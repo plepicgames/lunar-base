@@ -1,7 +1,7 @@
 # 0006. Keep Jev off in the public deployment
 
 - **Date:** 2026-10-11
-- **Status:** accepted
+- **Status:** superseded by [0010](./0010-turn-jev-on-in-the-public-deployment.md)
 
 ## Context and problem statement
 
