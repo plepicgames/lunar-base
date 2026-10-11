@@ -975,6 +975,7 @@ client keeps no rules and cannot drift; reconnecting is the same message.
 | `lobby.state` | `games[]`: id, creator, seats, humans joined and wanted, bots, options | Sent to every session in the lobby when the list changes |
 | `game.update` | `game`, `seq`, `view`, `events[]` | The seat's full view and the events since its last update. On join or resume `events` holds the seat's last 200 events |
 | `error` | `code`, `message` | The message was refused. Nothing changed |
+| `server.restart` | | The server is stopping and its games end with it. It is the last message of the socket, which then closes with code 1012 |
 
 Error codes: `bad_message`, `unsupported_protocol`, `name_invalid`,
 `name_taken`, `not_in_lobby`, `game_not_found`, `game_full`,
@@ -986,6 +987,13 @@ the reason the game ended: `victory` or `step_limit` from the engine,
 `turn_limit` or `engine_error` from the room; only `victory` has winners. `seq` grows with
 every update; a client ignores an older one. A `game.decide` with an old
 `decision` id gets `stale_decision`, so a double click cannot answer twice.
+
+`server.restart` did not change the protocol version, which stays 1. The
+version is checked in `hello` only, and that message is unchanged. A client
+built before `server.restart` drops the frame, as it drops every frame that
+does not parse. It then treats the close as a drop: it shows the Reconnecting
+banner and retries until the new server answers, which refuses the old token,
+and it returns to the Name screen with the game-lost sentence.
 
 `src/protocol/messages.ts` fixes what the tables leave open:
 
@@ -1034,7 +1042,7 @@ the last participant goes.
 | Player returns | `hello` with the token, then `welcome` and `game.update` with the full view. The player decides again from the next pending decision |
 | Same token on a second socket | The new socket wins. The old one is closed with code 4001 |
 | Session with no socket, not seated in a running game | Dropped after 30 minutes |
-| Server restarts | All games are lost. Clients fall back to the name screen. Resuming games after a restart is not built |
+| Server restarts | All games are lost. The server sends each socket `server.restart` and closes it with code 1012 (see [Shutdown](#health-and-shutdown)). The client shows a notice and a button back to the Name screen. Resuming games after a restart is not built |
 
 The 30-minute clock starts at disconnect. Resuming cancels it. A running room
 keeps its disconnected seated sessions; a watcher without a seat expires on
@@ -1086,6 +1094,7 @@ answer, so a dead connection is noticed.
 | After a drop | Keep the last screen visible and disable its controls beneath a Reconnecting banner. Retry after 250 ms, doubling the delay to a 5-second cap. On open, send `hello` with the stored token. The first resumed `game.update` replaces retained event history; later updates append new events. Keep the banner until `game.update` or `lobby.state` restores the view. If the token is unavailable when the new socket opens, clear the old session and game and return to Name with the game-lost sentence |
 | Lost session | A stored token refused with `name_invalid`, or a welcome with a different token, clears the old game and returns to the Name screen with a game-lost sentence |
 | Replaced tab | A close with code 4001 shows the other-tab banner and does not retry |
+| Server restart | `server.restart`, or a close with code 1012 without it, forgets the token, keeps the last screen visible with its controls disabled and does not retry. A notice says "The server restarted. This game has ended. Start a new game from the lobby."; outside a game it leaves out the middle sentence. Its one button, **Start again**, has the focus and opens a new socket on the Name screen. Before a session exists nothing is lost, so both are an ordinary drop and the client retries |
 | Notices | Server errors appear briefly above the screen. `stale_decision` leaves the current options usable |
 
 ## Server
@@ -1145,7 +1154,8 @@ next sweep tries again. A sweep that deleted something logs one
 
 `http.startServer(options)` owns the HTTP listener, WebSocket upgrade and
 session/lobby/room wiring. It returns the bound port (including the assigned
-port when asked for 0) and an async `close()` for tests. The static handler
+port when asked for 0), an async `close()` for tests and `shutdown()` (see
+[Health and shutdown](#health-and-shutdown)). The static handler
 answers 404 until a client build exists. An upgrade requires `<base>/ws` and an
 allowed `Origin`; anything else gets 403. A client reset while the refusal is
 sent leaves the server running.
@@ -1179,6 +1189,36 @@ bad value, prints one line with the counts, and passes them to
 | Refused upgrade | Every refusal answers with the status, `Content-Length: 0` and `Connection: close`, then destroys the socket: when the answer is flushed, on an error, or after 2 s. A client that never closes its side holds nothing open |
 | No address | A socket with no recorded address cannot create a game: the request is refused and logged with `address=none` |
 | Log | No address is logged. The first refusal of a tag and reason logs `limit refused=connections address=<tag>` or `limit refused=new_games address=<tag>`. Later ones are counted and logged at most once a minute per tag and reason as the same line with ` count=<n>`, the refusals since the line before. The tag is the first 16 hex characters of a SHA-256 over a random salt of this server and the counted address. The salt is never stored or logged. The server remembers at most 1000 such lines, forgets one after a quiet minute, and counts any further tags together as `address=other` |
+
+### Health and shutdown
+
+`GET <base>/healthz` (`/healthz` at the root, `/play/lunar-base/healthz` under
+that base) answers `200` with the body `ok` and a line break, as
+`text/plain; charset=utf-8` with `Cache-Control: no-store`. `HEAD` gets the
+same without a body; any other method gets `405` with `Allow: GET, HEAD`. The
+server answers it before the static handler, so it needs no client build. It
+names no version and no count, and outside the base the path is 404. Once a
+shutdown has begun it answers `503` with `shutting down`.
+
+`startServer` returns `shutdown(options)` beside `close()`. `main.ts` calls it
+on `SIGTERM` and on `SIGINT`:
+
+| Step | What happens |
+| --- | --- |
+| Begin | One log line: `shutdown begin signal=<name> connections=<open sockets> games=<started games>`. From here the health path answers 503 and a WebSocket upgrade is refused with 503 |
+| Sockets | Every open socket, also one that has not said `hello`, gets `server.restart` and is closed with code 1012 and the reason `Server restarting` |
+| Games | The log sweep stops. Every room stops: its grace timers, its result timer and its bot work end, and its log leaves the open set. Game logs are written synchronously, so nothing is flushed |
+| Listener | When the last socket has closed the HTTP listener closes. It stays up until then, so that a probe can read the 503. A response under way finishes; every other connection is dropped, also one that never sent a request |
+| Deadline | 10 seconds after the begin (`SHUTDOWN_DEADLINE_MS`), every connection still open is destroyed and one line says so: `shutdown deadline hit ms=10000 sockets=<n>` |
+| End | One log line, `shutdown end`. The promise resolves with `{ deadlineHit }` and never rejects. A second call returns the same promise |
+
+`main.ts` exits with code 0 when the promise resolves, also after the
+deadline. A second signal during the shutdown exits at once with code 1.
+`scripts/start.sh` ends with `exec node src/server/main.ts`, so a signal sent
+to that script's process reaches the server. `npm start` does not pass a
+signal on: `npm` exits and the server runs on, so a container starts the
+script or `node` itself. `close()` is for tests: it drops every socket without
+a message.
 
 `main.ts` trims `TYPESAFE_API_KEY` and builds one `jevMaker` when it is
 non-empty, using `LUNAR_JEV_MODEL` or `jev-latest`. The adapter and its

@@ -84,6 +84,11 @@ types, and relative imports that end in `.ts`.
 | `npm run check` | The gate, then the Playwright browser tests |
 | `npm start` | Installs if needed, builds the client, serves the game on port 4780 |
 
+A running server answers `GET <base>/healthz` with `200`. `SIGTERM` or
+`SIGINT` stops it: each player is told that the server restarts, and the
+process exits with code 0 within 10 seconds; see
+[`architecture.md`](./architecture.md#health-and-shutdown).
+
 The print files the images were made from are not in this repository. The
 image build commands read their location from the environment; see
 [`README.md`](../../README.md#rebuild-the-images).

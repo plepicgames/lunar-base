@@ -167,6 +167,37 @@ button:disabled {
 .connectionBanner {
   top: var(--spacing-3);
 }
+
+.restartNotice {
+  position: fixed;
+  z-index: 100;
+  top: var(--spacing-3);
+  left: 50%;
+  display: flex;
+  width: min(90vw, 32rem);
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  transform: translateX(-50%);
+  border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  color: var(--paper);
+  text-align: center;
+}
+
+.restartNotice p {
+  margin: 0;
+}
+
+.restartNotice button {
+  min-height: 3.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--space-900);
+  font-weight: 700;
+}
 .serverNotice {
   bottom: var(--spacing-3);
 }

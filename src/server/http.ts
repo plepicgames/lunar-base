@@ -1,12 +1,13 @@
 import { randomBytes } from "node:crypto";
-import { createServer } from "node:http";
-import type { AddressInfo } from "node:net";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import type { AddressInfo, Socket } from "node:net";
 import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
 import type { DecisionMaker } from "../bots/maker.ts";
 import { builtinMaker } from "../bots/builtin/index.ts";
 import { withFallback } from "../bots/fallback.ts";
 import { startGame } from "../engine/index.ts";
+import { RESTART_CLOSE_CODE, type ServerMessage } from "../protocol/messages.ts";
 import { basePrefix, normalizeBasePath } from "./base-path.ts";
 import { createLobby } from "./lobby.ts";
 import {
@@ -52,11 +53,45 @@ export interface ServerOptions {
   readonly now?: () => number;
 }
 
+/** How long a shutdown waits for its sockets before it drops them. */
+export const SHUTDOWN_DEADLINE_MS = 10_000;
+
+export interface ShutdownOptions {
+  /** What asked for the shutdown; named in the first log line. */
+  readonly signal?: string;
+  /** Runs `run` after `ms` and returns its cancel. Default `setTimeout`; a test passes its own. */
+  readonly schedule?: (run: () => void, ms: number) => () => void;
+}
+
+export interface ShutdownResult {
+  /** True when a socket was still open after `SHUTDOWN_DEADLINE_MS` and was dropped. */
+  readonly deadlineHit: boolean;
+}
+
 export interface RunningServer {
   readonly port: number;
   /** The TCP connections this server holds open, for the tests of what a refusal leaves behind. */
   connections(): Promise<number>;
+  /** Drops every socket at once, for tests. */
   close(): Promise<void>;
+  /**
+   * Tells every client the server restarts, closes the sockets with 1012 and
+   * stops listening. Never rejects. A second call returns the first one's promise.
+   */
+  shutdown(options?: ShutdownOptions): Promise<ShutdownResult>;
+}
+
+const RESTART: ServerMessage = { type: "server.restart" };
+
+/** The probe answer. It says nothing about the build, the players or the games. */
+function answerHealth(request: IncomingMessage, response: ServerResponse, stopping: boolean): void {
+  const headers = { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" };
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    response.writeHead(405, { ...headers, Allow: "GET, HEAD" }).end("Method not allowed.\n");
+    return;
+  }
+  // Node sends no body for HEAD.
+  response.writeHead(stopping ? 503 : 200, headers).end(stopping ? "shutting down\n" : "ok\n");
 }
 
 /** How long a refused upgrade may take to flush its answer before the socket is dropped. */
@@ -86,6 +121,10 @@ function refuseUpgrade(socket: Duplex, status: string): void {
 export async function startServer(options: ServerOptions = {}): Promise<RunningServer> {
   const basePath = normalizeBasePath(options.basePath ?? "/");
   const socketPath = `${basePrefix(basePath)}/ws`;
+  const healthPath = `${basePrefix(basePath)}/healthz`;
+  const log = options.log ?? console.log;
+  /** Set when shutdown begins: health answers 503 and upgrades are refused. */
+  let stopping: Promise<ShutdownResult> | undefined;
   const logDirectory = options.logs?.directory ?? DEFAULT_LOG_DIRECTORY;
   refuseLinkedLogDirectory(logDirectory);
   /** The games of this server whose room still exists. Its sweep spares their logs. */
@@ -166,9 +205,36 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       (roomFor(session) ?? lobby).onMessage(session, message);
     },
   });
-  const server = createServer(staticHandler(basePath, options.clientDir));
+  const serveStatic = staticHandler(basePath, options.clientDir);
+  let listenerClosed: Promise<void> | undefined;
+  /** The connections with a response under way. A shutdown lets these finish. */
+  const answering = new Set<Socket>();
+  const server = createServer((request, response) => {
+    const { socket } = request;
+    answering.add(socket);
+    response.once("close", () => {
+      answering.delete(socket);
+      if (listenerClosed !== undefined) socket.destroy();
+    });
+    if (request.url?.split("?", 1)[0] === healthPath) {
+      answerHealth(request, response, stopping !== undefined);
+      return;
+    }
+    serveStatic(request, response);
+  });
+  // Every TCP connection, upgraded or not, so the shutdown deadline can drop them all.
+  const connections = new Set<Socket>();
+  server.on("connection", (socket) => {
+    connections.add(socket);
+    socket.once("close", () => connections.delete(socket));
+  });
   const sockets = new WebSocketServer({ noServer: true });
   server.on("upgrade", (request, socket, head) => {
+    // In this order: shutting down, then the path and the origin, then the cap.
+    if (stopping !== undefined) {
+      refuseUpgrade(socket, "503 Service Unavailable");
+      return;
+    }
     if (
       request.url?.split("?", 1)[0] !== socketPath ||
       !originAllowed(limits.allowedOrigins, request.headers.origin, request.headers.host)
@@ -216,6 +282,82 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     days === undefined
       ? undefined
       : startGameLogSweep({ directory: logDirectory, days, open: openLogs, log: options.log });
+  /** Stop listening; settles when every connection has ended. */
+  const closeListener = (): Promise<void> =>
+    (listenerClosed ??= new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    }));
+
+  async function shutdown(request: ShutdownOptions): Promise<ShutdownResult> {
+    const clients = [...sockets.clients];
+    log(
+      `shutdown begin signal=${request.signal ?? "none"} connections=${String(clients.length)} games=${String(rooms.size)}`,
+    );
+    sweep?.stop();
+    visitors.stop();
+    const drained = Promise.all(
+      clients.map(
+        (socket) =>
+          new Promise<void>((resolve) => {
+            socket.once("close", () => {
+              resolve();
+            });
+          }),
+      ),
+    );
+    for (const socket of clients) {
+      if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(RESTART));
+      socket.close(RESTART_CLOSE_CODE, "Server restarting");
+    }
+    // The games end here: no timer or bot answer outlives them, and each
+    // log leaves the open set.
+    for (const room of rooms.values()) room.stop();
+    rooms.clear();
+    // The listener stays up until the sockets are gone, so a probe gets 503
+    // and a new upgrade is refused. It closes with the last socket. A
+    // connection with no response under way is dropped then: Node keeps one
+    // that never sent a request open, and it would hold the exit.
+    const closed = drained
+      .then(() => {
+        const done = closeListener();
+        for (const socket of connections) if (!answering.has(socket)) socket.destroy();
+        return done;
+      })
+      .then(
+        () => false,
+        () => false,
+      );
+    let cancel = (): void => undefined;
+    const deadline = new Promise<boolean>((resolve) => {
+      const schedule =
+        request.schedule ??
+        ((run, ms) => {
+          const timer = setTimeout(run, ms);
+          return () => {
+            clearTimeout(timer);
+          };
+        });
+      cancel = schedule(() => {
+        resolve(true);
+      }, SHUTDOWN_DEADLINE_MS);
+    });
+    const deadlineHit = await Promise.race([closed, deadline]);
+    cancel();
+    if (deadlineHit) {
+      log(
+        `shutdown deadline hit ms=${String(SHUTDOWN_DEADLINE_MS)} sockets=${String(sockets.clients.size)}`,
+      );
+      for (const socket of connections) socket.destroy();
+      void closeListener().catch(() => undefined);
+    }
+    sockets.close();
+    log("shutdown end");
+    return { deadlineHit };
+  }
+
   return {
     port: (server.address() as AddressInfo).port,
     connections: () =>
@@ -229,13 +371,9 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       sweep?.stop();
       visitors.stop();
       for (const socket of sockets.clients) socket.terminate();
-      await new Promise<void>((resolve, reject) => {
-        server.close((error) => {
-          if (error) reject(error);
-          else resolve();
-        });
-      });
+      await closeListener();
       sockets.close();
     },
+    shutdown: (request = {}) => (stopping ??= shutdown(request)),
   };
 }

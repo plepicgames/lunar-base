@@ -1131,6 +1131,23 @@ describe("game room", () => {
     rmSync(directory, { recursive: true, force: true });
   });
 
+  test("a stopped room closes its log, ends its automation and no longer runs", () => {
+    const directory = mkdtempSync(join(tmpdir(), "lunar-stop-log-"));
+    const { humans, rooms, openLogs } = setup({ logDirectory: directory });
+    const [a, b] = humans();
+    const { game } = a.update();
+    const room = rooms.get(game);
+    expect(openLogs.has(game)).toBe(true);
+    room?.stop();
+    room?.stop();
+    expect(openLogs.size).toBe(0);
+    expect(room?.isRunning()).toBe(false);
+    const seen = b.updates().length;
+    (a.update().view.pending?.seat === 0 ? a : b).answer();
+    expect(b.updates()).toHaveLength(seen);
+    rmSync(directory, { recursive: true, force: true });
+  });
+
   test("a game continues after its log directory cannot be created", () => {
     const directory = mkdtempSync(join(tmpdir(), "lunar-write-error-"));
     const blocked = join(directory, "blocked");

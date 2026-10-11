@@ -71,6 +71,12 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 
 A value that is set and not valid stops the start with an error.
 
+`GET <base>/healthz` answers `200` and `ok` while the server runs, for example
+`/play/lunar-base/healthz`.
+
+On `SIGTERM` or `SIGINT` the server tells every player that it restarts, ends
+the games, and exits with code 0 within 10 seconds.
+
 ## Report a problem
 
 Use the **Report a problem** link at the bottom of the game, or open the

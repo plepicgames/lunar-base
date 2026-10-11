@@ -103,6 +103,87 @@ test("a replaced tab shows the other-tab notice and does not retry", () => {
   expect(FakeWebSocket.instances).toHaveLength(1);
 });
 
+const RESTART_NOTICE =
+  "The server restarted. This game has ended. Start a new game from the lobby.";
+
+test("the restart message shows the notice, stops the retries and offers a fresh start", () => {
+  const first = startGame();
+  const option = screen.getByRole("button", { name: "Do not Build" });
+  act(() => {
+    first.receive({ type: "server.restart" });
+  });
+  expect(screen.getByText(RESTART_NOTICE)).toBeTruthy();
+  act(() => {
+    first.drop(1012);
+  });
+  expect(screen.getByText(RESTART_NOTICE)).toBeTruthy();
+  expect(screen.queryByText("Reconnecting")).toBeNull();
+  expect(option.matches(":disabled")).toBe(true);
+  expect(window.sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+  act(() => {
+    vi.advanceTimersByTime(60_000);
+  });
+  expect(FakeWebSocket.instances).toHaveLength(1);
+
+  const again = screen.getByRole("button", { name: "Start again" });
+  expect(document.activeElement).toBe(again);
+  fireEvent.click(again);
+  expect(FakeWebSocket.instances).toHaveLength(2);
+  act(() => {
+    FakeWebSocket.current.open();
+  });
+  expect(FakeWebSocket.current.messages).toEqual([]);
+  expect(screen.getByRole("textbox", { name: "Name" })).toBeTruthy();
+  expect(screen.queryByText(RESTART_NOTICE)).toBeNull();
+  expect(screen.queryByText(/game was lost/i)).toBeNull();
+});
+
+test("a close with code 1012 and no message shows the same notice and does not retry", () => {
+  const first = startGame();
+  act(() => {
+    first.drop(1012);
+  });
+  expect(screen.getByText(RESTART_NOTICE)).toBeTruthy();
+  expect(screen.queryByText("Reconnecting")).toBeNull();
+  act(() => {
+    vi.advanceTimersByTime(60_000);
+  });
+  expect(FakeWebSocket.instances).toHaveLength(1);
+});
+
+test("the restart message stops the retries whatever close code follows; the lobby loses no game", () => {
+  render(<App />);
+  const socket = FakeWebSocket.current;
+  act(() => {
+    socket.open();
+    socket.receive({ type: "welcome", protocol: 1, token, name: "Ann", jev: false });
+    socket.receive({ type: "lobby.state", games: [] });
+    socket.receive({ type: "server.restart" });
+    socket.drop();
+  });
+  expect(screen.getByText("The server restarted. Start a new game from the lobby.")).toBeTruthy();
+  act(() => {
+    vi.advanceTimersByTime(60_000);
+  });
+  expect(FakeWebSocket.instances).toHaveLength(1);
+});
+
+test("before a session exists a restart is an ordinary drop: the client retries", () => {
+  window.sessionStorage.clear();
+  render(<App />);
+  const socket = FakeWebSocket.current;
+  act(() => {
+    socket.open();
+    socket.receive({ type: "server.restart" });
+    socket.drop(1012);
+  });
+  expect(screen.queryByText(/server restarted/i)).toBeNull();
+  act(() => {
+    vi.advanceTimersByTime(250);
+  });
+  expect(FakeWebSocket.instances).toHaveLength(2);
+});
+
 test("a lost stored session clears the game and explains the return to Name", () => {
   const first = startGame();
   act(() => {

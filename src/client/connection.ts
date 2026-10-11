@@ -6,6 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { socketUrl, tokenKey } from "./base.ts";
 import {
   PROTOCOL_VERSION,
+  RESTART_CLOSE_CODE,
   serverMessageSchema,
   type ClientMessageInput,
   type ErrorMessage,
@@ -53,7 +54,11 @@ export interface ConnectionState {
   readonly game: GameState | null;
   /** The latest refusal. The next `send` clears it. */
   readonly error: ErrorMessage | null;
-  readonly interruption: "none" | "reconnecting" | "other-tab";
+  /**
+   * `restarted`: the server said it restarts, so the session and its game are
+   * gone. Nothing retries; `reset` starts again.
+   */
+  readonly interruption: "none" | "reconnecting" | "other-tab" | "restarted";
   readonly lostGame: boolean;
 }
 
@@ -64,6 +69,8 @@ export interface Connection {
   readonly open: () => void;
   /** Closes the socket and ignores what it still says. */
   readonly close: () => void;
+  /** Forgets the session and its game and opens a new socket: the Name screen. */
+  readonly reset: () => void;
   /** Sends one message. Returns false, sending nothing, unless the socket is open. */
   readonly send: (message: ClientMessageInput) => boolean;
 }
@@ -190,6 +197,12 @@ export function createConnection(): Connection {
           if (state.error === message) set({ ...state, error: null });
         }, 4000);
         return;
+      case "server.restart":
+        // With no session nothing is lost: the close that follows is a drop.
+        if (state.session === null) return;
+        writeToken(null);
+        set({ ...state, interruption: "restarted" });
+        return;
     }
   }
 
@@ -239,6 +252,16 @@ export function createConnection(): Connection {
         set({ ...state, status: "closed", interruption: "other-tab" });
         return;
       }
+      // The restart message, or its close code alone: the server forgot the
+      // session, so a retry could only fail. The player starts again by hand.
+      if (
+        state.session !== null &&
+        (state.interruption === "restarted" || event.code === RESTART_CLOSE_CODE)
+      ) {
+        writeToken(null);
+        set({ ...state, status: "closed", interruption: "restarted" });
+        return;
+      }
       set({ ...state, status: "closed", interruption: "reconnecting" });
       retryTimer = setTimeout(
         () => {
@@ -251,6 +274,17 @@ export function createConnection(): Connection {
     };
   }
 
+  function close(): void {
+    if (retryTimer !== null) clearTimeout(retryTimer);
+    if (errorTimer !== null) clearTimeout(errorTimer);
+    retryTimer = null;
+    errorTimer = null;
+    fullHistoryOnNextUpdate = false;
+    const current = socket;
+    socket = null;
+    current?.close();
+  }
+
   return {
     getState: () => state,
     subscribe(listener) {
@@ -260,15 +294,13 @@ export function createConnection(): Connection {
       };
     },
     open,
-    close() {
-      if (retryTimer !== null) clearTimeout(retryTimer);
-      if (errorTimer !== null) clearTimeout(errorTimer);
-      retryTimer = null;
-      errorTimer = null;
-      fullHistoryOnNextUpdate = false;
-      const current = socket;
-      socket = null;
-      current?.close();
+    close,
+    reset() {
+      close();
+      writeToken(null);
+      retryCount = 0;
+      state = INITIAL;
+      open();
     },
     send(message) {
       if (socket === null || socket.readyState !== WebSocket.OPEN) return false;
@@ -281,6 +313,7 @@ export function createConnection(): Connection {
 
 export interface ConnectionHandle extends ConnectionState {
   readonly send: Connection["send"];
+  readonly reset: Connection["reset"];
 }
 
 /** The connection of this component tree: its state and a send function. */
@@ -293,5 +326,5 @@ export function useConnection(): ConnectionHandle {
     };
   }, [connection]);
   const state = useSyncExternalStore(connection.subscribe, connection.getState);
-  return { ...state, send: connection.send };
+  return { ...state, send: connection.send, reset: connection.reset };
 }

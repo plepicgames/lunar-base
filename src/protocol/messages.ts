@@ -212,11 +212,21 @@ const error = z.strictObject({
 });
 export type ErrorMessage = z.infer<typeof error>;
 
+/**
+ * The last message of a socket: the server is stopping and its games end with
+ * it. The socket then closes with `RESTART_CLOSE_CODE`.
+ */
+const serverRestart = z.strictObject({ type: z.literal("server.restart") });
+
+/** WebSocket close code 1012, "service restart". */
+export const RESTART_CLOSE_CODE = 1012;
+
 export const serverMessageSchema = z.discriminatedUnion("type", [
   welcome,
   lobbyState,
   gameUpdate,
   error,
+  serverRestart,
 ]);
 export type ServerMessage = z.infer<typeof serverMessageSchema>;
 
