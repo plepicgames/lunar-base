@@ -45,7 +45,7 @@ test("the lobby and the table link to the report form without a seed or a token"
       if (message.type === "game.update" && message.game) game = message.game;
     });
   });
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("textbox", { name: "Name" }).fill("Zebedee");
   await page.getByRole("button", { name: "Enter the lobby" }).click();
   await expect(page.getByRole("heading", { name: "Create a game" })).toBeVisible();
@@ -94,7 +94,7 @@ async function script(page: Page, scripted: Partial<GameView>): Promise<void> {
       );
     });
   });
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("textbox", { name: "Name" }).fill("Ann");
   await page.getByRole("button", { name: "Enter the lobby" }).click();
 }
