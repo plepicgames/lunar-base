@@ -111,6 +111,8 @@ const serverCases: Record<ServerMessage["type"], Case> = {
     missing: "message",
     wrong: { code: 404 },
   },
+  // server.restart has no field but its type.
+  "server.restart": { valid: { type: "server.restart" }, missing: "type", wrong: { type: 7 } },
 };
 
 function without(value: Json, key: string): Json {

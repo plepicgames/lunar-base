@@ -85,6 +85,8 @@ export function App() {
     <Shell
       screen={connection.game !== null ? "table" : open ? "waiting" : "lobby"}
       interruption={connection.interruption}
+      gameEnded={connection.game !== null || open !== undefined}
+      onStartAgain={connection.reset}
       notice={
         connection.game !== null || open !== undefined ? (connection.error?.message ?? null) : null
       }

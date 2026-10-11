@@ -40,9 +40,46 @@ export async function main(): Promise<RunningServer> {
   return running;
 }
 
+/** The part of `process` the signal handlers use. */
+export interface SignalSource {
+  on(signal: "SIGTERM" | "SIGINT", listener: () => void): unknown;
+  exit(code: number): void;
+}
+
+/**
+ * On SIGTERM or SIGINT shut the server down and exit with 0, also when the
+ * shutdown hit its deadline. A second signal during shutdown exits at once
+ * with 1.
+ */
+export function shutdownOnSignals(running: RunningServer, source: SignalSource = process): void {
+  let begun = false;
+  for (const signal of ["SIGTERM", "SIGINT"] as const) {
+    source.on(signal, () => {
+      if (begun) {
+        source.exit(1);
+        return;
+      }
+      begun = true;
+      void running.shutdown({ signal }).then(
+        () => {
+          source.exit(0);
+        },
+        (error: unknown) => {
+          console.error(error);
+          source.exit(1);
+        },
+      );
+    });
+  }
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  void main().catch((error: unknown) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+  void main()
+    .then((running) => {
+      shutdownOnSignals(running);
+    })
+    .catch((error: unknown) => {
+      console.error(error);
+      process.exitCode = 1;
+    });
 }

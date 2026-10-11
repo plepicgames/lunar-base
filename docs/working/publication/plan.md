@@ -114,7 +114,7 @@ One row is one pull request in one repository. Rows run in the order given.
   about 100,000 decisions an hour. Files: `src/bots/` (the fallback maker),
   `src/server/main.ts`, `limits.ts`, and their tests. Verify: tests on an
   injected clock; the startup line shows the budget. O2 waits for this row.
-- [ ] **L7 Health and shutdown.** `GET <base>/healthz` for the probes. On
+- [x] **L7 Health and shutdown.** `GET <base>/healthz` for the probes. On
   `SIGTERM` the server tells each connected player that the game ends and
   closes. Files: `src/server/http.ts`, `main.ts` and `room.ts`,
   `src/protocol/` for the new message, the client screen that shows it, and

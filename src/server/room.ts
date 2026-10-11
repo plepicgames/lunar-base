@@ -45,6 +45,8 @@ export interface Room {
   onMessage(session: Session, message: ClientMessage): void;
   onBound(session: Session): void;
   onDisconnect(session: Session): void;
+  /** The server is stopping: end the timers and bot work and close the game log. */
+  stop(): void;
 }
 
 /** The caller routes bound sessions here and removes the room on onEmpty. */
@@ -357,6 +359,13 @@ export function createRoom(game: LobbyGameRoom, options: RoomOptions): Room {
         waitForAbsent(session);
         broadcast();
       });
+    },
+    stop() {
+      if (disposed) return;
+      disposed = true;
+      stopAutomation();
+      clearTimeout(expiryTimer);
+      options.gameLog?.close();
     },
   };
   enqueue(() => {
