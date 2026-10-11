@@ -50,8 +50,8 @@ removes the rest.
 ## Purpose and boundaries
 
 This repository owns the online Lunar Base card game: engine, server, client,
-card data, artwork and the container image. Today it holds documents only; see
-[`docs/current/overview.md`](./docs/current/overview.md).
+card data, artwork and the container image. The layout and the import
+boundaries are in [`docs/current/overview.md`](./docs/current/overview.md).
 
 It does not own the shop site (`hannosirkel/plepic`), the Kubernetes manifests
 (`hannosirkel/deploys`) or the Argo CD Application and route
@@ -65,16 +65,29 @@ Enable the secret scan once in each checkout. Never bypass it.
 git config --local core.hooksPath .githooks
 ```
 
-The game code is not imported yet. When it is, run these before handoff:
+Run these before handoff. Node.js 24.15 or newer is required.
 
 ```bash
 npm ci
+bash scripts/validate
 npm run check
 ```
 
-Until then, the checks are the ones in `.github/workflows/validate.yml`:
-`gitleaks git --redact`, `zizmor .github/workflows/` and
-`lychee --config lychee.toml './**/*.md'`.
+- `bash scripts/validate` is the gate: format check, `shellcheck`, lint,
+  types, card data and image manifests, unit and integration tests, client
+  build. It needs no browser and no network.
+- `npm run check` runs the gate and then the Playwright browser tests. It
+  needs the Chromium of the pinned `@playwright/test`
+  (`npx playwright install chromium`). The tests never download a browser.
+- `npm start` builds the client and serves the game on port 4780.
+- Run one check at a time. The browser tests start a server on port 4791.
+
+`.github/workflows/validate.yml` also runs `gitleaks git --redact`,
+`zizmor .github/workflows/` and `lychee --config lychee.toml './**/*.md'`.
+
+Do not upgrade `typescript` past 6.0: `typescript-eslint` 8.71.1 accepts
+versions below 6.1 only. Do not upgrade `@playwright/test` without changing
+the Chromium the browser job installs.
 
 ## Public and secret constraints
 

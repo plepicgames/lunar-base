@@ -1,0 +1,28 @@
+/* The fan is exactly the width of the region; the rise of a hovered card has
+   its own room above, so nothing is clipped and nothing scrolls. The rise
+   moves `top`, never `transform`: a transformed slot would become the
+   containing block of the fixed zoom view drawn inside it. */
+.hand {
+  min-width: 0;
+  flex: 1;
+  padding-top: var(--spacing-6);
+}
+
+.fan {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  position: absolute;
+  top: 0;
+  transition: top 120ms ease-out;
+}
+
+.slot:hover,
+.slot:focus-within {
+  z-index: 1;
+  top: calc(-1 * var(--spacing-6));
+}

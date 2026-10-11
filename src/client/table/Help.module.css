@@ -1,0 +1,90 @@
+.helpButton {
+  position: fixed;
+  z-index: 5;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  color: var(--paper);
+  font: inherit;
+}
+.backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 80%);
+}
+.dialog {
+  width: min(100%, 90rem);
+  max-height: 95vh;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  color: var(--paper);
+}
+.header,
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.header h2 {
+  margin: 0 0 0.75rem;
+}
+.dialog button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-700);
+  color: var(--paper);
+  font: inherit;
+}
+.dialog button:disabled {
+  opacity: 0.45;
+}
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 23rem);
+  gap: 1.5rem;
+}
+.pages img {
+  display: block;
+  width: min(100%, 68vh);
+  max-height: 68vh;
+  object-fit: contain;
+  margin: auto;
+  background: white;
+}
+.navigation {
+  margin-top: 0.75rem;
+}
+.readings {
+  overflow-y: auto;
+  max-height: 75vh;
+  line-height: 1.4;
+}
+.readings h3 {
+  margin-top: 0;
+}
+.readings li {
+  margin-bottom: 0.65rem;
+}
+@media (max-width: 700px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+  .pages img {
+    max-height: 55vh;
+  }
+  .readings {
+    max-height: none;
+  }
+}

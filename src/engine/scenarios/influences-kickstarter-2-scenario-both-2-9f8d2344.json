@@ -1,0 +1,195 @@
+{
+  "config": {
+    "seats": 2,
+    "influences": true,
+    "kickstarter": true
+  },
+  "seed": "scenario-both-2",
+  "choices": [
+    {
+      "seat": 0,
+      "decision": "d1",
+      "option": "c1:1"
+    },
+    {
+      "seat": 0,
+      "decision": "d2",
+      "option": "c13:1,0,0"
+    },
+    {
+      "seat": 1,
+      "decision": "d4",
+      "option": "c18"
+    },
+    {
+      "seat": 1,
+      "decision": "d5",
+      "option": "c17"
+    },
+    {
+      "seat": 1,
+      "decision": "d6",
+      "option": "c2:1"
+    },
+    {
+      "seat": 1,
+      "decision": "d7",
+      "option": "c16:1,0,0"
+    },
+    {
+      "seat": 0,
+      "decision": "d8",
+      "option": "c1:1"
+    },
+    {
+      "seat": 0,
+      "decision": "d9",
+      "option": "c11:-1,0,0"
+    },
+    {
+      "seat": 1,
+      "decision": "d10",
+      "option": "c16:0"
+    },
+    {
+      "seat": 1,
+      "decision": "d11",
+      "option": "c14:0,-1,3"
+    },
+    {
+      "seat": 1,
+      "decision": "d12",
+      "option": "later"
+    },
+    {
+      "seat": 1,
+      "decision": "d13",
+      "option": "c15"
+    },
+    {
+      "seat": 0,
+      "decision": "d15",
+      "option": "c19"
+    },
+    {
+      "seat": 0,
+      "decision": "d16",
+      "option": "c1:2"
+    },
+    {
+      "seat": 1,
+      "decision": "d18",
+      "option": "c2:1"
+    },
+    {
+      "seat": 1,
+      "decision": "d19",
+      "option": "c22:-1,0,0"
+    },
+    {
+      "seat": 0,
+      "decision": "d20",
+      "option": "c1:0"
+    },
+    {
+      "seat": 0,
+      "decision": "d21",
+      "option": "c27"
+    },
+    {
+      "seat": 1,
+      "decision": "d22",
+      "option": "c2:0"
+    },
+    {
+      "seat": 1,
+      "decision": "d23",
+      "option": "c26"
+    },
+    {
+      "seat": 0,
+      "decision": "d24",
+      "option": "c1:1"
+    },
+    {
+      "seat": 0,
+      "decision": "d25",
+      "option": "c27:3,1,1"
+    },
+    {
+      "seat": 1,
+      "decision": "d26",
+      "option": "c2:1"
+    },
+    {
+      "seat": 1,
+      "decision": "d27",
+      "option": "c26:2,0,0"
+    },
+    {
+      "seat": 0,
+      "decision": "d28",
+      "option": "c1:0"
+    },
+    {
+      "seat": 0,
+      "decision": "d29",
+      "option": "c20"
+    },
+    {
+      "seat": 1,
+      "decision": "d30",
+      "option": "c2:2"
+    },
+    {
+      "seat": 1,
+      "decision": "d31",
+      "option": "c24"
+    },
+    {
+      "seat": 0,
+      "decision": "d33",
+      "option": "c1:0"
+    },
+    {
+      "seat": 0,
+      "decision": "d34",
+      "option": "c28"
+    },
+    {
+      "seat": 1,
+      "decision": "d35",
+      "option": "c2:1"
+    },
+    {
+      "seat": 1,
+      "decision": "d36",
+      "option": "c29:2,2,3"
+    },
+    {
+      "seat": 0,
+      "decision": "d37",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d38",
+      "option": "c31"
+    },
+    {
+      "seat": 0,
+      "decision": "d39",
+      "option": "c33"
+    }
+  ],
+  "expected": {
+    "result": {
+      "reason": "victory",
+      "winners": [0],
+      "scores": [1, 0]
+    },
+    "turns": 15,
+    "stateHash": "d791e46c7682bbb0bcf14acc7436694782cececf697d3d6eb11804c5bc1e261b",
+    "conditions": ["influences"]
+  }
+}

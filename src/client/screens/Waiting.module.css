@@ -1,0 +1,70 @@
+.panel {
+  width: min(100%, 44rem);
+  align-self: center;
+  padding: var(--spacing-6);
+  border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--space-900) 90%, transparent);
+  box-shadow: 0 1rem 3rem color-mix(in srgb, var(--space-900) 50%, transparent);
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.intro {
+  margin-bottom: var(--spacing-4);
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
+}
+
+.count {
+  font-weight: 700;
+  color: var(--action);
+}
+
+.seats {
+  display: grid;
+  gap: var(--spacing-2);
+  margin: 0 0 var(--spacing-6);
+  padding: 0;
+  list-style: none;
+  counter-reset: seat;
+}
+
+.seats li {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  min-height: 3rem;
+  padding: var(--spacing-2) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--paper) 18%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--space-800);
+  counter-increment: seat;
+}
+
+.seats li::before {
+  content: counter(seat, decimal-leading-zero);
+  color: var(--action);
+  font-weight: 700;
+}
+
+.seats .free {
+  border-style: dashed;
+  color: color-mix(in srgb, var(--paper) 65%, transparent);
+}
+
+.button {
+  min-height: 3rem;
+  padding: var(--spacing-2) var(--spacing-6);
+  border: 1px solid color-mix(in srgb, var(--paper) 55%, transparent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--paper);
+  font-weight: 700;
+}
+
+.button:hover {
+  background: var(--space-700);
+}

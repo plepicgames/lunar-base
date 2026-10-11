@@ -1,0 +1,27 @@
+:root {
+  --space-900: #101533;
+  --space-800: #131e4e;
+  --space-700: #272476;
+  --nebula: #2d1d5b;
+  --paper: #f7f4ec;
+  --credit: #fcb61f;
+  --colonist: #1d8ccc;
+  --achievement: #d81f38;
+  --influence: #f4804e;
+  --action: #25a8c5;
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 3rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+
+  /* Card corner radius over card width: 3.0 mm on a 50 mm card (evidence
+     2026-10-10-card-corner-radius.md). */
+  --card-radius-ratio: 0.06;
+}

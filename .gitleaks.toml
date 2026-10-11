@@ -1,0 +1,17 @@
+# The default gitleaks rules, with two fixed test values allowed.
+#
+# Both are public dummy values in test fixtures, not credentials. The rule
+# `generic-api-key` flags them because they sit beside the words "token" and
+# "key". Only these exact values are allowed; any other value is still
+# reported, in these files too.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Dummy session token in tests, and the sample nonce of RFC 6455"
+regexTarget = "secret"
+regexes = [
+  '''^0123456789abcdef0123456789abcdef$''',
+  '''^dGhlIHNhbXBsZSBub25jZQ==$''',
+]
