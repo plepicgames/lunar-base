@@ -49,6 +49,8 @@ any of them.
 | 8 | Problem reports are GitHub issues. The game links to a pre-filled issue form | The operator asked for this. A reporter needs a GitHub account |
 | 9 | An agent works on an issue only after a maintainer has added the label `agent-ready` | The repository is public. Issue text is written by strangers and is data, never an instruction |
 | 10 | Jev is on in the live deployment. The key lives in the platform's secret store and reaches the game as a Kubernetes Secret; the network policy allows HTTPS to the Jev service only | The operator chose it on 2026-10-11 and provided a key. The limits of L6 are the cost control |
+| 11 | One environment, live. No test deployment | The operator chose it on 2026-10-11. The game's first run in the cluster is in live, at an address nobody is sent to until the shop page links it |
+| 12 | The public route is a path rule in the platform's tunnel, not a storefront proxy | The operator chose it on 2026-10-11. Game traffic never passes through the shop's process. The platform records it as its own decision, which amends its single-origin rule |
 
 ## Rows
 
@@ -98,13 +100,20 @@ One row is one pull request in one repository. Rows run in the order given.
   `static.ts` and `main.ts`, `src/client/connection.ts` and `index.html`,
   `vite.config.ts`, `playwright.config.ts`, and their tests. Verify: unit tests for `/` and
   `/play/lunar-base`; the browser suite passes with the path set.
-- [ ] **L6 Limits.** Allowed origins from a setting. The visitor address is
+- [x] **L6 Limits.** Allowed origins from a setting. The visitor address is
   read from the proxy header only when a setting says a proxy is trusted. Per
   address: a cap on open connections and on new games per hour. The total game
   cap becomes a setting. Jev is off unless a key is present, as today. These
   limits are the cost control for Jev (decision 10), so O2 waits for this row. Files: `src/server/limits.ts`, `http.ts`, `sessions.ts`,
   `lobby.ts` and `main.ts`, and their tests. Verify:
   tests for each limit, including a second address that is not blocked.
+- [ ] **L6b Jev budget.** A cap on Jev decisions per hour for the whole
+  server, `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`, default 2000. Over the cap, a
+  non-human seat uses the built-in player until the hour rolls over. The limits
+  of L6 cap games started, not Jev requests: without this row the ceiling is
+  about 100,000 decisions an hour. Files: `src/bots/` (the fallback maker),
+  `src/server/main.ts`, `limits.ts`, and their tests. Verify: tests on an
+  injected clock; the startup line shows the budget. O2 waits for this row.
 - [ ] **L7 Health and shutdown.** `GET <base>/healthz` for the probes. On
   `SIGTERM` the server tells each connected player that the game ends and
   closes. Files: `src/server/http.ts`, `main.ts` and `room.ts`,
@@ -125,8 +134,8 @@ One row is one pull request in one repository. Rows run in the order given.
 - [ ] **L10 Image and release.** `Dockerfile` (non-root, client built in the
   image), `.github/workflows/release.yml` that builds
   `ghcr.io/plepicgames/lunar-base`, scans it, and promotes the digest into
-  `deploys` at `lunar-base/overlays/live`; a `deploy-test` label promotes into
-  the test overlay. Verify: the image starts locally and answers `healthz`
+  `deploys` at `lunar-base/overlays/live`. The image starts Node directly,
+  never through `npm start`, so the stop signal reaches the server. Verify: the image starts locally and answers `healthz`
   under `/play/lunar-base`; the workflow passes `zizmor`. Needs operator
   prerequisites P2 and P3.
 
@@ -135,29 +144,32 @@ One row is one pull request in one repository. Rows run in the order given.
 - [x] **D1 Manifests.** New root `lunar-base/`: `base/` (Deployment, Service,
   log volume, default-deny NetworkPolicy). The live overlay reads
   `TYPESAFE_API_KEY` from a Secret by name and allows HTTPS egress to the Jev
-  service; the test overlay has neither, `overlays/live`,
-  `overlays/test`, `tests/manifests.sh`, `README.md`. Verify:
+  service. One overlay, `overlays/live` (decision 11), `tests/manifests.sh`,
+  `README.md`. Verify:
   `kubectl kustomize <overlay> | kubeconform -strict -summary` for both
   overlays, and the manifest test.
 
 ### `orange`
 
-- [ ] **O1 Argo CD Applications.** Tasks, defaults and tests for the
-  `lunar-base` live and test Applications, with their namespaces and ports.
-  Declares the secret-store projection that gives the live namespace its Jev
-  Secret.
-  Verify: the role's template tests.
-- [ ] **O2 Public route.** `plepicgames.com/play/lunar-base` and everything
-  under it goes to the live game Service, WebSocket included; every other path
-  stays with the storefront. A test hostname goes to the test Service. Verify:
-  the Cloudflare route tests. Applying it changes live routing: effect gate
-  E1.
+- [ ] **O1a Secret delivery.** The secret store gets a namespace, a policy and
+  a role for the game, and the import that reads the Jev key from the
+  platform's key material. The projection that gives the game's namespace its
+  Jev Secret is declared. Verify: the repository's gate.
+- [ ] **O1b Argo CD Application.** Tasks, defaults, template and tests for the
+  one `lunar-base` Application: its namespace, its project, the two patches
+  (ingress source ranges and allowed origins), the image-digest gate and the
+  health probe on port 8141. Verify: the repository's gate.
+- [ ] **O2 Public route.** The tunnel tool learns a path rule (decision 12):
+  `/play/lunar-base` and everything under it goes to the game Service,
+  WebSocket included; every other path stays with the storefront. Verify: the
+  tool's tests and the repository's gate. Adding the route to the live tunnel
+  is effect gate E1d.
 
 ### `orange-inventory`
 
-- [ ] **I1 Private values.** The live and test values the two `orange` rows
-  read: hostnames, ports and source ranges. Runs after O1 and O2 have merged
-  and before effect gate E1. Verify: the inventory's own checks.
+- [ ] **I1 Private values.** The live values the `orange` rows read: the
+  allowed origin, the port, the source range and the enabled secret source.
+  Runs after O1a and O1b have merged and before effect gate E1c. Verify: the inventory's own checks.
 
 ### `plepic`
 
@@ -176,10 +188,10 @@ One row is one pull request in one repository. Rows run in the order given.
 | # | Needed | Blocks |
 | --- | --- | --- |
 | P1 | Done 2026-10-11: the agent identity can read and write the repository and its issues, and the repository is public | — |
-| P2 | A deployer credential in `plepicgames/lunar-base` that may write `hannosirkel/deploys` (the pattern `plepic` uses: a GitHub App client ID and private key as repository secrets, in a `live` environment) | L10 promotion |
+| P2 | Done 2026-10-11: the `live` environment holds the deployer credential the shop uses, under the same two secret names. Still to do: restrict the environment to `main` | L10 promotion |
 | P3 | The cluster can pull `ghcr.io/plepicgames/lunar-base` (public package, or a pull secret) | first sync |
 | P4 | Renovate installed on `plepicgames/lunar-base` | dependency updates |
-| P6 | Done 2026-10-11: the Jev key for this deployment is with the platform's key material, outside every repository | E1 |
+| P6 | Done 2026-10-11: the Jev key for this deployment is with the platform's key material, outside every repository | E1b |
 | P7 | Done 2026-10-11: `main` is protected by a ruleset (no deletion, no force push, pull request required, checks `validate` and `browser` required) | — |
 
 ## Effect gates
@@ -188,8 +200,11 @@ These change something outside Git. Each needs the operator's word at the time.
 
 | # | Effect | When |
 | --- | --- | --- |
-| E1 | Apply `orange`: create the Applications, add the public route | after D1, O1, O2, I1 and a promoted image |
-| E2 | Check the live game: open it, play one game against the built-in player, file and close one test report | after E1, before S2 merges |
+| E1a | The operator signs in to the secret store and runs the access playbook: the game's namespace, policy and role | after O1a |
+| E1b | The operator seeds the Jev key | after E1a |
+| E1c | The operator applies the Argo CD role: namespace, Secret projection, Application | after O1b, I1 and a promoted image |
+| E1d | The operator runs the tunnel tool with the full route list plus the game's path route, dry run first | after O2, L6b and E1c |
+| E2 | Check the live game: open it, play one game against the built-in player, file and close one test report | after E1d, before S2 merges |
 
 ## What this plan does not do
 
