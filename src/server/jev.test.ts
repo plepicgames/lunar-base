@@ -244,11 +244,19 @@ test("LUNAR_JEV_MAX_DECISIONS_PER_HOUR caps the Jev requests of the server", asy
   expect(output.filter((line) => /failed=|breaker=/.test(line))).toEqual([]);
 });
 
-test("a budget of 0 never asks Jev, and the startup line says why Jev is off", async () => {
+test("a budget of 0 builds no Jev maker: the lobby offers no Jev and refuses a Jev game", async () => {
   vi.stubEnv("LUNAR_JEV_MAX_DECISIONS_PER_HOUR", "0");
+  const started = vi.spyOn(http, "startServer");
   const { socket, messages } = await start(KEY);
+  expect(started.mock.calls[0][0]?.jev).toBeUndefined();
+  expect(messages[0]).toMatchObject({ type: "welcome", jev: false });
   expect(output).toContain("Jev is off because the budget is 0 decisions per hour");
   create(socket, "jev");
+  await vi.waitFor(() => {
+    expect(messages.at(-1)).toMatchObject({ type: "error", code: "bad_message" });
+  });
+  messages.length = 0;
+  create(socket);
   expect((await finish(messages)).every((line) => line.endsWith("by=builtin"))).toBe(true);
   expect(requests).toHaveLength(0);
   expect(output.filter((line) => line.startsWith("jev "))).toEqual([]);

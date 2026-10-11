@@ -1,4 +1,6 @@
 // Manual live measurement. Keep outside npm run check and all tests.
+// It asks Jev directly, outside the server's hourly budget: it ignores
+// LUNAR_JEV_MAX_DECISIONS_PER_HOUR, also when that is 0.
 import { performance } from "node:perf_hooks";
 import type { Fetch } from "@typesafe-ai/sdk";
 import { builtinMaker } from "../src/bots/builtin/index.ts";

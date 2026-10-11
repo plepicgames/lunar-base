@@ -6,12 +6,17 @@ export const BUDGET_WINDOW_MINUTES = 60;
 
 const MINUTE_MS = 60_000;
 
+/**
+ * Takes one counted decision back: it made no request. It takes from the
+ * minute its own decision was counted in, and only once: a second call, and
+ * a call after that minute left the window, change nothing.
+ */
+export type Refund = () => void;
+
 /** How many decisions a paid maker may be asked for, for everything that shares it. */
 export interface DecisionBudget {
-  /** Counts one decision. False when the window holds the limit already. */
-  take(): boolean;
-  /** Takes the newest count back: that decision made no request. */
-  giveBack(): void;
+  /** Counts one decision and returns its refund, or `undefined` when the window holds the limit already. */
+  take(): Refund | undefined;
   /** The decisions counted in the window now. */
   used(): number;
   /** How many minutes are remembered, for the test of the memory bound. */
@@ -30,6 +35,12 @@ export type DecisionBudgetOptions = {
  * A budget of decisions per sliding hour. It counts per clock minute, so it
  * remembers at most 61 numbers. A decision is counted until its minute is 61
  * minutes old: for 60 to 61 minutes, so no 60 minutes hold more than the limit.
+ *
+ * The budget's time never goes backwards. Each operation reads the clock
+ * once and keeps the latest time it has seen: a reading before that one,
+ * from a wall clock that was set back, counts as no time passed. So a count
+ * is never filed under a minute that has left the window already, and the
+ * minutes remembered stay within one window.
  */
 export function createDecisionBudget(options: DecisionBudgetOptions): DecisionBudget {
   const { limit } = options;
@@ -37,14 +48,21 @@ export function createDecisionBudget(options: DecisionBudgetOptions): DecisionBu
   const log = options.log ?? console.log;
   /** Decisions per clock minute, for the minutes still in the window. */
   const counts = new Map<number, number>();
-  /** The minute of the newest count. */
-  let newest = 0;
+  /** The latest time the clock has shown. */
+  let latest = Number.NEGATIVE_INFINITY;
   /** True from the first refusal until the next decision that is let through. */
   let exhausted = false;
   const state = `limit=${String(limit)} window=${String(BUDGET_WINDOW_MINUTES)}m`;
 
-  function used(): number {
-    const oldest = Math.floor(now() / MINUTE_MS) - BUDGET_WINDOW_MINUTES;
+  /** Reads the clock once: the current minute, never earlier than the one before. */
+  function currentMinute(): number {
+    latest = Math.max(latest, now());
+    return Math.floor(latest / MINUTE_MS);
+  }
+
+  /** The decisions counted in the window that ends with `current`; forgets older minutes. */
+  function usedAt(current: number): number {
+    const oldest = current - BUDGET_WINDOW_MINUTES;
     let total = 0;
     for (const [minute, count] of [...counts]) {
       if (minute < oldest) counts.delete(minute);
@@ -56,24 +74,31 @@ export function createDecisionBudget(options: DecisionBudgetOptions): DecisionBu
   return {
     take() {
       // A limit of 0 is a setting, not an exhaustion: the startup line says it.
-      if (limit === 0) return false;
-      if (used() >= limit) {
+      if (limit === 0) return undefined;
+      const minute = currentMinute();
+      if (usedAt(minute) >= limit) {
         if (!exhausted) log(`jev budget exhausted ${state}`);
         exhausted = true;
-        return false;
+        return undefined;
       }
       if (exhausted) log(`jev budget resumed ${state}`);
       exhausted = false;
-      newest = Math.floor(now() / MINUTE_MS);
-      counts.set(newest, (counts.get(newest) ?? 0) + 1);
-      return true;
+      counts.set(minute, (counts.get(minute) ?? 0) + 1);
+      let refunded = false;
+      return () => {
+        if (refunded) return;
+        refunded = true;
+        // Forgets the minutes that left the window, this one perhaps among
+        // them. Time never goes back, so a forgotten minute is never counted
+        // in again: what is still here under `minute` holds this decision.
+        usedAt(currentMinute());
+        const count = counts.get(minute);
+        if (count === undefined) return;
+        if (count > 1) counts.set(minute, count - 1);
+        else counts.delete(minute);
+      };
     },
-    giveBack() {
-      const count = counts.get(newest) ?? 0;
-      if (count > 1) counts.set(newest, count - 1);
-      else counts.delete(newest);
-    },
-    used,
+    used: () => usedAt(currentMinute()),
     buckets: () => counts.size,
   };
 }
@@ -87,11 +112,12 @@ export function createDecisionBudget(options: DecisionBudgetOptions): DecisionBu
 export function withDecisionBudget(primary: DecisionMaker, budget: DecisionBudget): DecisionMaker {
   return {
     async decide(request, signal) {
-      if (!budget.take()) throw new Declined("off");
+      const refund = budget.take();
+      if (!refund) throw new Declined("off");
       try {
         return await primary.decide(request, signal);
       } catch (error) {
-        if (error instanceof Declined) budget.giveBack();
+        if (error instanceof Declined) refund();
         throw error;
       }
     },

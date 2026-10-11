@@ -17,9 +17,11 @@ export async function main(): Promise<RunningServer> {
   const botDelayMs = Number(process.env.LUNAR_BOT_DELAY_MS ?? 700);
   const takeoverDelayMs = Number(process.env.LUNAR_TAKEOVER_DELAY_MS ?? 60_000);
   const apiKey = process.env.TYPESAFE_API_KEY?.trim();
-  const jev = apiKey
-    ? jevMaker({ apiKey, fetch: globalThis.fetch, model: process.env.LUNAR_JEV_MODEL })
-    : undefined;
+  // With a budget of 0 no maker is built: the lobby then offers no Jev.
+  const jev =
+    apiKey && jevDecisionsPerHour > 0
+      ? jevMaker({ apiKey, fetch: globalThis.fetch, model: process.env.LUNAR_JEV_MODEL })
+      : undefined;
   const basePath = normalizeBasePath(process.env.LUNAR_BASE_PATH ?? "/");
   const running = await startServer({
     port,
@@ -35,7 +37,7 @@ export async function main(): Promise<RunningServer> {
   });
   const path = basePath === "/" ? "" : `${basePath}/`;
   console.log(`Lunar Base is running at http://localhost:${String(running.port)}${path}`);
-  console.log(describeJev(jev !== undefined, jevDecisionsPerHour));
+  console.log(describeJev(Boolean(apiKey), jevDecisionsPerHour));
   console.log(
     `Game logs go to ${logs.directory} and are kept for ${String(logs.days)} ${logs.days === 1 ? "day" : "days"}; build ${logs.build}`,
   );

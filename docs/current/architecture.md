@@ -1349,9 +1349,10 @@ and wraps the shared Jev maker in it; `src/bots` knows nothing of the server.
 | Setting | `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`, default 2000. `ServerOptions.jevDecisionsPerHour` for a server started in a test |
 | Scope | One `createDecisionBudget` per server, shared by every Jev seat of every game. A game with the built-in brain, and a seat a bot took over, never touch it |
 | One decision | A decision that `withDecisionBudget` passes to the Jev maker counts once, whatever its retries and whether Jev answers, fails or runs out of time. A decision the Jev maker declines (`Declined`: too many options, breaker open, off after a 401) made no request and is taken back. A decision the engine forces reaches no maker and is not counted |
-| Window | The last 60 minutes, counted per clock minute: at most 61 numbers are remembered. A decision stays counted for 60 to 61 minutes, so no 60 minutes hold more than the limit. The clock is `ServerOptions.now` |
+| Refund | `take()` returns the refund of that one decision. It takes from the minute the decision was counted in, never from another decision's minute, and once only: a second call, and a call after the minute left the window, change nothing |
+| Window | The last 60 minutes, counted per clock minute: at most 61 numbers are remembered. A decision stays counted for 60 to 61 minutes, so no 60 minutes hold more than the limit. The clock is `ServerOptions.now`, in production `Date.now`, a wall clock. The budget keeps the latest time it has read: an earlier reading, from a clock that was set back, counts as no time passed, so no decision is freed early and no more than 61 minutes are remembered. A clock set forward frees decisions early by that much |
 | Over the budget | The wrapper rejects with `Declined("off")` before the Jev maker is asked. `withFallback` asks the built-in maker and labels the decision `builtin`. Jev is not contacted, the breaker hears nothing, and no failure is logged. When the window has room again, later decisions of the same game go to Jev |
-| Budget 0 | Every decision is refused: no Jev request is ever made. With a credential the lobby still accepts `botBrain: "jev"`; those seats play built-in |
+| Budget 0 | No Jev request is ever made. `main.ts` builds no Jev maker, also with a credential: `welcome.jev` is off and the lobby refuses `botBrain: "jev"`, as without a credential. A server started with a maker and `jevDecisionsPerHour: 0` refuses every decision |
 | Log | `jev budget exhausted limit=<n> window=60m` at the first refused decision, and `jev budget resumed limit=<n> window=60m` at the next decision that is let through. One pair per exhaustion, never a line per refused decision. Nothing with a budget of 0 |
 | Players | Nothing changes in the protocol or the client. A seat over the budget plays as a seat does whose Jev request failed: the built-in maker's choice is applied, and no message says which maker chose |
 
@@ -1547,7 +1548,9 @@ message. The room logs which maker decided.
 
 `npm run jev:probe` plays one seeded two-seat game with Jev as both seats'
 primary maker and the usual built-in fallback. It is a manual command, outside
-the gate, `npm run check` and every test. Without `TYPESAFE_API_KEY`, it prints one
+the gate, `npm run check` and every test. It asks Jev directly, outside the
+server's [Jev budget](#jev-budget): it ignores
+`LUNAR_JEV_MAX_DECISIONS_PER_HOUR`, also when that is 0. Without `TYPESAFE_API_KEY`, it prints one
 missing-credential line and exits without constructing the adapter or making a
 request. With a credential, it prints each decision's kind, elapsed time for
 `decideBy` (including fallback), maker label and the sanitized response model
