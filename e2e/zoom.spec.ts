@@ -5,8 +5,8 @@ import { build } from "vite";
 import { expect, test } from "./fixtures.ts";
 
 // No screen shows a card yet (T051), so the spec builds a one-card page from
-// the real components into the ignored .cache and serves it under /__harness/
-// beside the real server, which still answers /cards/ and the fonts.
+// the real components into the ignored .cache and serves it under /__harness/.
+// The build copies `assets/`, so the card images sit beside the page.
 const root = join(import.meta.dirname, "..");
 const harness = join(root, ".cache", "zoom-harness");
 const out = join(harness, "out");
@@ -16,6 +16,7 @@ const TYPES: Record<string, string> = {
   ".js": "text/javascript",
   ".css": "text/css",
   ".woff2": "font/woff2",
+  ".webp": "image/webp",
 };
 
 const PAGE = `<!doctype html>
@@ -71,6 +72,7 @@ test.beforeAll(async () => {
     root: harness,
     base: BASE,
     logLevel: "silent",
+    publicDir: join(root, "assets"),
     plugins: [react()],
     build: { outDir: out, emptyOutDir: true },
   });
@@ -107,7 +109,7 @@ test("the zoom of a centred card stays open while the pointer rests and moves wi
 
   const card = page
     .getByRole("button")
-    .filter({ has: page.locator('img[src="/cards/w240/mod-depot.webp"]') });
+    .filter({ has: page.locator('img[src$="/cards/w240/mod-depot.webp"]') });
   await expect(card).toBeVisible();
   const box = await card.boundingBox();
   if (box === null) throw new Error("the card has no box");

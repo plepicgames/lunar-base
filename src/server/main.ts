@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { jevMaker } from "../bots/jev/adapter.ts";
+import { normalizeBasePath } from "./base-path.ts";
 import { startServer } from "./http.ts";
 
 export async function main(): Promise<void> {
@@ -10,15 +11,18 @@ export async function main(): Promise<void> {
   const jev = apiKey
     ? jevMaker({ apiKey, fetch: globalThis.fetch, model: process.env.LUNAR_JEV_MODEL })
     : undefined;
+  const basePath = normalizeBasePath(process.env.LUNAR_BASE_PATH ?? "/");
   const running = await startServer({
     port,
     host: process.env.HOST ?? "127.0.0.1",
+    basePath,
     ...(process.env.LUNAR_SEED === undefined ? {} : { seed: process.env.LUNAR_SEED }),
     botDelayMs,
     takeoverDelayMs,
     jev,
   });
-  console.log(`Lunar Base is running at http://localhost:${String(running.port)}`);
+  const path = basePath === "/" ? "" : `${basePath}/`;
+  console.log(`Lunar Base is running at http://localhost:${String(running.port)}${path}`);
   console.log(`Jev is ${jev ? "on" : "off"}`);
 }
 

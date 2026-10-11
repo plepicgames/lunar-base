@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { assetUrl } from "../base.ts";
 import { useModalFocus } from "../cards/modal-focus.ts";
 import styles from "./Help.module.css";
 
@@ -51,7 +52,10 @@ function HelpDialog({ onClose }: { readonly onClose: () => void }) {
         </header>
         <div className={styles.content}>
           <section className={styles.pages} aria-label="Rulebook pages">
-            <img src={`/help/page-${String(page)}.webp`} alt={`Rulebook page ${String(page)}`} />
+            <img
+              src={assetUrl(`help/page-${String(page)}.webp`)}
+              alt={`Rulebook page ${String(page)}`}
+            />
             <nav className={styles.navigation} aria-label="Help pages">
               <button
                 type="button"

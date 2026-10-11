@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createGame, viewFor, type Seat } from "../engine/index.ts";
 import type { GameView, ServerMessage } from "../protocol/messages.ts";
+import { assetUrl, socketUrl, tokenKey } from "./base.ts";
 import { createConnection, TOKEN_KEY } from "./connection.ts";
 import { FakeWebSocket } from "./testing/fake-socket.ts";
 
@@ -216,5 +217,39 @@ describe("connection", () => {
     expect(FakeWebSocket.instances).toHaveLength(2);
     first.receive(welcome);
     expect(connection.getState().session).toBeNull();
+  });
+});
+
+describe("base", () => {
+  test.each([
+    ["http://localhost:4780/", "ws://localhost:4780/ws"],
+    ["http://localhost:4780/?plain=1#top", "ws://localhost:4780/ws"],
+    ["http://localhost:4780/index.html", "ws://localhost:4780/ws"],
+    ["https://example.com/", "wss://example.com/ws"],
+    ["http://example.com/play/lunar-base/", "ws://example.com/play/lunar-base/ws"],
+    ["https://example.com/play/lunar-base/", "wss://example.com/play/lunar-base/ws"],
+    ["https://example.com/play/lunar-base/?plain=1", "wss://example.com/play/lunar-base/ws"],
+    ["https://example.com/play/lunar-base/index.html", "wss://example.com/play/lunar-base/ws"],
+  ])("a page at %s opens its socket at %s", (page, socket) => {
+    expect(socketUrl(page)).toBe(socket);
+  });
+
+  test.each([
+    ["http://localhost:4780/", "/cards/w240/mod-depot.webp"],
+    ["https://example.com/?plain=1", "/cards/w240/mod-depot.webp"],
+    ["http://example.com/play/lunar-base/", "/play/lunar-base/cards/w240/mod-depot.webp"],
+    ["https://example.com/play/lunar-base/", "/play/lunar-base/cards/w240/mod-depot.webp"],
+    [
+      "https://example.com/play/lunar-base/index.html",
+      "/play/lunar-base/cards/w240/mod-depot.webp",
+    ],
+  ])("a page at %s loads a card image from %s", (page, image) => {
+    expect(assetUrl("cards/w240/mod-depot.webp", page)).toBe(image);
+  });
+
+  test("the token key is the plain one at the root and names the base elsewhere", () => {
+    expect(tokenKey("http://localhost:4780/")).toBe(TOKEN_KEY);
+    expect(tokenKey("https://example.com/?plain=1")).toBe(TOKEN_KEY);
+    expect(tokenKey("https://example.com/play/lunar-base/")).toBe(`${TOKEN_KEY}:/play/lunar-base/`);
   });
 });

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { assetUrl } from "./base.ts";
 import { ReportLink, type ReportContext } from "./ReportLink.tsx";
 
 interface ShellProps {
@@ -23,7 +24,11 @@ export function Shell({
     <div className={`shell ${isTable ? "table" : "hero"}`}>
       {!isTable && (
         <header className={`header ${screen === "name" ? "" : "headerCompact"}`}>
-          <img className="logo" src="/brand/lunar-base-logo-color.png" alt="Lunar Base" />
+          <img
+            className="logo"
+            src={assetUrl("brand/lunar-base-logo-color.png")}
+            alt="Lunar Base"
+          />
         </header>
       )}
       <main className="main">
@@ -42,7 +47,7 @@ export function Shell({
         </p>
       )}
       <footer className="footer">
-        <img src="/brand/plepic-games-wordmark.svg" alt="Plepic Games" width="160" />
+        <img src={assetUrl("brand/plepic-games-wordmark.svg")} alt="Plepic Games" width="160" />
         <ReportLink {...report} />
       </footer>
     </div>

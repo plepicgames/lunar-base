@@ -6,16 +6,21 @@ import type { DecisionMaker } from "../bots/maker.ts";
 import { builtinMaker } from "../bots/builtin/index.ts";
 import { withFallback } from "../bots/fallback.ts";
 import { startGame } from "../engine/index.ts";
+import { basePrefix, normalizeBasePath } from "./base-path.ts";
 import { createLobby } from "./lobby.ts";
 import { createGameLog } from "./gamelog.ts";
 import { createRoom, type Room } from "./room.ts";
 import { createSessions, type Session } from "./sessions.ts";
-import { serveStatic } from "./static.ts";
+import { staticHandler } from "./static.ts";
 import { wsConnection } from "./transport.ts";
 
 export interface ServerOptions {
   readonly port?: number;
   readonly host?: string;
+  /** The URL path the game is served under. Default `/`. */
+  readonly basePath?: string;
+  /** The client build to serve. Default `dist/client` of the repository. */
+  readonly clientDir?: string;
   readonly seed?: string;
   readonly botDelayMs?: number;
   readonly takeoverDelayMs?: number;
@@ -31,6 +36,8 @@ export interface RunningServer {
 
 /** Start the one-process HTTP and WebSocket game server. */
 export async function startServer(options: ServerOptions = {}): Promise<RunningServer> {
+  const basePath = normalizeBasePath(options.basePath ?? "/");
+  const socketPath = `${basePrefix(basePath)}/ws`;
   const rooms = new Map<string, Room>();
   const roomFor = (session: Session) => [...rooms.values()].find((room) => room.has(session));
   const lobby = createLobby({
@@ -94,7 +101,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       (roomFor(session) ?? lobby).onMessage(session, message);
     },
   });
-  const server = createServer(serveStatic);
+  const server = createServer(staticHandler(basePath, options.clientDir));
   const sockets = new WebSocketServer({ noServer: true });
   sockets.on("connection", (socket) => {
     sessions.accept(wsConnection(socket));
@@ -108,7 +115,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     } catch {
       // Missing or malformed Origin is refused like a foreign host.
     }
-    if (request.url?.split("?", 1)[0] !== "/ws" || !validOrigin) {
+    if (request.url?.split("?", 1)[0] !== socketPath || !validOrigin) {
       socket.once("error", () => socket.destroy());
       socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
       return;

@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures.ts";
 
 async function enter(page: Page, name: string): Promise<void> {
-  await page.goto("/?plain=1");
+  await page.goto("./?plain=1");
   await page.getByRole("textbox", { name: "Name" }).fill(name);
   await page.getByRole("button", { name: "Enter the lobby" }).click();
   await expect(page.getByRole("heading", { name: "Create a game" })).toBeVisible();
@@ -48,7 +48,7 @@ test("a second tab in the same browser context enters as its own player", async 
   await expect(page.getByRole("region", { name: "Table" })).toBeVisible();
 
   const second = await page.context().newPage();
-  await second.goto("/");
+  await second.goto("./");
   await expect(second.getByRole("textbox", { name: "Name" })).toBeVisible();
   await second.getByRole("textbox", { name: "Name" }).fill("Tab Bo");
   await second.getByRole("button", { name: "Enter the lobby" }).click();

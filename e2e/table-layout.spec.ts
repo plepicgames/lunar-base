@@ -66,7 +66,7 @@ async function showTable(
       );
     });
   });
-  await page.goto(`/${query}`);
+  await page.goto(`./${query}`);
   await page.getByRole("textbox", { name: "Name" }).fill("Ann");
   await page.getByRole("button", { name: "Enter the lobby" }).click();
   const ready =
