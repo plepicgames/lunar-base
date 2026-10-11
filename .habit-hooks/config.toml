@@ -1,0 +1,63 @@
+# Generated from hannosirkel/architecture. Do not edit by hand.
+# Regenerate with: tooling/universe sync-baseline lunar-base
+
+plugins = ["typescript", "generic"]
+files = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.mjs",
+  "**/*.cjs",
+  "!**/node_modules/**",
+  "!**/.next/**",
+  "!**/dist/**",
+  "!**/build/**",
+  "**/*.sh",
+  "**/*.bats",
+  "**/*.md",
+  "**/*.yaml",
+  "**/*.yml",
+]
+
+[sensors.comment]
+files = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.mjs",
+  "**/*.cjs",
+  "!**/node_modules/**",
+  "!**/.next/**",
+  "!**/dist/**",
+  "!**/build/**",
+]
+
+[sensors.eslint]
+files = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.mjs",
+  "**/*.cjs",
+  "!**/node_modules/**",
+  "!**/.next/**",
+  "!**/dist/**",
+  "!**/build/**",
+]
+
+[sensors.knip]
+files = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.mjs",
+  "**/*.cjs",
+  "!**/node_modules/**",
+  "!**/.next/**",
+  "!**/dist/**",
+  "!**/build/**",
+]
+
+# The plugin default is 200; the universe standard is this.
+[sensors.line-count]
+args = ["--max", "400"]
