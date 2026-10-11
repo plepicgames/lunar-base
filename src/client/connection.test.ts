@@ -50,6 +50,47 @@ function opened() {
 }
 
 describe("connection", () => {
+  test("reset before the old socket closes opens one new socket and ignores the old one", () => {
+    vi.useFakeTimers();
+    try {
+      const connection = opened();
+      const old = FakeWebSocket.current;
+      connection.send({ type: "hello", protocol: 1, name: "Ann" });
+      old.receive(welcome);
+      old.receive(update(1));
+      old.receive({ type: "server.restart" });
+      expect(connection.getState().interruption).toBe("restarted");
+
+      connection.reset();
+      expect(FakeWebSocket.instances).toHaveLength(2);
+      expect(old.closeCode).toBe(1000);
+      const fresh = FakeWebSocket.current;
+      const clean = { status: "connecting", session: null, game: null, interruption: "none" };
+      expect(connection.getState()).toMatchObject(clean);
+      expect(window.sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+
+      // What the old socket still says changes nothing and starts no retry.
+      old.receive(welcome);
+      old.receive(update(2));
+      old.drop(1012);
+      vi.advanceTimersByTime(60_000);
+      expect(FakeWebSocket.instances).toHaveLength(2);
+      expect(connection.getState()).toMatchObject(clean);
+      expect(window.sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+
+      fresh.open();
+      expect(fresh.sent).toEqual([]);
+      expect(connection.getState()).toMatchObject({
+        status: "open",
+        session: null,
+        lostGame: false,
+      });
+      expect(connection.send({ type: "hello", protocol: 1, name: "Ann" })).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("connects to /ws on the page's host and starts with no session", () => {
     const connection = createConnection();
     connection.open();

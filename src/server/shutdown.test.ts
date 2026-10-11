@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createConnection, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -21,7 +21,10 @@ afterEach(async () => {
   rmSync(directory, { recursive: true, force: true });
 });
 
-async function start(basePath = "/"): Promise<RunningServer> {
+async function start(
+  basePath = "/",
+  log: (line: string) => void = (line) => lines.push(line),
+): Promise<RunningServer> {
   running = await startServer({
     port: 0,
     host: "127.0.0.1",
@@ -29,7 +32,7 @@ async function start(basePath = "/"): Promise<RunningServer> {
     // No client build: the health path must not need one.
     clientDir: join(directory, "no-client-build"),
     botDelayMs: 600_000,
-    log: (line) => lines.push(line),
+    log,
     logs: { directory: join(directory, "games") },
   });
   return running;
@@ -223,6 +226,107 @@ test("a connection that never sent a request does not hold the shutdown", async 
   });
   await ended;
   expect(lines.at(-2)).toBe("shutdown begin signal=none connections=0 games=0");
+});
+
+const CREATE = JSON.stringify({
+  type: "lobby.create",
+  seats: 2,
+  bots: 1,
+  influences: false,
+  kickstarter: false,
+});
+
+test("a message sent after shutdown began starts no game: no room, no log file", async () => {
+  const server = await start();
+  const players = [await connect(server.port), await connect(server.port)];
+  for (const [index, player] of players.entries()) {
+    player.socket.send(
+      JSON.stringify({ type: "hello", protocol: 1, name: `Player ${String(index)}` }),
+    );
+  }
+  await vi.waitFor(() => {
+    for (const player of players) {
+      expect(player.messages.some((message) => message.type === "lobby.state")).toBe(true);
+    }
+  });
+  // The second player answers the restart message itself, so its frame
+  // reaches the server inside the close handshake.
+  players[1].socket.on("message", (data: Buffer) => {
+    if (data.toString().includes("server.restart")) players[1].socket.send(CREATE);
+  });
+
+  const stopping = server.shutdown({ signal: "SIGTERM" });
+  // The first one's frame arrives between the call and the close.
+  players[0].socket.send(CREATE);
+  expect(await stopping).toEqual({ deadlineHit: false });
+
+  for (const player of players) {
+    expect((await player.closed).code).toBe(1012);
+    expect(player.messages.at(-1)).toEqual({ type: "server.restart" });
+    expect(player.messages.some((message) => message.type === "game.update")).toBe(false);
+  }
+  const games = join(directory, "games");
+  expect(existsSync(games) ? readdirSync(games) : []).toEqual([]);
+  expect(lines.filter((line) => line.startsWith("game="))).toEqual([]);
+});
+
+test("pipelined requests under way when the listener closes all get their whole response", async () => {
+  const clientDir = join(directory, "client");
+  mkdirSync(clientDir);
+  const size = 8 * 1024 * 1024;
+  writeFileSync(join(clientDir, "big.bin"), Buffer.alloc(size, 0x61));
+  running = await startServer({
+    port: 0,
+    host: "127.0.0.1",
+    clientDir,
+    log: (line) => lines.push(line),
+    logs: { directory: join(directory, "games") },
+  });
+  const server = running;
+  const socket = createConnection(server.port, "127.0.0.1");
+  await new Promise((resolve) => socket.once("connect", resolve));
+  let received = 0;
+  let head = "";
+  const ended = new Promise<void>((resolve) => socket.once("close", resolve));
+  const first = new Promise<void>((resolve) => {
+    socket.on("data", (data) => {
+      if (head.length < 4096) head += data.toString("latin1");
+      received += data.length;
+      resolve();
+    });
+  });
+  const get = `GET /big.bin HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n`;
+  socket.write(get + get);
+  // Both requests are parsed; the client stops reading, so neither response can finish.
+  await first;
+  socket.pause();
+
+  const stopping = server.shutdown({ schedule: () => () => undefined });
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  socket.resume();
+  expect(await stopping).toEqual({ deadlineHit: false });
+  await ended;
+
+  const headers = /^HTTP\/1\.1 200 OK\r\n[^]*?\r\n\r\n/.exec(head)?.[0] ?? "";
+  expect(headers).toContain(`Content-Length: ${String(size)}`);
+  // Two whole responses: the same headers twice, apart from a Date a second later.
+  expect(received).toBeGreaterThanOrEqual(2 * size + 2 * headers.length - 2);
+  expect(received).toBeLessThanOrEqual(2 * size + 2 * headers.length + 2);
+});
+
+test("a logger or a scheduler that throws does not stop the shutdown", async () => {
+  const server = await start("/", () => {
+    throw new Error("logger");
+  });
+  const client = await connect(server.port);
+  expect(
+    await server.shutdown({
+      schedule() {
+        throw new Error("scheduler");
+      },
+    }),
+  ).toEqual({ deadlineHit: false });
+  expect((await client.closed).code).toBe(1012);
 });
 
 function signals() {

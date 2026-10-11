@@ -123,7 +123,11 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const socketPath = `${basePrefix(basePath)}/ws`;
   const healthPath = `${basePrefix(basePath)}/healthz`;
   const log = options.log ?? console.log;
-  /** Set when shutdown begins: health answers 503 and upgrades are refused. */
+  /**
+   * True from the first instant of a shutdown: health answers 503, upgrades
+   * are refused and every message a client still sends is dropped.
+   */
+  let draining = false;
   let stopping: Promise<ShutdownResult> | undefined;
   const logDirectory = options.logs?.directory ?? DEFAULT_LOG_DIRECTORY;
   refuseLinkedLogDirectory(logDirectory);
@@ -207,17 +211,28 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   });
   const serveStatic = staticHandler(basePath, options.clientDir);
   let listenerClosed: Promise<void> | undefined;
-  /** The connections with a response under way. A shutdown lets these finish. */
-  const answering = new Set<Socket>();
+  /**
+   * The responses not yet finished, per connection: pipelined requests put
+   * several on one. A shutdown lets them all finish before it closes the
+   * connection. It sets no `Connection: close`: Node treats a response with
+   * that header as the last of its connection and drops the ones queued behind it.
+   */
+  const answering = new Map<Socket, number>();
   const server = createServer((request, response) => {
     const { socket } = request;
-    answering.add(socket);
+    answering.set(socket, (answering.get(socket) ?? 0) + 1);
     response.once("close", () => {
+      const left = (answering.get(socket) ?? 1) - 1;
+      if (left > 0) {
+        answering.set(socket, left);
+        return;
+      }
       answering.delete(socket);
-      if (listenerClosed !== undefined) socket.destroy();
+      // Flushes what is written, then closes.
+      if (listenerClosed !== undefined) socket.destroySoon();
     });
     if (request.url?.split("?", 1)[0] === healthPath) {
-      answerHealth(request, response, stopping !== undefined);
+      answerHealth(request, response, draining);
       return;
     }
     serveStatic(request, response);
@@ -231,7 +246,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const sockets = new WebSocketServer({ noServer: true });
   server.on("upgrade", (request, socket, head) => {
     // In this order: shutting down, then the path and the origin, then the cap.
-    if (stopping !== undefined) {
+    if (draining) {
       refuseUpgrade(socket, "503 Service Unavailable");
       return;
     }
@@ -259,7 +274,17 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       visitors.disconnect(address);
     });
     sockets.handleUpgrade(request, socket, head, (webSocket) => {
-      const connection = wsConnection(webSocket);
+      const socketConnection = wsConnection(webSocket);
+      const connection: Connection = {
+        ...socketConnection,
+        onMessage(handler) {
+          // A closing socket still delivers frames until its handshake ends.
+          // Once a shutdown has begun none of them reaches the lobby or a room.
+          socketConnection.onMessage((text) => {
+            if (!draining) handler(text);
+          });
+        },
+      };
       addresses.set(connection, address);
       sessions.accept(connection);
     });
@@ -291,9 +316,26 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       });
     }));
 
+  /** A logger that throws must not stop a shutdown. */
+  const say = (line: string): void => {
+    try {
+      log(line);
+    } catch {
+      // The shutdown goes on without the line.
+    }
+  };
+  const timeout = (run: () => void, ms: number): (() => void) => {
+    const timer = setTimeout(run, ms);
+    return () => {
+      clearTimeout(timer);
+    };
+  };
+
   async function shutdown(request: ShutdownOptions): Promise<ShutdownResult> {
+    // First of all: from here no client message starts or changes a game.
+    draining = true;
     const clients = [...sockets.clients];
-    log(
+    say(
       `shutdown begin signal=${request.signal ?? "none"} connections=${String(clients.length)} games=${String(rooms.size)}`,
     );
     sweep?.stop();
@@ -309,8 +351,12 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       ),
     );
     for (const socket of clients) {
-      if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(RESTART));
-      socket.close(RESTART_CLOSE_CODE, "Server restarting");
+      try {
+        if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(RESTART));
+        socket.close(RESTART_CLOSE_CODE, "Server restarting");
+      } catch {
+        socket.terminate();
+      }
     }
     // The games end here: no timer or bot answer outlives them, and each
     // log leaves the open set.
@@ -318,12 +364,13 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     rooms.clear();
     // The listener stays up until the sockets are gone, so a probe gets 503
     // and a new upgrade is refused. It closes with the last socket. A
-    // connection with no response under way is dropped then: Node keeps one
-    // that never sent a request open, and it would hold the exit.
+    // connection with no response under way is closed then: Node keeps one
+    // that never sent a request open, and it would hold the exit. One with
+    // responses under way closes after the last of them.
     const closed = drained
       .then(() => {
         const done = closeListener();
-        for (const socket of connections) if (!answering.has(socket)) socket.destroy();
+        for (const socket of connections) if (!answering.has(socket)) socket.destroySoon();
         return done;
       })
       .then(
@@ -332,29 +379,31 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       );
     let cancel = (): void => undefined;
     const deadline = new Promise<boolean>((resolve) => {
-      const schedule =
-        request.schedule ??
-        ((run, ms) => {
-          const timer = setTimeout(run, ms);
-          return () => {
-            clearTimeout(timer);
-          };
-        });
-      cancel = schedule(() => {
+      const hit = (): void => {
         resolve(true);
-      }, SHUTDOWN_DEADLINE_MS);
+      };
+      try {
+        cancel = (request.schedule ?? timeout)(hit, SHUTDOWN_DEADLINE_MS);
+      } catch {
+        // A scheduler that throws must not leave the shutdown without its deadline.
+        cancel = timeout(hit, SHUTDOWN_DEADLINE_MS);
+      }
     });
     const deadlineHit = await Promise.race([closed, deadline]);
-    cancel();
+    try {
+      cancel();
+    } catch {
+      // Nothing depends on the cancel.
+    }
     if (deadlineHit) {
-      log(
+      say(
         `shutdown deadline hit ms=${String(SHUTDOWN_DEADLINE_MS)} sockets=${String(sockets.clients.size)}`,
       );
       for (const socket of connections) socket.destroy();
       void closeListener().catch(() => undefined);
     }
     sockets.close();
-    log("shutdown end");
+    say("shutdown end");
     return { deadlineHit };
   }
 

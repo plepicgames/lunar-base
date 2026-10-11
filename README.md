@@ -72,10 +72,13 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 A value that is set and not valid stops the start with an error.
 
 `GET <base>/healthz` answers `200` and `ok` while the server runs, for example
-`/play/lunar-base/healthz`.
+`/play/lunar-base/healthz`, and `503` while it shuts down.
 
 On `SIGTERM` or `SIGINT` the server tells every player that it restarts, ends
-the games, and exits with code 0 within 10 seconds.
+the games, and exits with code 0 within 10 seconds. A second signal during
+that time exits at once with code 1. In a container start
+`node src/server/main.ts` or `bash scripts/start.sh`: under `npm start` the
+signal does not reach the server.
 
 ## Report a problem
 

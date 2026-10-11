@@ -84,9 +84,10 @@ types, and relative imports that end in `.ts`.
 | `npm run check` | The gate, then the Playwright browser tests |
 | `npm start` | Installs if needed, builds the client, serves the game on port 4780 |
 
-A running server answers `GET <base>/healthz` with `200`. `SIGTERM` or
-`SIGINT` stops it: each player is told that the server restarts, and the
-process exits with code 0 within 10 seconds; see
+A running server answers `GET <base>/healthz` with `200`, and with `503`
+while it shuts down. `SIGTERM` or `SIGINT` stops it: each player is told that
+the server restarts, and the process exits with code 0 within 10 seconds. A
+second signal during that time exits at once with code 1; see
 [`architecture.md`](./architecture.md#health-and-shutdown).
 
 The print files the images were made from are not in this repository. The

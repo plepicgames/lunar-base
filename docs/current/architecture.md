@@ -988,12 +988,12 @@ the reason the game ended: `victory` or `step_limit` from the engine,
 every update; a client ignores an older one. A `game.decide` with an old
 `decision` id gets `stale_decision`, so a double click cannot answer twice.
 
-`server.restart` did not change the protocol version, which stays 1. The
-version is checked in `hello` only, and that message is unchanged. A client
-built before `server.restart` drops the frame, as it drops every frame that
-does not parse. It then treats the close as a drop: it shows the Reconnecting
-banner and retries until the new server answers, which refuses the old token,
-and it returns to the Name screen with the game-lost sentence.
+`server.restart` did not change the protocol version, which stays 1, because
+a client built before it still ends in the right place. Such a client
+discards the unknown message, as it discards every frame that does not parse.
+It then treats the close as a drop: it shows the Reconnecting banner and
+retries until the new server answers, which refuses the old token, and it
+returns to the Name screen with the game-lost sentence.
 
 `src/protocol/messages.ts` fixes what the tables leave open:
 
@@ -1205,19 +1205,21 @@ on `SIGTERM` and on `SIGINT`:
 
 | Step | What happens |
 | --- | --- |
-| Begin | One log line: `shutdown begin signal=<name> connections=<open sockets> games=<started games>`. From here the health path answers 503 and a WebSocket upgrade is refused with 503 |
+| Begin | One log line: `shutdown begin signal=<name> connections=<open sockets> games=<started games>`. From here the health path answers 503, a WebSocket upgrade is refused with 503, and every message a client still sends is dropped before the sessions see it: a `lobby.create` or `lobby.join` that arrives during the close handshake starts no game |
 | Sockets | Every open socket, also one that has not said `hello`, gets `server.restart` and is closed with code 1012 and the reason `Server restarting` |
 | Games | The log sweep stops. Every room stops: its grace timers, its result timer and its bot work end, and its log leaves the open set. Game logs are written synchronously, so nothing is flushed |
-| Listener | When the last socket has closed the HTTP listener closes. It stays up until then, so that a probe can read the 503. A response under way finishes; every other connection is dropped, also one that never sent a request |
-| Deadline | 10 seconds after the begin (`SHUTDOWN_DEADLINE_MS`), every connection still open is destroyed and one line says so: `shutdown deadline hit ms=10000 sockets=<n>` |
-| End | One log line, `shutdown end`. The promise resolves with `{ deadlineHit }` and never rejects. A second call returns the same promise |
+| Listener | When the last socket has closed the HTTP listener closes. It stays up until then, so that a probe can read the 503. The server counts the unfinished responses of each connection, so pipelined requests all get their whole response; the connection closes after the last one. A connection with none is closed at once, also one that never sent a request. No response carries `Connection: close`: Node drops the responses queued behind one that does |
+| Deadline | 10 seconds after the begin (`SHUTDOWN_DEADLINE_MS`), every connection still open is destroyed and one line says so: `shutdown deadline hit ms=10000 sockets=<n>`. Nothing is destroyed by force before that |
+| End | One log line, `shutdown end`. The promise resolves with `{ deadlineHit }`. A log callback or an injected scheduler that throws does not stop it; the default timer then keeps the deadline. A second call returns the same promise |
 
 `main.ts` exits with code 0 when the promise resolves, also after the
 deadline. A second signal during the shutdown exits at once with code 1.
 `scripts/start.sh` ends with `exec node src/server/main.ts`, so a signal sent
-to that script's process reaches the server. `npm start` does not pass a
-signal on: `npm` exits and the server runs on, so a container starts the
-script or `node` itself. `close()` is for tests: it drops every socket without
+to that script's process reaches the server. Under `npm start` it does not:
+`npm` passes `SIGTERM` and `SIGINT` to its immediate child, and that child is
+the shell that runs the script line, which does not pass them on to Node. `npm`
+then exits and the server runs on. A container therefore starts Node directly
+(`node src/server/main.ts`) or `bash scripts/start.sh`, never `npm start`. `close()` is for tests: it drops every socket without
 a message.
 
 `main.ts` trims `TYPESAFE_API_KEY` and builds one `jevMaker` when it is
