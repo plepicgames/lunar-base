@@ -1184,7 +1184,7 @@ bad value, prints one line with the counts, and passes them to
 | Address | An IPv4 address counts as itself, also when it arrives as `::ffff:a.b.c.d`. An IPv6 address counts by its /64 prefix, so one network is one visitor |
 | Connection place | Taken at the upgrade and held by the TCP socket. Its close gives the place back, whatever ended it: a close from either side, an error, a failed handshake, or the ping timeout |
 | Resume | A resuming socket is a new socket: it needs a free place, and the socket it replaces keeps its place until it has closed. A visitor whose places are all held by dead sockets gets 429 until the ping timeout frees them, at most two ping intervals (30 s). The client keeps retrying, and the token then resumes the session |
-| New games | One list of times per address. A time is forgotten 60 minutes after it was recorded: when that address next asks, and for every address every minute on a timer that does not keep the process alive and that `close()` stops. A refused request records nothing |
+| New games | One list of times per address. A time is forgotten 60 minutes after it was recorded: when that address next asks, and for every address every minute on a timer that does not keep the process alive and that `close()` and `shutdown()` stop. A refused request records nothing |
 | Whose counters | Each `startServer` call has its own counters, clock (`now`, for tests) and salt. Two servers in one process share none |
 | Refused upgrade | Every refusal answers with the status, `Content-Length: 0` and `Connection: close`, then destroys the socket: when the answer is flushed, on an error, or after 2 s. A client that never closes its side holds nothing open |
 | No address | A socket with no recorded address cannot create a game: the request is refused and logged with `address=none` |
@@ -1205,11 +1205,11 @@ on `SIGTERM` and on `SIGINT`:
 
 | Step | What happens |
 | --- | --- |
-| Begin | One log line: `shutdown begin signal=<name> connections=<open sockets> games=<started games>`. From here the health path answers 503, a WebSocket upgrade is refused with 503, and every message a client still sends is dropped before the sessions see it: a `lobby.create` or `lobby.join` that arrives during the close handshake starts no game |
+| Begin | One log line: `shutdown begin signal=<name> connections=<open sockets> games=<started games>`. From here the health path answers 503, a WebSocket upgrade is refused with 503 before its path, origin and connection cap are looked at (it takes no connection place, and its socket is closed like every refused upgrade), and every message a client still sends is dropped before the sessions see it: a `lobby.create` or `lobby.join` that arrives during the close handshake starts no game |
 | Sockets | Every open socket, also one that has not said `hello`, gets `server.restart` and is closed with code 1012 and the reason `Server restarting` |
-| Games | The log sweep stops. Every room stops: its grace timers, its result timer and its bot work end, and its log leaves the open set. Game logs are written synchronously, so nothing is flushed |
+| Games | The log sweep and the limits timer stop. Every room stops: its grace timers, its result timer and its bot work end, and its log leaves the open set. Game logs are written synchronously, so nothing is flushed |
 | Listener | When the last socket has closed the HTTP listener closes. It stays up until then, so that a probe can read the 503. The server counts the unfinished responses of each connection, so pipelined requests all get their whole response; the connection closes after the last one. A connection with none is closed at once, also one that never sent a request. No response carries `Connection: close`: Node drops the responses queued behind one that does |
-| Deadline | 10 seconds after the begin (`SHUTDOWN_DEADLINE_MS`), every connection still open is destroyed and one line says so: `shutdown deadline hit ms=10000 sockets=<n>`. Nothing is destroyed by force before that |
+| Deadline | 10 seconds after the begin (`SHUTDOWN_DEADLINE_MS`), every connection still open is destroyed and one line says so: `shutdown deadline hit ms=10000 sockets=<n>`. Nothing is destroyed by force before that. A connection place is held by its TCP socket, so each one is given back however the socket ends: by the close handshake or by the deadline |
 | End | One log line, `shutdown end`. The promise resolves with `{ deadlineHit }`. A log callback or an injected scheduler that throws does not stop it; the default timer then keeps the deadline. A second call returns the same promise |
 
 `main.ts` exits with code 0 when the promise resolves, also after the
