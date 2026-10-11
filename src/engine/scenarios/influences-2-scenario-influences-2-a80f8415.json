@@ -1,0 +1,270 @@
+{
+  "config": {
+    "seats": 2,
+    "influences": true,
+    "kickstarter": false
+  },
+  "seed": "scenario-influences-2",
+  "choices": [
+    {
+      "seat": 1,
+      "decision": "d1",
+      "option": "c2:1"
+    },
+    {
+      "seat": 1,
+      "decision": "d2",
+      "option": "c7:1,0,0"
+    },
+    {
+      "seat": 1,
+      "decision": "d3",
+      "option": "c8"
+    },
+    {
+      "seat": 0,
+      "decision": "d5",
+      "option": "c11"
+    },
+    {
+      "seat": 0,
+      "decision": "d6",
+      "option": "c16"
+    },
+    {
+      "seat": 0,
+      "decision": "d7",
+      "option": "1"
+    },
+    {
+      "seat": 0,
+      "decision": "d8",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d9",
+      "option": "c12:0,-2,0"
+    },
+    {
+      "seat": 0,
+      "decision": "d10",
+      "option": "now"
+    },
+    {
+      "seat": 0,
+      "decision": "d11",
+      "option": "c17"
+    },
+    {
+      "seat": 0,
+      "decision": "d12",
+      "option": "1"
+    },
+    {
+      "seat": 1,
+      "decision": "d13",
+      "option": "c2:2"
+    },
+    {
+      "seat": 1,
+      "decision": "d14",
+      "option": "c13"
+    },
+    {
+      "seat": 1,
+      "decision": "d15",
+      "option": "c15"
+    },
+    {
+      "seat": 0,
+      "decision": "d16",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d17",
+      "option": "c18:1,-2,2"
+    },
+    {
+      "seat": 0,
+      "decision": "d18",
+      "option": "now"
+    },
+    {
+      "seat": 0,
+      "decision": "d21",
+      "option": "1"
+    },
+    {
+      "seat": 1,
+      "decision": "d23",
+      "option": "c2:0"
+    },
+    {
+      "seat": 1,
+      "decision": "d24",
+      "option": "c22"
+    },
+    {
+      "seat": 0,
+      "decision": "d25",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d26",
+      "option": "c17:2,0,1"
+    },
+    {
+      "seat": 0,
+      "decision": "d27",
+      "option": "now"
+    },
+    {
+      "seat": 0,
+      "decision": "d28",
+      "option": "c19"
+    },
+    {
+      "seat": 0,
+      "decision": "d29",
+      "option": "c23"
+    },
+    {
+      "seat": 0,
+      "decision": "d30",
+      "option": "1"
+    },
+    {
+      "seat": 1,
+      "decision": "d32",
+      "option": "c2:2"
+    },
+    {
+      "seat": 1,
+      "decision": "d33",
+      "option": "c24"
+    },
+    {
+      "seat": 1,
+      "decision": "d34",
+      "option": "c25"
+    },
+    {
+      "seat": 0,
+      "decision": "d35",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d36",
+      "option": "c23:1,1,3"
+    },
+    {
+      "seat": 0,
+      "decision": "d37",
+      "option": "now"
+    },
+    {
+      "seat": 0,
+      "decision": "d39",
+      "option": "1"
+    },
+    {
+      "seat": 1,
+      "decision": "d41",
+      "option": "c2:0"
+    },
+    {
+      "seat": 1,
+      "decision": "d42",
+      "option": "c31"
+    },
+    {
+      "seat": 0,
+      "decision": "d43",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d44",
+      "option": "c10:2,-3,0"
+    },
+    {
+      "seat": 0,
+      "decision": "d45",
+      "option": "c32"
+    },
+    {
+      "seat": 0,
+      "decision": "d46",
+      "option": "1"
+    },
+    {
+      "seat": 1,
+      "decision": "d48",
+      "option": "c2:0"
+    },
+    {
+      "seat": 1,
+      "decision": "d49",
+      "option": "c28"
+    },
+    {
+      "seat": 0,
+      "decision": "d50",
+      "option": "c1:2"
+    },
+    {
+      "seat": 0,
+      "decision": "d51",
+      "option": "c21:1,2,3"
+    },
+    {
+      "seat": 0,
+      "decision": "d52",
+      "option": "now"
+    },
+    {
+      "seat": 0,
+      "decision": "d53",
+      "option": "c29"
+    },
+    {
+      "seat": 0,
+      "decision": "d54",
+      "option": "1"
+    },
+    {
+      "seat": 1,
+      "decision": "d56",
+      "option": "c2:0"
+    },
+    {
+      "seat": 0,
+      "decision": "d58",
+      "option": "c29"
+    },
+    {
+      "seat": 0,
+      "decision": "d59",
+      "option": "c36"
+    },
+    {
+      "seat": 0,
+      "decision": "d60",
+      "option": "c34:-2,1,3"
+    }
+  ],
+  "expected": {
+    "result": {
+      "reason": "victory",
+      "winners": [0],
+      "scores": [1, 0]
+    },
+    "turns": 14,
+    "stateHash": "cbd701a573258d400a7cdeb80d61ea2dee4c799e11e969f5ed5212a6f8fb6b0b",
+    "conditions": ["achievements"]
+  }
+}

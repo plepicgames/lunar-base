@@ -1,0 +1,120 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr);
+  gap: var(--spacing-6);
+  align-items: start;
+  width: 100%;
+}
+
+.panel {
+  min-width: 0;
+  padding: var(--spacing-8);
+  border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--space-900) 90%, transparent);
+  box-shadow: 0 1rem 3rem color-mix(in srgb, var(--space-900) 50%, transparent);
+}
+
+.panel h2 {
+  margin: 0 0 var(--spacing-6);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.games {
+  display: grid;
+  gap: var(--spacing-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--paper) 18%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--space-800);
+}
+
+.gameInfo {
+  display: grid;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.gameInfo strong {
+  font-size: 1.125rem;
+}
+
+.gameInfo small,
+.empty {
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
+}
+
+.field {
+  display: grid;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 3rem;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--paper) 40%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--space-900);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: var(--spacing-3) 0;
+  color: color-mix(in srgb, var(--paper) 65%, transparent);
+}
+
+.option input {
+  accent-color: var(--action);
+}
+
+.button {
+  min-height: 3rem;
+  padding: var(--spacing-2) var(--spacing-6);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--space-900);
+  font-weight: 700;
+}
+
+.button:hover {
+  background: color-mix(in srgb, var(--action) 75%, var(--paper));
+}
+
+.panel form .button,
+form.panel .button {
+  width: 100%;
+  margin-top: var(--spacing-4);
+}
+
+.error {
+  margin: var(--spacing-4) 0 0;
+  color: var(--paper);
+}
+
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: var(--spacing-6);
+  }
+}

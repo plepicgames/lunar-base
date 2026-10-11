@@ -1,0 +1,169 @@
+@import "@fontsource-variable/outfit";
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--space-900);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--paper);
+  font-family: "Outfit Variable", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:not(:disabled):not([data-zoom-card]):not([data-card]):not([data-offer-preview]):is(
+    :hover,
+    :focus-visible
+  ) {
+  box-shadow: 0 0 0.75rem color-mix(in srgb, var(--action) 55%, transparent);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: saturate(0.35);
+}
+
+:focus-visible {
+  outline: 3px solid var(--action);
+  outline-offset: 3px;
+}
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background-color: var(--space-900);
+  background-position: center top;
+  background-size: cover;
+}
+
+.hero {
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--space-900) 12%, transparent),
+      var(--space-900)
+    ),
+    url("/brand/hero-nebula.webp");
+}
+
+.table {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--space-900) 78%, transparent),
+      color-mix(in srgb, var(--space-900) 78%, transparent)
+    ),
+    url("/brand/footer-nebula.webp");
+}
+
+/*
+ * The picture table fills the window and never grows past it; its regions
+ * scroll inside. The plain table and the result keep ordinary page scrolling.
+ */
+.shell.table:has([data-layout="picture"]) {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.shell.table:has([data-layout="picture"]) .main {
+  min-height: 0;
+}
+
+.shell.table:has([data-layout="picture"]) .footer {
+  min-height: 2.25rem;
+  padding: var(--spacing-1) var(--spacing-6);
+}
+
+.shell.table:has([data-layout="picture"]) .footer img {
+  width: 100px;
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+  padding: clamp(var(--spacing-8), 7vh, 5rem) var(--spacing-4) var(--spacing-8);
+}
+
+.headerCompact {
+  padding-top: var(--spacing-6);
+  padding-bottom: var(--spacing-6);
+}
+
+.headerCompact .logo {
+  width: min(100%, 360px);
+}
+
+.logo {
+  display: block;
+  width: min(100%, 500px);
+  height: auto;
+  object-fit: contain;
+}
+
+.main {
+  display: flex;
+  width: min(100%, 72rem);
+  flex: 1;
+  flex-direction: column;
+  align-self: center;
+  padding: var(--spacing-4);
+}
+
+.footer {
+  display: flex;
+  min-height: 5.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-6);
+}
+
+.footer img {
+  display: block;
+  width: 160px;
+  height: auto;
+}
+/* A dropped socket keeps the last screen in place while every control is disabled. */
+.screenLock {
+  display: contents;
+}
+
+.connectionBanner,
+.serverNotice {
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(90vw, 32rem);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  color: var(--paper);
+  text-align: center;
+}
+
+.connectionBanner {
+  top: var(--spacing-3);
+}
+.serverNotice {
+  bottom: var(--spacing-3);
+}

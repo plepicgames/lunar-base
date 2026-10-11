@@ -1,0 +1,105 @@
+.result {
+  width: 100%;
+  padding: var(--spacing-8);
+  border: 1px solid color-mix(in srgb, var(--paper) 20%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--space-900) 94%, transparent);
+}
+
+.eyebrow {
+  margin: 0 0 var(--spacing-2);
+  color: var(--action);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.result h2 {
+  margin: 0 0 var(--spacing-8);
+  font-size: clamp(1.75rem, 4vw, 3rem);
+}
+
+.players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-8);
+}
+
+.player {
+  min-width: 0;
+  padding: var(--spacing-6);
+  border: 1px solid color-mix(in srgb, var(--paper) 20%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--space-800);
+}
+
+.player h3 {
+  margin: 0 0 var(--spacing-4);
+  font-size: 1.5rem;
+}
+
+.conditions {
+  display: grid;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.condition {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-height: 2.5rem;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--space-900) 65%, transparent);
+  font-size: 0.95rem;
+}
+
+.condition img {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: contain;
+}
+
+.met {
+  border-left: 3px solid var(--action);
+}
+
+.unmet {
+  color: color-mix(in srgb, var(--paper) 65%, transparent);
+}
+
+.score {
+  margin: var(--spacing-4) 0 0;
+  font-weight: 700;
+}
+
+.revealed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.button {
+  min-height: 3rem;
+  padding: var(--spacing-2) var(--spacing-6);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--space-900);
+  font-weight: 700;
+}
+
+.button:hover {
+  background: color-mix(in srgb, var(--action) 75%, var(--paper));
+}
+
+@media (max-width: 600px) {
+  .result {
+    padding: var(--spacing-6);
+  }
+}

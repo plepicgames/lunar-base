@@ -1,0 +1,117 @@
+.anchor {
+  display: inline-block;
+}
+
+.trigger {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  line-height: 0;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* A card that answers the pending decision: the action colour, drawn outside
+   the card so it does not change the card's size. */
+.glow {
+  border-radius: calc(var(--card-radius-ratio) * 100%) / calc(var(--card-radius-ratio) * 50%);
+  box-shadow:
+    0 0 0 3px var(--action),
+    0 0 1rem 0.25rem var(--action);
+  cursor: pointer;
+}
+
+/* Colour is not the only sign: a tag in the card's corner says what the card
+   is. The button has its own accessible name, so the tag is not announced. */
+.glow {
+  position: relative;
+}
+.glow::after {
+  content: "Pick";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 0 0.375rem;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--space-900);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  pointer-events: none;
+}
+.glow[aria-pressed="true"]::after {
+  content: "✓ Picked";
+  background: var(--influence);
+}
+
+/* The picked card of a choice that goes on: the selection colour. */
+.glow[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 3px var(--influence),
+    0 0 1rem 0.25rem var(--influence);
+}
+
+.zoom {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: flex;
+  width: fit-content;
+  max-width: calc(100vw - var(--spacing-8));
+  height: fit-content;
+  max-height: calc(100vh - var(--spacing-8));
+  box-sizing: border-box;
+  align-items: flex-start;
+  margin: auto;
+  gap: var(--spacing-6);
+  padding: var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--space-900) 92%, transparent);
+  box-shadow: 0 1rem 3rem color-mix(in srgb, var(--space-900) 70%, transparent);
+  color: var(--paper);
+
+  /* The view must not take the pointer: it would cover a centred card and
+     end its hover. */
+  pointer-events: none;
+}
+
+/* A control in a modal zoom (the log's Close) takes the pointer itself. */
+.zoom button {
+  pointer-events: auto;
+}
+
+.image {
+  display: block;
+  flex: none;
+
+  /* The card is twice as tall as wide; size it by height so it fits. */
+  width: auto;
+  height: min(1182px, calc(100vh - var(--spacing-8) - var(--spacing-8) - 2px));
+  aspect-ratio: 1 / 2;
+
+  /* Percentages follow the displayed box, so the 0.06 token holds at any size. */
+  border-radius: calc(var(--card-radius-ratio) * 100%) / calc(var(--card-radius-ratio) * 50%);
+}
+
+.text {
+  min-width: 0;
+  flex: 1 1 12rem;
+  max-width: 16rem;
+  overflow-wrap: anywhere;
+}
+
+.name {
+  margin: 0 0 var(--spacing-3);
+  font-size: 1.5rem;
+}
+
+.rules {
+  margin: 0 0 var(--spacing-3);
+  font-size: 1.125rem;
+  line-height: 1.4;
+}

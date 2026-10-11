@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# The gate: every check that needs no browser and no network. Steps run in
+# order and the run stops at the first failure. Run `npm ci` first.
+#
+# `--browser` adds the browser tests; that is what `npm run check` runs.
+set -euo pipefail
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd -- "$root"
+
+run_name=validate
+browser=0
+case "${1:-}" in
+  '') ;;
+  --browser)
+    run_name=check
+    browser=1
+    ;;
+  *)
+    printf 'usage: scripts/validate [--browser]\n' >&2
+    exit 2
+    ;;
+esac
+
+run_start=$(date +%s%3N)
+run_complete=0
+
+elapsed() {
+  local start=$1 end
+  end=$(date +%s%3N)
+  printf '%d.%03d' "$(((end - start) / 1000))" "$(((end - start) % 1000))"
+}
+
+total() {
+  local status=$?
+  local result=failed
+  if [ "$run_complete" -eq 1 ] && [ "$status" -eq 0 ]; then
+    result=ok
+  elif [ "$status" -gt 128 ] || [ "$status" -eq 0 ]; then
+    result=interrupted
+  fi
+  printf '\n%s total: %s s (%s)\n' "$run_name" "$(elapsed "$run_start")" "$result"
+}
+trap total EXIT
+
+step() {
+  local name=$1 start status=0
+  shift
+  printf '\n==> %s\n' "$name"
+  start=$(date +%s%3N)
+  "$@" || status=$?
+  printf '%s: %s s\n' "$name" "$(elapsed "$start")"
+  return "$status"
+}
+
+# Every shell file this repository tracks: named `*.sh`, or executable with a
+# shell shebang. The set is derived, so a new script is linted without a list.
+shell_lint() {
+  local candidate shebang
+  local -a files=()
+  while IFS= read -r candidate; do
+    [ -f "$candidate" ] || continue
+    case "$candidate" in
+      *.sh)
+        files+=("$candidate")
+        continue
+        ;;
+    esac
+    [ -x "$candidate" ] || continue
+    IFS= read -r shebang <"$candidate" || shebang=''
+    case "$shebang" in
+      '#!'*[\ /]bash* | '#!'*[\ /]sh | '#!'*[\ /]sh\ *) files+=("$candidate") ;;
+    esac
+  done < <(git ls-files)
+  if [ "${#files[@]}" -eq 0 ]; then
+    printf 'shellcheck found no shell files to lint, which cannot be right\n' >&2
+    return 1
+  fi
+  shellcheck -- "${files[@]}"
+}
+
+step Format npx prettier --check . --cache --cache-location .cache/prettier
+step Shell shell_lint
+step Lint npx eslint .
+step Types bash -c 'npx tsc -p src/engine/tsconfig.json && npx tsc -p src/protocol/tsconfig.json && npx tsc -p src/bots/tsconfig.json && npx tsc -p src/server/tsconfig.json && npx tsc -p src/client/tsconfig.json && npx tsc -p tsconfig.tests.json'
+step Data bash -c 'scripts/validate-cards.sh && npm run --silent assets:verify'
+step Tests npx vitest run
+step Build npx vite build
+if [ "$browser" -eq 1 ]; then
+  step Browser bash -c 'bash scripts/start.sh --prepare && npx playwright test'
+fi
+run_complete=1

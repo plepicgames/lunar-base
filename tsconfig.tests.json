@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"],
+    "lib": ["es2024", "dom"],
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "test/**/*.ts",
+    "tools/**/*.ts",
+    "e2e/**/*.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": ["node_modules", ".worktrees"]
+}

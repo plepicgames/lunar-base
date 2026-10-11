@@ -1,0 +1,235 @@
+/* The table is as tall as the space it is given. Opponents, decision and hand
+   keep their size; the board and the log take what is left and scroll inside
+   it, so the public counters are on screen at every state of the log. */
+.table {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 16rem;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "opponents opponents"
+    "board log"
+    "decision decision"
+    "hand hand";
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+}
+
+.opponents {
+  display: grid;
+  grid-area: opponents;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--spacing-3);
+  margin: 0;
+  padding: 0;
+}
+
+.opponent {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+.opponent[data-targeted] {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.preview {
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  overflow: hidden;
+}
+.baseHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.baseHeading button {
+  border: 1px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  color: var(--paper);
+}
+
+.board {
+  display: flex;
+  min-height: 0;
+  grid-area: board;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  overflow-y: auto;
+}
+
+/* The Base comes before Supply in the document, so the keyboard reaches it
+   first; Supply is drawn above it. */
+.supply {
+  order: -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+}
+
+.supplyCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  max-width: 12rem;
+}
+
+.influenceEffect {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.piles {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  margin-left: auto;
+}
+.piles > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+.discardBackdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 75%);
+}
+.discardDialog {
+  max-width: min(90vw, 50rem);
+  max-height: 85vh;
+  padding: var(--spacing-4);
+  border: 1px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  overflow: auto;
+}
+.discardCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+}
+.influences ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1) var(--spacing-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+
+.heading {
+  margin: 0 0 var(--spacing-1);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.base {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 18rem;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--space-900) 60%, transparent);
+}
+
+.log {
+  grid-area: log;
+  min-height: 0;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--space-900) 80%, transparent);
+  overflow-y: auto;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.decision {
+  max-height: 20vh;
+  grid-area: decision;
+  overflow-y: auto;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--space-700) 70%, transparent);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin: var(--spacing-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 2px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--paper);
+}
+.option[aria-pressed="true"] {
+  border-style: double;
+  border-width: 5px;
+  background: var(--action);
+  color: var(--space-900);
+  font-weight: 700;
+}
+
+.mine {
+  display: flex;
+  min-width: 0;
+  grid-area: hand;
+  align-items: flex-end;
+  gap: var(--spacing-4);
+}
+
+/* A window of 800 px or less in height: the same regions with less air, so
+   Supply, Base, decision and hand all fit without overlapping. */
+@media (max-height: 800px) {
+  .table {
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+
+  .base {
+    flex: 1 1 6rem;
+    padding: var(--spacing-1) var(--spacing-3);
+  }
+
+  /* D2 groups its boxes by card: the lead and the groups share a row. */
+  .decision[data-kind="main_action"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-1) var(--spacing-3);
+  }
+
+  .decision[data-kind="main_action"] > p,
+  .decision[data-kind="main_action"] > ul {
+    margin: 0;
+  }
+}

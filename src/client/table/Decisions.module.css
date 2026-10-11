@@ -1,0 +1,87 @@
+.groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  margin: var(--spacing-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Boxes sit side by side under the card's image: the bar stays one or two
+   rows tall so the board above it keeps a usable viewport. */
+.boxes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boxes .option {
+  padding: var(--spacing-2);
+}
+
+.option {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 2px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--paper);
+  text-align: left;
+}
+
+/* A dialog over the table: the decision cannot be missed and is not a page. */
+.backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--space-900) 70%, transparent);
+}
+
+.dialog {
+  display: flex;
+  max-width: min(32rem, calc(100vw - var(--spacing-8)));
+  max-height: calc(100vh - var(--spacing-8));
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: 2px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-700);
+  overflow-y: auto;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.choices {
+  width: 100%;
+}
+
+.choices .option {
+  width: 100%;
+}

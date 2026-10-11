@@ -1,0 +1,57 @@
+.form {
+  display: flex;
+  width: min(100%, 28rem);
+  flex-direction: column;
+  gap: var(--spacing-6);
+  align-self: center;
+  padding: var(--spacing-8);
+  border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--space-900) 83%, transparent),
+      color-mix(in srgb, var(--space-900) 83%, transparent)
+    ),
+    url("/brand/contour-background.webp") center / cover;
+  box-shadow: 0 1rem 3rem color-mix(in srgb, var(--space-900) 50%, transparent);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.field {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--paper) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--space-900);
+}
+
+.button {
+  min-height: 3.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--space-900);
+  font-weight: 700;
+}
+
+.button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--action) 75%, var(--paper));
+}
+
+.button:disabled {
+  opacity: 0.55;
+}
+
+.error {
+  margin: 0;
+  color: var(--paper);
+}

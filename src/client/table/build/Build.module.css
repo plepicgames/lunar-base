@@ -1,0 +1,28 @@
+.status {
+  margin: 0;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin: var(--spacing-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.button,
+.confirm {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 2px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--paper);
+}
+
+/* Confirm is the one button that sends the Build. */
+.confirm {
+  background: var(--action);
+  color: var(--space-900);
+  font-weight: 600;
+}

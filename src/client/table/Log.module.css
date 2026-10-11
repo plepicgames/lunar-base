@@ -1,0 +1,53 @@
+.log {
+  grid-area: log;
+  min-height: 0;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--space-900) 80%, transparent);
+  overflow-y: auto;
+}
+.heading {
+  margin: 0 0 var(--spacing-1);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.list li {
+  margin-bottom: var(--spacing-2);
+}
+.turn {
+  border-top: 1px solid var(--action);
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-1);
+  font-weight: 600;
+}
+.cardLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--action);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+.dialog {
+  position: fixed;
+  z-index: 20;
+  inset: 10% 15%;
+  overflow: auto;
+  padding: var(--spacing-4);
+  border: 2px solid var(--action);
+  border-radius: var(--radius-sm);
+  background: var(--space-900);
+  color: var(--paper);
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 65%);
+}
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
