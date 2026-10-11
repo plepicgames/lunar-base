@@ -80,6 +80,8 @@ npm run check
   needs the Chromium of the pinned `@playwright/test`
   (`npx playwright install chromium`). The tests never download a browser.
 - `npm start` builds the client and serves the game on port 4780.
+- `docker build .` then `bash scripts/smoke-image.sh <image>` builds the image
+  and runs it as the cluster will. `CONTAINER_ENGINE=podman` uses Podman.
 - Run one check at a time. The browser tests start a server on port 4791.
 
 `.github/workflows/validate.yml` also runs `gitleaks git --redact`,
@@ -126,3 +128,14 @@ the Chromium the browser job installs.
 - Record a durable choice in `docs/decisions/`, as `000N-short-title.md`.
 - A change to `plepic`, `deploys`, `orange` or `architecture` is a separate
   pull request in that repository, from its own worktree.
+
+## Release
+
+- A merge to `main` that changes a file the image is built from deploys to
+  live and ends every game in progress. Say so in such a pull request. The
+  files are the `paths` list of `.github/workflows/release.yml`.
+- Never push an image, log in to the registry or run the `Release` workflow
+  by hand. Never edit the digest in `deploys`; roll back by reverting the
+  promotion commit there.
+- A file the image needs goes in three places: the `Dockerfile`,
+  `.dockerignore` and that `paths` list.

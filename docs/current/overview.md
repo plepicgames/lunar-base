@@ -12,8 +12,9 @@ from that view. Games live in the memory of one process.
 | [`architecture.md`](./architecture.md) | The engine, the protocol, the server, the non-human players, the client and the tests |
 | [`open-questions.md`](./open-questions.md) | The points where the rulebook is unclear, and the reading chosen |
 
-No container image is built and nothing is deployed from this repository.
-The [plan](../working/publication/plan.md) lists the work that remains.
+The repository builds the game's container image and promotes its digest
+into the live environment; see [Image](./architecture.md#image). The
+[plan](../working/publication/plan.md) lists the work that remains.
 
 ## Problem reports
 
@@ -53,7 +54,8 @@ Problem reports are GitHub issues in this repository
 | `docs/design/cards.json` | The card catalogue. The engine and the client load it |
 | `e2e/` | Playwright browser tests |
 | `test/` | Test setup: no network beyond the loopback address, no Jev key |
-| `scripts/` | `validate` (the gate), `check.sh`, `start.sh`, `validate-cards.sh` |
+| `scripts/` | `validate` (the gate), `check.sh`, `start.sh`, `validate-cards.sh`, `smoke-image.sh` (runs a built image as the cluster will), `update-gitops-digest.sh` (the promotion guard) |
+| `Dockerfile`, `.dockerignore` | The container image and the files it is built from |
 
 Test files live next to the code as `*.test.ts` and `*.test.tsx`.
 
@@ -99,7 +101,8 @@ image build commands read their location from the environment; see
 | Path | Holds |
 | --- | --- |
 | `.github/ISSUE_TEMPLATE/` | The problem-report form and its contact link |
-| `.github/workflows/validate.yml` | `scripts/validate`, the browser tests, secret scan over full history, workflow lint, link check |
+| `.github/workflows/validate.yml` | `scripts/validate`, the browser tests, an image build and smoke run, secret scan over full history, workflow lint, link check |
+| `.github/workflows/release.yml` | On a merge to `main` that changes the image: build, publish, scan and promote the digest into `hannosirkel/deploys` |
 | `.githooks/pre-commit` | Secret scan of staged changes |
 | `.gitleaks.toml` | The default secret rules, with two fixed test values allowed |
 | `renovate.json` | Dependency updates from the shared preset |

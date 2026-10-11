@@ -3,7 +3,8 @@
 This repository holds the online version of the Lunar Base card game by
 Plepic Games OÜ: a web game for 2 to 6 players, any number of them non-human.
 It holds the game code, the card data, the artwork and the design documents.
-Nothing is deployed from it yet.
+It builds the game's container image and promotes it; see
+[Build and release](#build-and-release).
 
 The plan for the work is
 [`docs/working/publication/plan.md`](./docs/working/publication/plan.md).
@@ -13,7 +14,7 @@ The plan for the work is
 | Owns | Does not own |
 | --- | --- |
 | The game: rules engine, server, browser client, card data and artwork | The shop site and the "Play online" box: [`hannosirkel/plepic`](https://github.com/hannosirkel/plepic) |
-| The container image of the game (planned) | Kubernetes manifests: [`hannosirkel/deploys`](https://github.com/hannosirkel/deploys) |
+| The container image of the game and its release workflow | Kubernetes manifests: [`hannosirkel/deploys`](https://github.com/hannosirkel/deploys) |
 | Its own documents, decisions and plans | The Argo CD Application and the public route: [`hannosirkel/orange`](https://github.com/hannosirkel/orange) |
 | Problem reports about the game, as GitHub issues | Cross-repository standards: [`hannosirkel/architecture`](https://github.com/hannosirkel/architecture) |
 
@@ -129,7 +130,8 @@ git config --local core.hooksPath .githooks
 
 The hook needs [`gitleaks`](https://github.com/gitleaks/gitleaks). The
 `Validate` workflow runs on each pull request: `scripts/validate`, the browser
-tests, a secret scan over the full history, a workflow lint and a link check.
+tests, an image build, a secret scan over the full history, a workflow lint
+and a link check.
 
 ### Reproduce a game
 
@@ -163,16 +165,46 @@ Building needs `pdftoppm`; card building from an archive also needs `unzip`.
 card manifest with that card's entries only, so rebuild the full set before
 `assets:verify`.
 
-## Build and deploy
+## Build and release
 
-Planned, not done. No container image is built and nothing is deployed from
-this repository today.
+The game has one environment, live. The `Release` workflow
+(`.github/workflows/release.yml`) is the only way an image is published and
+the only writer of the deployed digest.
 
-| Step | Place |
+**A release restarts the game and ends every game in progress.** The game runs
+as one process, so there is no rolling update. For that reason the workflow
+runs only on a merge to `main` that changes a file the image is built from:
+`src/` (tests excepted), `assets/`, `docs/design/cards.json`, the package
+files, the `Dockerfile` and the release files themselves. A merge that changes
+only documents or tests deploys nothing.
+
+| Job | Does |
 | --- | --- |
-| Build the container image | this repository |
-| Hold the Kubernetes state | `hannosirkel/deploys`, root `lunar-base/` |
-| Run the Argo CD Application and the public route | `hannosirkel/orange` |
+| `validate` | `bash scripts/validate` and the browser tests |
+| `gate` | Refuses any ref but `main`. Reads `scripts/update-gitops-digest.sh` from the merged commit |
+| `build` | Builds the image with `LUNAR_BUILD` set to the commit, pushes it to `ghcr.io/plepicgames/lunar-base` as `sha-<commit>`, runs the pushed digest with `scripts/smoke-image.sh`, and scans it for critical vulnerabilities that have a fix |
+| `promote` | Writes the digest into `lunar-base/overlays/live/kustomization.yaml` in [`hannosirkel/deploys`](https://github.com/hannosirkel/deploys), runs that repository's manifest test, and pushes one commit: `deploy(live): lunar-base <commit> <digest>` |
+
+Argo CD then applies the change; the Application and the public route are in
+`hannosirkel/orange`. The version at the bottom of the game is the commit the
+image was built from.
+
+To roll back, revert the promotion commit in `deploys`: that promotes the
+earlier digest again. Never edit the digest by hand, never push an image by
+hand, and never change the running Deployment in the cluster.
+
+Build and try the image on your own machine; nothing is pushed:
+
+```sh
+docker build --build-arg LUNAR_BUILD="$(git rev-parse HEAD)" --tag lunar-base:local .
+bash scripts/smoke-image.sh lunar-base:local
+```
+
+The smoke script runs the image as the cluster does (user 10001, read-only
+root filesystem, a volume for the game logs, base path `/play/lunar-base`),
+waits for the health path, sends `SIGTERM` and requires exit code 0. Set
+`CONTAINER_ENGINE=podman` to use Podman. Each pull request builds and runs the
+image the same way, without a registry login.
 
 ## Documents
 

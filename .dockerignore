@@ -1,0 +1,22 @@
+# An allow-list: the build context holds only what the image is built from.
+# `release.yml` lists the same paths in its `paths` filter; change both.
+*
+!package.json
+!package-lock.json
+!.npmrc
+!vite.config.ts
+!tsconfig.base.json
+!src/
+!assets/
+!docs/
+docs/*
+!docs/design/
+docs/design/*
+!docs/design/cards.json
+
+# Tests and their fixtures are in no image.
+**/*.test.ts
+**/*.test.tsx
+src/*/testing/
+src/engine/scenarios/
+**/__snapshots__/

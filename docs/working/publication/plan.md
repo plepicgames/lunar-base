@@ -132,7 +132,7 @@ One row is one pull request in one repository. Rows run in the order given.
   `game-problem` and `agent-ready`, a `README.md` section for people, and an
   `AGENTS.md` section for agents (decision 9, and how to replay a logged game).
   Verify: client tests for the link; the form renders on GitHub.
-- [ ] **L10 Image and release.** `Dockerfile` (non-root, client built in the
+- [x] **L10 Image and release.** `Dockerfile` (non-root, client built in the
   image), `.github/workflows/release.yml` that builds
   `ghcr.io/plepicgames/lunar-base`, scans it, and promotes the digest into
   `deploys` at `lunar-base/overlays/live`. The image starts Node directly,

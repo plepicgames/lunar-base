@@ -128,3 +128,26 @@ jobs:
         run: |
           set -euo pipefail
           npx playwright test
+
+  # A pull request that breaks the image would otherwise fail only in
+  # `release.yml`, after the merge. Builds without a registry login and pushes
+  # nothing.
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Build the image
+        run: |
+          set -euo pipefail
+          docker build --build-arg "LUNAR_BUILD=$GITHUB_SHA" --tag lunar-base:ci .
+
+      - name: Run the image as the cluster will
+        run: |
+          set -euo pipefail
+          bash scripts/smoke-image.sh lunar-base:ci "$GITHUB_SHA"
