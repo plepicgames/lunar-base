@@ -222,7 +222,7 @@ jobs:
           vuln-type: os,library
           severity: CRITICAL
           scanners: vuln
-          version: v0.70.0
+          version: v0.75.0
 
       - name: Retain the vulnerability report
         if: ${{ always() && hashFiles('trivy-lunar-base.json') != '' }}
