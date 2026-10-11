@@ -2,8 +2,8 @@
 
 This repository holds the online version of the Lunar Base card game by
 Plepic Games OÜ: a web game for 2 to 6 players, any number of them non-human.
-It holds the game code, the card data and the artwork. The design documents
-arrive in the next pull request. Nothing is deployed from it yet.
+It holds the game code, the card data, the artwork and the design documents.
+Nothing is deployed from it yet.
 
 The plan for the work is
 [`docs/working/publication/plan.md`](./docs/working/publication/plan.md).
@@ -132,7 +132,10 @@ this repository today.
 
 | Path | Holds |
 | --- | --- |
-| [`docs/current/`](./docs/current/overview.md) | What exists today |
+| [`docs/current/overview.md`](./docs/current/overview.md) | What exists today: layout, import boundaries, commands |
+| [`docs/current/rules.md`](./docs/current/rules.md) | The rules the engine implements, with rule numbers |
+| [`docs/current/architecture.md`](./docs/current/architecture.md) | How the engine, the server, the client and the tests are built |
+| [`docs/current/open-questions.md`](./docs/current/open-questions.md) | The points where the rulebook is unclear, and the reading chosen |
 | [`docs/design/cards.json`](./docs/design/cards.json) | The card catalogue the engine and the client load |
 | [`docs/decisions/`](./docs/decisions/) | Why each durable choice was made |
 | [`docs/working/`](./docs/working/publication/plan.md) | Active plans |

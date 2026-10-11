@@ -4,7 +4,7 @@
 reach it from a "Play online" box on `https://plepicgames.com/games/lunar-base`,
 and report problems as GitHub issues in this repository.
 
-Status: in progress. Started 2026-10-11 on the operator's instruction.
+Status: in progress. Started 2026-10-11 on the operator's instruction. The import (L1 to L4) and the catalogue entry are done.
 
 ## Where things are
 
@@ -55,7 +55,7 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### Architecture
 
-- [ ] **A1 Catalogue entry.** Files: `universe/repositories.yaml`. Adds
+- [x] **A1 Catalogue entry.** Files: `universe/repositories.yaml`. Adds
   `lunar-base` with profile `application-public`, languages `typescript` and
   `shell`, and registers this plan. Verify: `tooling/universe validate` and
   `tooling/universe audit lunar-base`. Opened as a draft first, because
@@ -64,7 +64,7 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### This repository: import
 
-- [ ] **L1 Governance and documents.** The first commit on `main` holds
+- [x] **L1 Governance and documents.** The first commit on `main` holds
   `README.md` only, because an empty repository has no branch to open a pull
   request against. The pull request adds `AGENTS.md`, `CLAUDE.md`,
   `.habit-hooks/config.toml`, `LICENSE`, `THIRD-PARTY-NOTICES.md`,
@@ -74,17 +74,17 @@ One row is one pull request in one repository. Rows run in the order given.
   plan. Verify: the workflow passes; `tooling/universe audit lunar-base` reports
   no failure. Size override: 22 files, most of them one-page documents that
   an empty governed repository must hold together.
-- [ ] **L2 Data and artwork.** `assets/` and `docs/design/cards.json`, copied
+- [x] **L2 Data and artwork.** `assets/` and `docs/design/cards.json`, copied
   unchanged. Verify: file count and SHA-256 list equal the source; gitleaks
   passes. Size override: about 185 binary files.
-- [ ] **L3 Code.** `src/`, `tools/`, `scripts/`, `e2e/`, `test/`,
+- [x] **L3 Code.** `src/`, `tools/`, `scripts/`, `e2e/`, `test/`,
   `package.json`, `package-lock.json`, and the tool configuration, copied with
   private paths removed from comments and from `tools/assets/`. Adds
   `scripts/validate` as the gate the workflow runs, and a browser-test job.
   Verify: `npm ci && npm run check` passes in the worktree and in CI; no tracked
   file names a home directory or a private source directory. Size override:
   about 200 source files.
-- [ ] **L4 Design documents.** `docs/design/rules.md`, `architecture.md` and
+- [x] **L4 Design documents.** `docs/design/rules.md`, `architecture.md` and
   `open-questions.md` move to `docs/current/`, with private paths removed and
   links repaired. Verify: link check passes; no tracked file names a home
   directory or a private source directory.
@@ -168,7 +168,8 @@ One row is one pull request in one repository. Rows run in the order given.
 
 | # | Needed | Blocks |
 | --- | --- | --- |
-| P1 | The agent identity (`baldrick-h2`) can read and write `plepicgames/lunar-base`, and the repository is public. On 2026-10-11 it answered "not found" with and without credentials | every push; L1 onward |
+| P1 | Done for access on 2026-10-11: the agent identity can read and write the repository. Still open: the repository is private, and it must be public before players can file reports | L9 in use; E2 |
+| P5 | The agent identity may read and write issues and labels in this repository. On 2026-10-11 the issues API refused it | L9 labels; working on reports |
 | P2 | A deployer credential in `plepicgames/lunar-base` that may write `hannosirkel/deploys` (the pattern `plepic` uses: a GitHub App client ID and private key as repository secrets, in a `live` environment) | L10 promotion |
 | P3 | The cluster can pull `ghcr.io/plepicgames/lunar-base` (public package, or a pull secret) | first sync |
 | P4 | Renovate installed on `plepicgames/lunar-base` | dependency updates |
@@ -186,5 +187,5 @@ These change something outside Git. Each needs the operator's word at the time.
 
 - No sign-in, no accounts, no saved games across a restart.
 - No translation of the game. It is English.
-- No change to the rules. The 44 open rule readings stay as they are in
+- No change to the rules. The 49 open rule readings stay as they are in
   `docs/current/open-questions.md`.

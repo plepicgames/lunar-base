@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "about": "Every card face in the Lunar Base print files. One entry per distinct printed face; `count` is the number of copies and `sources` lists the print page of each copy. Read docs/design/rules.md section 9 for the meaning of the fields.",
+  "about": "Every card face in the Lunar Base print files. One entry per distinct printed face; `count` is the number of copies and `sources` lists the print page of each copy. Read docs/current/rules.md section 9 for the meaning of the fields.",
   "source_archive": "Lunar-production.zip",
   "card_trim_mm": [50, 100],
   "render": "pdftoppm -r 300 -x 35 -y 35 -W 591 -H 1181 -png <pdf>; one PDF page is one card face",
