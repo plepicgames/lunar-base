@@ -137,7 +137,11 @@ async function play(config: GameConfig, bots: number, seed: string): Promise<Pla
           return withFallback(maker, maker);
         },
         // Keep the accepted choices in memory for an independent engine replay.
-        gameLog: { path: "memory", choice: (choice) => choices.push(structuredClone(choice)) },
+        gameLog: {
+          path: "memory",
+          choice: (choice) => choices.push(structuredClone(choice)),
+          close() {},
+        },
         onLeave: (session) => {
           lobby.release(session);
         },

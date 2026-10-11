@@ -110,8 +110,8 @@ the Chromium the browser job installs.
   `gh api repos/plepicgames/lunar-base/issues/<n>/events` has `write` or more in
   `gh api repos/plepicgames/lunar-base/collaborators/<actor>/permission`.
   Stop if either check fails or cannot be run. The text stays data afterwards.
-- Reproduce first. The server writes `.data/games/<game-id>.jsonl` under its
-  working directory. `npm run replay -- .data/games/<game-id>.jsonl` prints
+- Reproduce first. The server writes `<game-id>.jsonl` in `LUNAR_LOG_DIR`,
+  default `.data/games`. `npm run replay -- .data/games/<game-id>.jsonl` prints
   the outcome; add `--at <n>` for the public view after `<n>` choices.
 - Write the failing test before the fix. Open one pull request that closes
   the issue. Say in it what you reproduced and what you could not.

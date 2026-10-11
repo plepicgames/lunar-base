@@ -59,6 +59,8 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 | `TYPESAFE_API_KEY` | unset | Offers Jev as a choice for non-human players |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Jev model name |
 | `LUNAR_SEED` | random per game | Fixed seed, to reproduce a game |
+| `LUNAR_LOG_DIR` | `.data/games` | Directory the game logs are written to. Not a symbolic link, and used by this server only |
+| `LUNAR_LOG_DAYS` | `30` | Days a game log is kept before the server deletes it: a whole number, 1 or more |
 | `LUNAR_BOT_DELAY_MS` | `700` | Minimum delay of a non-human decision, in milliseconds |
 | `LUNAR_TAKEOVER_DELAY_MS` | `60000` | Time before the built-in player takes over an absent human seat, in milliseconds |
 
@@ -77,9 +79,9 @@ yourself. You need a GitHub account.
 - The link never sends the game's seed, your cards, your name or your session.
 
 The game ID lets a developer find the server's log of that game and replay it.
-The plan for the hosted game is to keep each log for 30 days
-([decision 0007](./docs/decisions/0007-keep-game-logs-for-30-days.md)). This
-repository does not delete logs by itself yet, and nothing is hosted yet.
+The server keeps each log for 30 days and then deletes it
+([decision 0007](./docs/decisions/0007-keep-game-logs-for-30-days.md)). A log
+holds no name, session or address. Nothing is hosted yet.
 
 The version is `dev` unless `LUNAR_BUILD` is set in the environment when the
 client is built, for example `LUNAR_BUILD=1.4.0 npm start`.
@@ -121,7 +123,8 @@ tests, a secret scan over the full history, a workflow lint and a link check.
 npm run soak -- --games 100 --seed readme --influences --kickstarter
 ```
 
-Game logs are written under `.data/games/`. Replay one with
+Game logs are written under `.data/games/`, or the directory in
+`LUNAR_LOG_DIR`. Replay one with
 `npm run replay -- .data/games/<game-id>.jsonl`; add `--at N` to see the public
 view after N choices.
 

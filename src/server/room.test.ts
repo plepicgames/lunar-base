@@ -1,5 +1,5 @@
 import { performance } from "node:perf_hooks";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -23,7 +23,7 @@ import { dealGame } from "../engine/setup.ts";
 import { buildState } from "../engine/testing/build.ts";
 import { pushTurn } from "../engine/turn.ts";
 import { createLobby } from "./lobby.ts";
-import { createGameLog } from "./gamelog.ts";
+import { createGameLog, sweepGameLogs } from "./gamelog.ts";
 import { replayFile } from "../../tools/replay.ts";
 import { createRoom, type Room } from "./room.ts";
 import { createSessions, PING_INTERVAL_MS, type Session } from "./sessions.ts";
@@ -61,6 +61,7 @@ function setup(
 ) {
   const rooms = new Map<string, Room>();
   const logs: string[] = [];
+  const openLogs = new Set<string>();
   const roomFor = (session: Session) => [...rooms.values()].find((room) => room.has(session));
   const lobby = createLobby({
     onStart(game) {
@@ -72,13 +73,11 @@ function setup(
             : (options.state ?? started.state),
         events: options.state ? [] : started.events,
         gameLog: options.logDirectory
-          ? createGameLog(
-              game.id,
-              started.state.config,
-              seed,
-              (line) => logs.push(line),
-              options.logDirectory,
-            )
+          ? createGameLog(game.id, started.state.config, seed, {
+              log: (line) => logs.push(line),
+              directory: options.logDirectory,
+              open: openLogs,
+            })
           : undefined,
         makeBuiltinMaker: (seat) => builtinMaker(seed, seat),
         makeMaker:
@@ -161,7 +160,7 @@ function setup(
     b.send({ type: "lobby.join", game: state.games[0].id });
     return [a, b] as const;
   }
-  return { rooms, logs, client, humans };
+  return { rooms, logs, openLogs, client, humans };
 }
 
 afterEach(() => {
@@ -1108,6 +1107,27 @@ describe("game room", () => {
     expect(logs.join("\n")).toContain("engine_error");
     expect(logs.join("\n")).toContain(a.update().game);
     expect(logs.join("\n")).toContain(join(directory, `${a.update().game}.jsonl`));
+    rmSync(directory, { recursive: true, force: true });
+  });
+
+  test("a sweep keeps the log of a running game and deletes it once everyone has left", () => {
+    const directory = mkdtempSync(join(tmpdir(), "lunar-open-log-"));
+    const { humans, openLogs } = setup({ logDirectory: directory });
+    const [a, b] = humans();
+    a.answer();
+    const path = join(directory, `${a.update().game}.jsonl`);
+    utimesSync(path, 0, 0);
+    const sweep = () => {
+      sweepGameLogs({ directory, days: 30, open: openLogs, log: () => {} });
+    };
+    sweep();
+    expect(existsSync(path)).toBe(true);
+    a.send({ type: "game.leave" });
+    sweep();
+    expect(existsSync(path)).toBe(true);
+    b.send({ type: "game.leave" });
+    sweep();
+    expect(existsSync(path)).toBe(false);
     rmSync(directory, { recursive: true, force: true });
   });
 

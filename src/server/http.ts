@@ -8,7 +8,13 @@ import { withFallback } from "../bots/fallback.ts";
 import { startGame } from "../engine/index.ts";
 import { basePrefix, normalizeBasePath } from "./base-path.ts";
 import { createLobby } from "./lobby.ts";
-import { createGameLog } from "./gamelog.ts";
+import {
+  createGameLog,
+  DEFAULT_LOG_DIRECTORY,
+  refuseLinkedLogDirectory,
+  startGameLogSweep,
+  type GameLogSettings,
+} from "./gamelog.ts";
 import { createRoom, type Room } from "./room.ts";
 import { createSessions, type Session } from "./sessions.ts";
 import { staticHandler } from "./static.ts";
@@ -27,6 +33,11 @@ export interface ServerOptions {
   readonly jev?: DecisionMaker;
   readonly pingIntervalMs?: number;
   readonly log?: (line: string) => void;
+  /**
+   * Where this server writes its game logs, how long it keeps them and the
+   * build it names in them. Old logs are deleted only when `days` is given.
+   */
+  readonly logs?: Partial<GameLogSettings>;
 }
 
 export interface RunningServer {
@@ -38,6 +49,10 @@ export interface RunningServer {
 export async function startServer(options: ServerOptions = {}): Promise<RunningServer> {
   const basePath = normalizeBasePath(options.basePath ?? "/");
   const socketPath = `${basePrefix(basePath)}/ws`;
+  const logDirectory = options.logs?.directory ?? DEFAULT_LOG_DIRECTORY;
+  refuseLinkedLogDirectory(logDirectory);
+  /** The games of this server whose room still exists. Its sweep spares their logs. */
+  const openLogs = new Set<string>();
   const rooms = new Map<string, Room>();
   const roomFor = (session: Session) => [...rooms.values()].find((room) => room.has(session));
   const lobby = createLobby({
@@ -50,7 +65,12 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
         kickstarter: game.options.kickstarter,
       };
       const started = startGame(config, seed);
-      const gameLog = createGameLog(game.id, config, seed, options.log);
+      const gameLog = createGameLog(game.id, config, seed, {
+        log: options.log,
+        directory: logDirectory,
+        build: options.logs?.build,
+        open: openLogs,
+      });
       const room = createRoom(game, {
         state: started.state,
         events: started.events,
@@ -136,9 +156,15 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     sockets.close();
     throw error;
   }
+  const days = options.logs?.days;
+  const sweep =
+    days === undefined
+      ? undefined
+      : startGameLogSweep({ directory: logDirectory, days, open: openLogs, log: options.log });
   return {
     port: (server.address() as AddressInfo).port,
     async close() {
+      sweep?.stop();
       for (const socket of sockets.clients) socket.terminate();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {
