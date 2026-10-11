@@ -69,6 +69,31 @@ export function limitSettings(env: Environment): LimitSettings {
   };
 }
 
+/** The default of `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`. */
+export const JEV_MAX_DECISIONS_PER_HOUR = 2000;
+
+/**
+ * Reads `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`: the Jev decisions one server
+ * makes in an hour, over all its games. 0 means it makes none. Throws on a
+ * value that is set and not valid.
+ */
+export function jevBudgetSetting(env: Environment): number {
+  const name = "LUNAR_JEV_MAX_DECISIONS_PER_HOUR";
+  const raw = env[name];
+  if (raw === undefined) return JEV_MAX_DECISIONS_PER_HOUR;
+  const value = /^(0|[1-9]\d*)$/.test(raw.trim()) ? Number(raw) : Number.NaN;
+  if (!Number.isSafeInteger(value))
+    throw new Error(`${name} must be a whole number, 0 or more; got "${raw}"`);
+  return value;
+}
+
+/** The startup line about Jev. It never holds the credential. */
+export function describeJev(credential: boolean, decisionsPerHour: number): string {
+  if (!credential) return "Jev is off";
+  if (decisionsPerHour === 0) return "Jev is off because the budget is 0 decisions per hour";
+  return `Jev is on, at most ${String(decisionsPerHour)} ${decisionsPerHour === 1 ? "decision" : "decisions"} per hour`;
+}
+
 /** The list in `LUNAR_ALLOWED_ORIGINS`, each entry in the form a browser sends. */
 function allowedOrigins(raw: string | undefined): readonly string[] | null {
   if (raw === undefined) return null;

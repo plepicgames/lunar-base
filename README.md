@@ -58,6 +58,7 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 | `LUNAR_BASE_PATH` | `/` | URL path the game is served under, for example `/play/lunar-base` |
 | `TYPESAFE_API_KEY` | unset | Offers Jev as a choice for non-human players |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Jev model name |
+| `LUNAR_JEV_MAX_DECISIONS_PER_HOUR` | `2000` | Jev decisions the whole server makes in an hour: a whole number, 0 or more. Over it, non-human seats use the built-in player until the hour has room again. `0`: Jev is never asked |
 | `LUNAR_SEED` | random per game | Fixed seed, to reproduce a game |
 | `LUNAR_LOG_DIR` | `.data/games` | Directory the game logs are written to. Not a symbolic link, and used by this server only |
 | `LUNAR_LOG_DAYS` | `30` | Days a game log is kept before the server deletes it: a whole number, 1 or more |

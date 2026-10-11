@@ -5,6 +5,7 @@ import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
 import type { DecisionMaker } from "../bots/maker.ts";
 import { builtinMaker } from "../bots/builtin/index.ts";
+import { createDecisionBudget, withDecisionBudget } from "../bots/budget.ts";
 import { withFallback } from "../bots/fallback.ts";
 import { startGame } from "../engine/index.ts";
 import { RESTART_CLOSE_CODE, type ServerMessage } from "../protocol/messages.ts";
@@ -20,6 +21,7 @@ import {
 import {
   createVisitorLimits,
   DEFAULT_LIMITS,
+  JEV_MAX_DECISIONS_PER_HOUR,
   originAllowed,
   visitorAddress,
   type LimitSettings,
@@ -40,6 +42,11 @@ export interface ServerOptions {
   readonly botDelayMs?: number;
   readonly takeoverDelayMs?: number;
   readonly jev?: DecisionMaker;
+  /**
+   * The Jev decisions this server makes in an hour, over all its games.
+   * Default `JEV_MAX_DECISIONS_PER_HOUR`; 0 means it never asks `jev`.
+   */
+  readonly jevDecisionsPerHour?: number;
   readonly pingIntervalMs?: number;
   readonly log?: (line: string) => void;
   /**
@@ -49,7 +56,7 @@ export interface ServerOptions {
   readonly logs?: Partial<GameLogSettings>;
   /** What this server allows a visitor. A value left out is its default. */
   readonly limits?: Partial<LimitSettings>;
-  /** The clock of the per-address limits. A test passes its own. */
+  /** The clock of the per-address limits and the Jev budget. A test passes its own. */
   readonly now?: () => number;
 }
 
@@ -137,6 +144,17 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   /** This server's counters per visitor address, and the address of each open socket. */
   const visitors = createVisitorLimits({ settings: limits, now: options.now, log: options.log });
   const addresses = new WeakMap<Connection, string>();
+  // One budget for this server: every Jev seat of every game asks through it.
+  const jev =
+    options.jev &&
+    withDecisionBudget(
+      options.jev,
+      createDecisionBudget({
+        limit: options.jevDecisionsPerHour ?? JEV_MAX_DECISIONS_PER_HOUR,
+        now: options.now,
+        log: options.log,
+      }),
+    );
   const rooms = new Map<string, Room>();
   const roomFor = (session: Session) => [...rooms.values()].find((room) => room.has(session));
   const lobby = createLobby({
@@ -167,7 +185,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
         makeMaker(seat) {
           const builtin = builtinMaker(seed, seat);
           return withFallback(
-            game.options.botBrain === "jev" ? (options.jev ?? builtin) : builtin,
+            game.options.botBrain === "jev" ? (jev ?? builtin) : builtin,
             builtin,
           );
         },
