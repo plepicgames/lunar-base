@@ -41,11 +41,12 @@ jobs:
           args: --no-progress --config lychee.toml './**/*.md'
           fail: true
 
-      # GAP: Node.js is not installed by a pinned action here. No workflow this
-      # was allowed to copy a commit SHA from uses `actions/setup-node`, and a
-      # SHA is never made up. Until a maintainer adds that action with a true
-      # pin, the job uses the Node.js of the runner image and this step stops
-      # the job when that one is older than `engines` in `package.json`.
+      - name: Set up Node.js
+        # actions/setup-node v7.1.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: "24"
+
       - name: Check the Node.js version
         run: |
           set -euo pipefail
@@ -91,8 +92,12 @@ jobs:
         with:
           persist-credentials: false
 
-      # GAP: the same gap as in the `validate` job. No pinned `actions/setup-node`;
-      # the job uses the Node.js of the runner image.
+      - name: Set up Node.js
+        # actions/setup-node v7.1.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: "24"
+
       - name: Check the Node.js version
         run: |
           set -euo pipefail
