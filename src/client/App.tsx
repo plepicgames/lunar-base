@@ -1,6 +1,7 @@
 import "./styles/global.css";
 import { PROTOCOL_VERSION } from "../protocol/messages.ts";
 import { useConnection } from "./connection.ts";
+import type { ReportContext } from "./ReportLink.tsx";
 import { Shell } from "./Shell.tsx";
 import { Lobby } from "./screens/Lobby.tsx";
 import { Name } from "./screens/Name.tsx";
@@ -32,8 +33,11 @@ export function App() {
 
   const open = connection.lobby?.find((game) => game.humans.includes(session.name));
   let screen;
+  let report: ReportContext | undefined;
   if (connection.game !== null) {
-    const { game } = connection.game;
+    const { game, view } = connection.game;
+    // Both are public: every seat gets the game ID and the turn number.
+    report = { screen: view.result === null ? "table" : "result", game, turn: view.turn.number };
     screen = (
       <Table
         game={connection.game}
@@ -84,6 +88,7 @@ export function App() {
       notice={
         connection.game !== null || open !== undefined ? (connection.error?.message ?? null) : null
       }
+      report={report}
     >
       {screen}
     </Shell>

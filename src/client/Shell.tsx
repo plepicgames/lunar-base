@@ -1,13 +1,22 @@
 import type { ReactNode } from "react";
+import { ReportLink, type ReportContext } from "./ReportLink.tsx";
 
 interface ShellProps {
   readonly screen: "name" | "lobby" | "waiting" | "table";
   readonly children: ReactNode;
   readonly interruption?: "none" | "reconnecting" | "other-tab";
   readonly notice?: string | null;
+  /** What a problem report says about the game. Outside a game the screen is enough. */
+  readonly report?: ReportContext;
 }
 
-export function Shell({ screen, children, interruption = "none", notice = null }: ShellProps) {
+export function Shell({
+  screen,
+  children,
+  interruption = "none",
+  notice = null,
+  report = { screen },
+}: ShellProps) {
   const isTable = screen === "table";
   const locked = interruption !== "none";
   return (
@@ -34,6 +43,7 @@ export function Shell({ screen, children, interruption = "none", notice = null }
       )}
       <footer className="footer">
         <img src="/brand/plepic-games-wordmark.svg" alt="Plepic Games" width="160" />
+        <ReportLink {...report} />
       </footer>
     </div>
   );

@@ -15,7 +15,7 @@ The plan for the work is
 | The game: rules engine, server, browser client, card data and artwork | The shop site and the "Play online" box: [`hannosirkel/plepic`](https://github.com/hannosirkel/plepic) |
 | The container image of the game (planned) | Kubernetes manifests: [`hannosirkel/deploys`](https://github.com/hannosirkel/deploys) |
 | Its own documents, decisions and plans | The Argo CD Application and the public route: [`hannosirkel/orange`](https://github.com/hannosirkel/orange) |
-| Problem reports about the game, as GitHub issues (planned) | Cross-repository standards: [`hannosirkel/architecture`](https://github.com/hannosirkel/architecture) |
+| Problem reports about the game, as GitHub issues | Cross-repository standards: [`hannosirkel/architecture`](https://github.com/hannosirkel/architecture) |
 
 ## Visibility
 
@@ -60,6 +60,31 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 | `LUNAR_SEED` | random per game | Fixed seed, to reproduce a game |
 | `LUNAR_BOT_DELAY_MS` | `700` | Minimum delay of a non-human decision, in milliseconds |
 | `LUNAR_TAKEOVER_DELAY_MS` | `60000` | Time before the built-in player takes over an absent human seat, in milliseconds |
+
+## Report a problem
+
+Use the **Report a problem** link at the bottom of the game, or open the
+[issue form](https://github.com/plepicgames/lunar-base/issues/new?template=game-problem.yml)
+yourself. You need a GitHub account.
+
+- Say what happened and what you expected. A screenshot helps.
+- The link fills in the game ID, the turn number, the screen, the game
+  version and your browser. Leave them in. Without the link, copy the version
+  from the bottom of the game.
+- A report is public. Do not put a password, an e-mail address or other
+  personal data in it.
+- The link never sends the game's seed, your cards, your name or your session.
+
+The game ID lets a developer find the server's log of that game and replay it.
+The plan for the hosted game is to keep each log for 30 days
+([decision 0007](./docs/decisions/0007-keep-game-logs-for-30-days.md)). This
+repository does not delete logs by itself yet, and nothing is hosted yet.
+
+The version is `dev` unless `LUNAR_BUILD` is set in the environment when the
+client is built, for example `LUNAR_BUILD=1.4.0 npm start`.
+
+For a question about buying the board game, write to
+[Plepic Games support](https://plepicgames.com/support/lunar-base) instead.
 
 ## Develop and test
 

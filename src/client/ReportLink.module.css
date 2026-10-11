@@ -1,0 +1,31 @@
+.report {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin: 0;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.link {
+  display: inline-flex;
+  min-height: 1.5rem;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--paper);
+  text-underline-offset: 0.2em;
+}
+
+.link:hover {
+  color: var(--action);
+}
+
+/* A long version never pushes the link out of a narrow window. */
+.build {
+  overflow: hidden;
+  min-width: 0;
+  max-width: 12rem;
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
+  text-overflow: ellipsis;
+}
