@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -83,7 +83,7 @@ jobs:
           ./gitleaks git --redact --verbose
 
   browser:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -133,7 +133,7 @@ jobs:
   # `release.yml`, after the merge. Builds without a registry login and pushes
   # nothing.
   image:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - name: Check out repository
