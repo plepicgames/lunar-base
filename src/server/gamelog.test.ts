@@ -20,6 +20,8 @@ import {
   createGameLog,
   gameLogDays,
   gameLogDirectory,
+  gameLogSettings,
+  refuseLinkedLogDirectory,
   startGameLogSweep,
   sweepGameLogs,
 } from "./gamelog.ts";
@@ -37,7 +39,8 @@ afterEach(() => {
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 0, 31);
-const created = () => new Date(NOW);
+const quiet = () => {};
+const at = { log: quiet, now: () => NOW };
 const header = (seed: string) => ({
   config,
   seed,
@@ -56,8 +59,7 @@ function aged(name: string, age: number, content = "{}\n"): string {
 }
 
 test("creates a log and replays accepted decisions to the identical state", () => {
-  vi.stubEnv("LUNAR_BUILD", undefined);
-  const log = createGameLog("game-1", config, "log-seed", () => {}, directory, created);
+  const log = createGameLog("game-1", config, "log-seed", { ...at, directory });
   let state = startGame(config, "log-seed").state;
   for (let n = 0; n < 30 && state.pending && !state.result; n++) {
     const pending = state.pending;
@@ -84,8 +86,7 @@ test("creates a log and replays accepted decisions to the identical state", () =
 test("creates a missing nested log directory", () => {
   const missing = join(directory, "missing", "games");
   expect(existsSync(missing)).toBe(false);
-  vi.stubEnv("LUNAR_BUILD", undefined);
-  const log = createGameLog("nested", config, "seed", () => {}, missing, created);
+  const log = createGameLog("nested", config, "seed", { ...at, directory: missing });
   expect(existsSync(log.path)).toBe(true);
   expect(readFileSync(log.path, "utf8")).toBe(`${JSON.stringify(header("seed"))}\n`);
 });
@@ -94,7 +95,7 @@ test("write errors are reported and do not throw", () => {
   const errors = vi.fn();
   const blocked = join(directory, "blocked");
   writeFileSync(blocked, "file");
-  const log = createGameLog("game-2", config, "seed", errors, blocked);
+  const log = createGameLog("game-2", config, "seed", { log: errors, directory: blocked });
   expect(() => {
     log.choice({ seat: 0, decision: "d1", option: "o1" }, "human");
   }).not.toThrow();
@@ -102,15 +103,15 @@ test("write errors are reported and do not throw", () => {
 });
 
 test("the header names the build that wrote the log", () => {
-  vi.stubEnv("LUNAR_BUILD", "1.4.0");
-  const log = createGameLog("built", config, "seed", () => {}, directory, created);
+  const log = createGameLog("built", config, "seed", { ...at, directory, build: "1.4.0" });
   expect(JSON.parse(readFileSync(log.path, "utf8"))).toMatchObject({ build: "1.4.0" });
   expect(buildVersion({ LUNAR_BUILD: "" })).toBe("dev");
   expect(buildVersion({})).toBe("dev");
+  expect(buildVersion({ LUNAR_BUILD: "1.4.0" })).toBe("1.4.0");
 });
 
 test("a choice line holds the seat, decision, option and maker, and nothing else", () => {
-  const log = createGameLog("strict", config, "seed", () => {}, directory);
+  const log = createGameLog("strict", config, "seed", { log: quiet, directory });
   const extra = { seat: 1, decision: "d1", option: "o1", name: "Zebedee" };
   log.choice(extra, "human");
   const line = readFileSync(log.path, "utf8").trimEnd().split("\n")[1];
@@ -122,17 +123,44 @@ test("logs go to .data/games unless LUNAR_LOG_DIR names another directory", () =
   expect(gameLogDirectory({ LUNAR_LOG_DIR: "  " })).toBe(join(".data", "games"));
   expect(gameLogDirectory({ LUNAR_LOG_DIR: directory })).toBe(directory);
 
-  vi.stubEnv("LUNAR_LOG_DIR", undefined);
-  const usual = createGameLog(`default-${String(process.pid)}`, config, "seed", () => {});
+  // The environment is read once by `main`; a log never reads it again.
+  vi.stubEnv("LUNAR_LOG_DIR", join(directory, "ignored"));
+  vi.stubEnv("LUNAR_BUILD", "ignored");
+  const usual = createGameLog(`default-${String(process.pid)}`, config, "seed", at);
   expect(usual.path).toBe(join(".data", "games", `default-${String(process.pid)}.jsonl`));
-  expect(existsSync(usual.path)).toBe(true);
+  expect(readFileSync(usual.path, "utf8")).toBe(`${JSON.stringify(header("seed"))}\n`);
   rmSync(usual.path, { force: true });
+  expect(existsSync(join(directory, "ignored"))).toBe(false);
 
   const chosen = join(directory, "chosen");
-  vi.stubEnv("LUNAR_LOG_DIR", chosen);
-  const log = createGameLog("placed", config, "seed", () => {});
+  const log = createGameLog("placed", config, "seed", { log: quiet, directory: chosen });
   expect(log.path).toBe(join(chosen, "placed.jsonl"));
   expect(existsSync(log.path)).toBe(true);
+  expect(gameLogSettings({ LUNAR_LOG_DIR: chosen, LUNAR_LOG_DAYS: "7", LUNAR_BUILD: "2" })).toEqual(
+    { directory: chosen, days: 7, build: "2" },
+  );
+  expect(gameLogSettings({})).toEqual({
+    directory: join(".data", "games"),
+    days: 30,
+    build: "dev",
+  });
+});
+
+test("a log directory that is a symbolic link is refused", () => {
+  const real = join(directory, "real");
+  mkdirSync(real);
+  const link = join(directory, "link");
+  symlinkSync(real, link);
+  expect(() => {
+    refuseLinkedLogDirectory(link);
+  }).toThrow(`The game log directory must not be a symbolic link: ${link}`);
+  expect(() => {
+    refuseLinkedLogDirectory(`${link}/`);
+  }).toThrow(/must not be a symbolic link/);
+  expect(() => {
+    refuseLinkedLogDirectory(real);
+    refuseLinkedLogDirectory(join(directory, "missing"));
+  }).not.toThrow();
 });
 
 test("logs are kept for 30 days unless LUNAR_LOG_DAYS names a whole number of days", () => {
@@ -161,13 +189,55 @@ test("a sweep deletes logs older than the limit and keeps one exactly at it", ()
 });
 
 test("a sweep keeps the log of a game that is still open, however old", () => {
-  const log = createGameLog(named(4), config, "seed", () => {}, directory);
+  const open = new Set<string>();
+  const log = createGameLog(named(4), config, "seed", { log: quiet, directory, open });
   utimesSync(log.path, (NOW - 90 * DAY) / 1000, (NOW - 90 * DAY) / 1000);
-  sweepGameLogs({ directory, days: 30, now: () => NOW, log: () => {} });
+  sweepGameLogs({ directory, days: 30, open, ...at });
   expect(existsSync(log.path)).toBe(true);
   log.close();
-  sweepGameLogs({ directory, days: 30, now: () => NOW, log: () => {} });
+  sweepGameLogs({ directory, days: 30, open, ...at });
   expect(existsSync(log.path)).toBe(false);
+});
+
+test("closing a game of one server does not unprotect the same ID in another", () => {
+  const servers = ["one", "two"].map((name) => {
+    const open = new Set<string>();
+    const log = createGameLog(named(14), config, "seed", {
+      log: quiet,
+      directory: join(directory, name),
+      open,
+    });
+    utimesSync(log.path, (NOW - 90 * DAY) / 1000, (NOW - 90 * DAY) / 1000);
+    return { open, log, directory: join(directory, name) };
+  });
+  servers[0].log.close();
+  for (const { open, directory: own } of servers)
+    sweepGameLogs({ directory: own, days: 30, open, ...at });
+  expect(existsSync(servers[0].log.path)).toBe(false);
+  expect(existsSync(servers[1].log.path)).toBe(true);
+});
+
+test("a log callback that throws does not escape the sweep or stop the timer", () => {
+  const log = vi.fn(() => {
+    throw new Error("logger is broken");
+  });
+  const handle = { unref: vi.fn() };
+  const timer = {
+    setInterval: vi.fn<(run: () => void, ms: number) => typeof handle>(() => handle),
+    clearInterval: vi.fn(),
+  };
+  const first = aged(`${named(15)}.jsonl`, 90 * DAY);
+  expect(() =>
+    startGameLogSweep({ directory, days: 30, now: () => NOW, log, timer }),
+  ).not.toThrow();
+  expect(existsSync(first)).toBe(false);
+  const second = aged(`${named(16)}.jsonl`, 90 * DAY);
+  expect(() => {
+    timer.setInterval.mock.calls[0][0]();
+  }).not.toThrow();
+  expect(existsSync(second)).toBe(false);
+  expect(log).toHaveBeenCalledTimes(2);
+  expect(timer.clearInterval).not.toHaveBeenCalled();
 });
 
 test("a sweep leaves alone everything that is not a log file of this server", () => {
@@ -265,7 +335,7 @@ test("replay reads a log of the new format and one of the old format", () => {
     }
     return state;
   };
-  const current = createGameLog("current", config, "both", () => {}, directory);
+  const current = createGameLog("current", config, "both", { log: quiet, directory });
   const old = join(directory, "old.jsonl");
   writeFileSync(old, `${JSON.stringify({ config, seed: "both" })}\n`);
   const expected = choices(old);

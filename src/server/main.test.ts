@@ -1,9 +1,11 @@
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
+  symlinkSync,
   utimesSync,
   writeFileSync,
 } from "node:fs";
@@ -66,6 +68,101 @@ test.each(["0", "-1", "abc", "", "1.5"])(
   },
 );
 
+test("a log directory that is a symbolic link stops startup", async () => {
+  const link = `${directory}-link`;
+  symlinkSync(directory, link);
+  vi.stubEnv("LUNAR_LOG_DIR", link);
+  try {
+    await expect(main()).rejects.toThrow(
+      `The game log directory must not be a symbolic link: ${link}`,
+    );
+    expect(output.join("\n")).not.toContain("is running");
+  } finally {
+    rmSync(link, { force: true });
+  }
+});
+
+/** Start an all-bot game that stays open, and return the ID the server gave it. */
+async function openGame(port: number): Promise<string> {
+  const socket = new WebSocket(`ws://127.0.0.1:${String(port)}/ws`, {
+    origin: `http://127.0.0.1:${String(port)}`,
+  });
+  const messages: ServerMessage[] = [];
+  socket.on("message", (data: Buffer) => {
+    messages.push(serverMessageSchema.parse(JSON.parse(data.toString())));
+  });
+  await new Promise<void>((resolve) => socket.once("open", resolve));
+  socket.send(JSON.stringify({ type: "hello", protocol: 1, name: "Watcher" }));
+  await vi.waitFor(() => {
+    expect(messages.some((message) => message.type === "lobby.state")).toBe(true);
+  });
+  socket.send(
+    JSON.stringify({
+      type: "lobby.create",
+      seats: 2,
+      bots: 2,
+      influences: false,
+      kickstarter: false,
+    }),
+  );
+  const update = await vi.waitFor(() => {
+    const found = messages.find((message) => message.type === "game.update");
+    if (found?.type !== "game.update") throw new Error("No update yet");
+    return found;
+  });
+  socket.close();
+  return update.game;
+}
+
+test("two servers in one process each write and sweep only their own directory", async () => {
+  const old = "00000000-0000-4000-8000-000000000003.jsonl";
+  const then = Date.now() / 1000 - 3 * 24 * 60 * 60;
+  const directories = ["one", "two"].map((name) => {
+    const own = join(directory, name);
+    mkdirSync(own);
+    writeFileSync(join(own, old), "{}\n");
+    utimesSync(join(own, old), then, then);
+    return own;
+  });
+  // One day for the first server and thirty for the second: only the first deletes.
+  const servers = [
+    await http.startServer({
+      port: 0,
+      botDelayMs: 600_000,
+      log: () => {},
+      logs: { directory: directories[0], days: 1, build: "one" },
+    }),
+    await http.startServer({
+      port: 0,
+      botDelayMs: 600_000,
+      log: () => {},
+      logs: { directory: directories[1], days: 30, build: "two" },
+    }),
+  ];
+  try {
+    const games = [await openGame(servers[0].port), await openGame(servers[1].port)];
+    expect(readdirSync(directories[0])).toEqual([`${games[0]}.jsonl`]);
+    expect(readdirSync(directories[1]).sort()).toEqual([old, `${games[1]}.jsonl`].sort());
+    const build = (index: number) =>
+      (
+        JSON.parse(
+          readFileSync(join(directories[index], `${games[index]}.jsonl`), "utf8").split("\n")[0],
+        ) as { build: string }
+      ).build;
+    expect([build(0), build(1)]).toEqual(["one", "two"]);
+  } finally {
+    for (const server of servers) await server.close();
+  }
+});
+
+test("a server given no days deletes nothing", async () => {
+  const old = join(directory, "00000000-0000-4000-8000-000000000004.jsonl");
+  writeFileSync(old, "{}\n");
+  utimesSync(old, 0, 0);
+  running = await http.startServer({ port: 0, logs: { directory } });
+  expect(existsSync(old)).toBe(true);
+});
+
 test("startup deletes an old log and keeps a fresh one", async () => {
   const old = join(directory, "00000000-0000-4000-8000-000000000001.jsonl");
   const fresh = join(directory, "00000000-0000-4000-8000-000000000002.jsonl");
@@ -81,6 +178,8 @@ test("startup deletes an old log and keeps a fresh one", async () => {
 
 test("the log of a game with a named human holds no name and no session token", async () => {
   running = await main();
+  // Settings are read once at startup: a later change moves nothing.
+  vi.stubEnv("LUNAR_LOG_DIR", join(directory, "later"));
   const socket = new WebSocket(`ws://127.0.0.1:${String(running.port)}/ws`, {
     origin: `http://127.0.0.1:${String(running.port)}`,
   });

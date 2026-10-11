@@ -1101,7 +1101,11 @@ environment and listens.
 
 The log directory is `LUNAR_LOG_DIR`, or `.data/games` under the working
 directory (ignored by Git) when that is unset or blank. It is created when the
-first game is logged.
+first game is logged. `main.ts` reads the directory, `LUNAR_LOG_DAYS` and
+`LUNAR_BUILD` once and passes them to `http.startServer` as `logs`; the server
+hands them to each `createGameLog` and to its sweep. `gamelog` never reads the
+environment, so a server's logs and its sweep always use the same directory. A
+log directory that is itself a symbolic link stops the start with an error.
 
 The first JSONL line is `{config,seed,build,protocol,created}`: the build is
 `LUNAR_BUILD` or `dev`, the protocol is `PROTOCOL_VERSION`, and `created` is
@@ -1116,15 +1120,20 @@ directory. It prints the turn number, choice count, result reason and winners;
 `--at <n>` also prints the public view after the first `n` choices (`0` is the
 opening view).
 
-`main.ts` sweeps the log directory at startup and then once a day, on a timer
-that does not keep the process alive; the `close()` that `main()` returns
-stops it. A sweep deletes each log last written
+A server that is given `logs.days`, as `main.ts` always does, sweeps its log
+directory once it listens and then once a day, on a timer that does not keep
+the process alive; the server's `close()` stops it. A server given no days
+deletes nothing. A sweep deletes each log last written
 more than `LUNAR_LOG_DAYS` days ago (default 30); a log exactly that old stays.
 The value must be a whole number, 1 or more: anything else, a fraction
 included, stops the start with an error. A sweep deletes only a regular file
 directly in the log directory whose name is a UUID game ID and `.jsonl`. It
 never deletes a symbolic link, a directory, another file, or the log of a game
-whose room still exists in this process. It never throws: it logs one
+whose room still exists in the same server: each server keeps its own set of
+open games, shared by its logs and its sweep. The limit: the directory must be
+one that only this server writes to. The check and the delete are two steps,
+so a file that another process puts in a log's place between them is not
+protected. A sweep never throws, even when the log callback does: it logs one
 `gamelog_sweep_error` line with the count and the first error code, and the
 next sweep tries again. A sweep that deleted something logs one
 `gamelog_sweep deleted=<n>` line.

@@ -59,7 +59,7 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 | `TYPESAFE_API_KEY` | unset | Offers Jev as a choice for non-human players |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Jev model name |
 | `LUNAR_SEED` | random per game | Fixed seed, to reproduce a game |
-| `LUNAR_LOG_DIR` | `.data/games` | Directory the game logs are written to |
+| `LUNAR_LOG_DIR` | `.data/games` | Directory the game logs are written to. Not a symbolic link, and used by this server only |
 | `LUNAR_LOG_DAYS` | `30` | Days a game log is kept before the server deletes it: a whole number, 1 or more |
 | `LUNAR_BOT_DELAY_MS` | `700` | Minimum delay of a non-human decision, in milliseconds |
 | `LUNAR_TAKEOVER_DELAY_MS` | `60000` | Time before the built-in player takes over an absent human seat, in milliseconds |

@@ -61,6 +61,7 @@ function setup(
 ) {
   const rooms = new Map<string, Room>();
   const logs: string[] = [];
+  const openLogs = new Set<string>();
   const roomFor = (session: Session) => [...rooms.values()].find((room) => room.has(session));
   const lobby = createLobby({
     onStart(game) {
@@ -72,13 +73,11 @@ function setup(
             : (options.state ?? started.state),
         events: options.state ? [] : started.events,
         gameLog: options.logDirectory
-          ? createGameLog(
-              game.id,
-              started.state.config,
-              seed,
-              (line) => logs.push(line),
-              options.logDirectory,
-            )
+          ? createGameLog(game.id, started.state.config, seed, {
+              log: (line) => logs.push(line),
+              directory: options.logDirectory,
+              open: openLogs,
+            })
           : undefined,
         makeBuiltinMaker: (seat) => builtinMaker(seed, seat),
         makeMaker:
@@ -161,7 +160,7 @@ function setup(
     b.send({ type: "lobby.join", game: state.games[0].id });
     return [a, b] as const;
   }
-  return { rooms, logs, client, humans };
+  return { rooms, logs, openLogs, client, humans };
 }
 
 afterEach(() => {
@@ -1113,13 +1112,13 @@ describe("game room", () => {
 
   test("a sweep keeps the log of a running game and deletes it once everyone has left", () => {
     const directory = mkdtempSync(join(tmpdir(), "lunar-open-log-"));
-    const { humans } = setup({ logDirectory: directory });
+    const { humans, openLogs } = setup({ logDirectory: directory });
     const [a, b] = humans();
     a.answer();
     const path = join(directory, `${a.update().game}.jsonl`);
     utimesSync(path, 0, 0);
     const sweep = () => {
-      sweepGameLogs({ directory, days: 30, log: () => {} });
+      sweepGameLogs({ directory, days: 30, open: openLogs, log: () => {} });
     };
     sweep();
     expect(existsSync(path)).toBe(true);

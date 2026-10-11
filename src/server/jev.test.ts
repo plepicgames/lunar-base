@@ -69,9 +69,7 @@ async function start(key: string | undefined, fail = false) {
     );
   };
   vi.stubGlobal("fetch", fetch);
-  const started = vi.spyOn(http, "startServer");
-  await main();
-  running = (await started.mock.results[0].value) as http.RunningServer;
+  running = await main();
   const socket = new WebSocket(`ws://127.0.0.1:${String(running.port)}/ws`, {
     origin: `http://127.0.0.1:${String(running.port)}`,
   });
