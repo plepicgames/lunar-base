@@ -3,11 +3,14 @@ import { jevMaker } from "../bots/jev/adapter.ts";
 import { normalizeBasePath } from "./base-path.ts";
 import { gameLogSettings } from "./gamelog.ts";
 import { startServer, type RunningServer } from "./http.ts";
+import { describeLimits, limitSettings } from "./limits.ts";
 
 export async function main(): Promise<RunningServer> {
   // Read once, before listening: a bad LUNAR_LOG_DAYS stops the start, and
   // the server's logs and its sweep use these same values from here on.
   const logs = gameLogSettings(process.env);
+  // Likewise: a bad limit stops the start, and the server keeps these values.
+  const limits = limitSettings(process.env);
   const port = Number(process.env.PORT ?? 4780);
   const botDelayMs = Number(process.env.LUNAR_BOT_DELAY_MS ?? 700);
   const takeoverDelayMs = Number(process.env.LUNAR_TAKEOVER_DELAY_MS ?? 60_000);
@@ -25,6 +28,7 @@ export async function main(): Promise<RunningServer> {
     takeoverDelayMs,
     jev,
     logs,
+    limits,
   });
   const path = basePath === "/" ? "" : `${basePath}/`;
   console.log(`Lunar Base is running at http://localhost:${String(running.port)}${path}`);
@@ -32,6 +36,7 @@ export async function main(): Promise<RunningServer> {
   console.log(
     `Game logs go to ${logs.directory} and are kept for ${String(logs.days)} ${logs.days === 1 ? "day" : "days"}; build ${logs.build}`,
   );
+  console.log(describeLimits(limits));
   return running;
 }
 

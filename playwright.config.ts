@@ -44,6 +44,8 @@ export default defineConfig({
       LUNAR_SEED: "e2e-walking-skeleton",
       LUNAR_BOT_DELAY_MS: "0",
       LUNAR_TAKEOVER_DELAY_MS: "1000",
+      // Every test comes from one address and most of them start a game.
+      LUNAR_MAX_NEW_GAMES_PER_HOUR: "1000",
       // Empty counts as no credential: Jev stays off whatever the caller has.
       TYPESAFE_API_KEY: "",
     },

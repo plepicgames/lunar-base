@@ -17,6 +17,14 @@ import { serverMessageSchema, type ServerMessage } from "../protocol/messages.ts
 import * as http from "./http.ts";
 import { main } from "./main.ts";
 
+const LIMIT_SETTINGS = [
+  "LUNAR_ALLOWED_ORIGINS",
+  "LUNAR_TRUST_PROXY",
+  "LUNAR_MAX_GAMES",
+  "LUNAR_MAX_CONNECTIONS_PER_ADDRESS",
+  "LUNAR_MAX_NEW_GAMES_PER_HOUR",
+] as const;
+
 let directory: string;
 let output: string[];
 let running: http.RunningServer | undefined;
@@ -36,6 +44,7 @@ beforeEach(() => {
   vi.stubEnv("LUNAR_BUILD", undefined);
   vi.stubEnv("LUNAR_LOG_DIR", directory);
   vi.stubEnv("LUNAR_LOG_DAYS", undefined);
+  for (const name of LIMIT_SETTINGS) vi.stubEnv(name, undefined);
 });
 
 afterEach(async () => {
@@ -67,6 +76,55 @@ test.each(["0", "-1", "abc", "", "1.5"])(
     expect(started).not.toHaveBeenCalled();
   },
 );
+
+test("startup names the default limits", async () => {
+  running = await main();
+  expect(output).toContain(
+    "Limits: origins same host, proxy trust off, 20 games, 8 connections per address, 10 new games per address per hour",
+  );
+});
+
+test("startup reads the limits and the server uses them", async () => {
+  vi.stubEnv("LUNAR_ALLOWED_ORIGINS", "https://example.org,https://www.example.org");
+  vi.stubEnv("LUNAR_TRUST_PROXY", "true");
+  vi.stubEnv("LUNAR_MAX_GAMES", "5");
+  vi.stubEnv("LUNAR_MAX_CONNECTIONS_PER_ADDRESS", "1");
+  vi.stubEnv("LUNAR_MAX_NEW_GAMES_PER_HOUR", "3");
+  running = await main();
+  expect(output).toContain(
+    "Limits: origins 2 allowed, proxy trust on, 5 games, 1 connection per address, 3 new games per address per hour",
+  );
+  const open = (origin: string, address: string) =>
+    new Promise<WebSocket>((resolve, reject) => {
+      const socket = new WebSocket(`ws://127.0.0.1:${String(running?.port)}/ws`, {
+        origin,
+        headers: { "CF-Connecting-IP": address },
+      });
+      socket.once("open", () => {
+        resolve(socket);
+      });
+      socket.once("error", reject);
+    });
+  const first = await open("https://example.org", "192.0.2.1");
+  const second = await open("https://www.example.org", "192.0.2.2");
+  await expect(open("https://example.org", "192.0.2.1")).rejects.toThrow("429");
+  await expect(open(`http://127.0.0.1:${String(running.port)}`, "192.0.2.3")).rejects.toThrow(
+    "403",
+  );
+  expect(output.filter((line) => line.startsWith("limit"))).toEqual([
+    expect.stringMatching(/^limit refused=connections address=[0-9a-f]{16}$/),
+  ]);
+  expect(output.join("\n")).not.toContain("192.0.2");
+  first.close();
+  second.close();
+});
+
+test.each(LIMIT_SETTINGS)("a bad %s stops startup before anything listens", async (name) => {
+  vi.stubEnv(name, "no");
+  const start = vi.spyOn(http, "startServer");
+  await expect(main()).rejects.toThrow(name);
+  expect(start).not.toHaveBeenCalled();
+});
 
 test("a log directory that is a symbolic link stops startup", async () => {
   const link = `${directory}-link`;

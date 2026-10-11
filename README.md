@@ -63,6 +63,13 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 | `LUNAR_LOG_DAYS` | `30` | Days a game log is kept before the server deletes it: a whole number, 1 or more |
 | `LUNAR_BOT_DELAY_MS` | `700` | Minimum delay of a non-human decision, in milliseconds |
 | `LUNAR_TAKEOVER_DELAY_MS` | `60000` | Time before the built-in player takes over an absent human seat, in milliseconds |
+| `LUNAR_ALLOWED_ORIGINS` | unset | Comma-separated origins a browser may connect from, for example `https://example.org,https://www.example.org`. Unset: the page must come from the host it connects to |
+| `LUNAR_TRUST_PROXY` | `false` | `true` behind a proxy that sets `CF-Connecting-IP` or `X-Forwarded-For`: the visitor address is read from that header. `false`: it is the socket's address |
+| `LUNAR_MAX_GAMES` | `20` | Games at a time: a whole number, 1 or more |
+| `LUNAR_MAX_CONNECTIONS_PER_ADDRESS` | `8` | Open connections of one visitor address: a whole number, 1 or more |
+| `LUNAR_MAX_NEW_GAMES_PER_HOUR` | `10` | Games one visitor address may create in an hour: a whole number, 1 or more |
+
+A value that is set and not valid stops the start with an error.
 
 ## Report a problem
 

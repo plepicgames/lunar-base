@@ -1,13 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { createGame, viewFor } from "../engine/index.ts";
 import { serverMessageSchema, type ServerMessage } from "../protocol/messages.ts";
-import { createLobby, type LobbyGameRoom } from "./lobby.ts";
+import { createLobby, type LobbyGameRoom, type LobbyOptions } from "./lobby.ts";
 import { createSessions } from "./sessions.ts";
 import { memoryConnection } from "./transport.ts";
 
-function setup() {
+function setup(limits: Pick<LobbyOptions, "maxGames" | "mayCreate"> = {}) {
   const started: LobbyGameRoom[] = [];
-  const lobby = createLobby({ onStart: (game) => started.push(game) });
+  const lobby = createLobby({ ...limits, onStart: (game) => started.push(game) });
   const sessions = createSessions({
     jev: false,
     onBound: (session) => {
@@ -58,6 +58,66 @@ describe("lobby", () => {
     const next = client("Next").last();
     if (next?.type !== "lobby.state") throw new Error("Expected lobby state");
     expect(next.games).toHaveLength(20);
+  });
+
+  test("the game cap is the server's setting", () => {
+    const { client } = setup({ maxGames: 2 });
+    client("Ann").send(create(2, 0));
+    client("Bob").send(create(2, 0));
+    const cy = client("Cy");
+    cy.send(create(2, 0));
+    expect(cy.last()).toEqual({
+      type: "error",
+      code: "bad_message",
+      message: "The server is at its game limit.",
+    });
+    const state = client("Dee").last();
+    if (state?.type !== "lobby.state") throw new Error("Expected lobby state");
+    expect(state.games).toHaveLength(2);
+  });
+
+  test("a creator who may not create gets an error and no game; joining is not asked about", () => {
+    const asked: string[] = [];
+    const { client, started } = setup({
+      mayCreate(session) {
+        asked.push(session.name);
+        return session.name !== "Bob";
+      },
+    });
+    const ann = client("Ann");
+    const bob = client("Bob");
+    bob.send(create(2, 0));
+    expect(bob.last()).toEqual({
+      type: "error",
+      code: "bad_message",
+      message: "You have started too many games. Try again later.",
+    });
+    const before = ann.last();
+    if (before?.type !== "lobby.state") throw new Error("Expected lobby state");
+    expect(before.games).toHaveLength(0);
+    ann.send(create(2, 0));
+    const open = bob.states().at(-1);
+    if (!open?.games[0]) throw new Error("Expected an open game");
+    bob.send({ type: "lobby.join", game: open.games[0].id });
+    expect(started).toHaveLength(1);
+    expect(asked).toEqual(["Bob", "Ann"]);
+  });
+
+  test("a create refused for another reason is not counted against the creator", () => {
+    const asked: string[] = [];
+    const { client } = setup({
+      maxGames: 1,
+      mayCreate(session) {
+        asked.push(session.name);
+        return true;
+      },
+    });
+    const ann = client("Ann");
+    ann.send(create(2, 0));
+    ann.send(create(2, 0));
+    client("Bob").send(create(2, 0));
+    client("Cy").send(create(2, 1, { botBrain: "jev" }));
+    expect(asked).toEqual(["Ann"]);
   });
 
   test("one human and all remaining seats filled by bots start on creation", () => {
