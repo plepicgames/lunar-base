@@ -15,6 +15,28 @@ from that view. Games live in the memory of one process.
 No container image is built and nothing is deployed from this repository.
 The [plan](../working/publication/plan.md) lists the work that remains.
 
+## Problem reports
+
+Problem reports are GitHub issues in this repository
+([decision 0008](../decisions/0008-take-problem-reports-as-github-issues.md)).
+
+| Part | Does |
+| --- | --- |
+| `src/client/ReportLink.tsx` | Shows "Report a problem" and "Version …" in the footer of every screen. The link opens the issue form in a new tab |
+| `src/client/report.ts` | Builds the link. It fills the fields `game-id`, `turn`, `screen`, `build` and `browser`. Every value is percent-encoded, and the user agent is cut so the link stays below 2,000 characters |
+| `.github/ISSUE_TEMPLATE/game-problem.yml` | The issue form. Its field `id`s are the names above. It adds the label `game-problem` and the title prefix `[game] ` |
+| `.github/ISSUE_TEMPLATE/config.yml` | Allows blank issues. Sends questions about buying the board game to Plepic Games support |
+
+- The game ID and the turn number are public: `game.update` carries both to
+  every seat. Outside a game the link leaves both out. `screen` is `name`,
+  `lobby`, `waiting`, `table` or `result`.
+- The link never holds the seed, a hand, a session token or a player's name.
+- The version is the value of `LUNAR_BUILD` when the client is built, or
+  `dev`. The server does not log it.
+- A maintainer finds the game's log by its ID and replays it; see
+  [`AGENTS.md`](../../AGENTS.md). No log is deleted by this repository yet
+  ([decision 0007](../decisions/0007-keep-game-logs-for-30-days.md)).
+
 ## Layout
 
 | Path | Holds |
@@ -68,6 +90,7 @@ image build commands read their location from the environment; see
 
 | Path | Holds |
 | --- | --- |
+| `.github/ISSUE_TEMPLATE/` | The problem-report form and its contact link |
 | `.github/workflows/validate.yml` | `scripts/validate`, the browser tests, secret scan over full history, workflow lint, link check |
 | `.githooks/pre-commit` | Secret scan of staged changes |
 | `.gitleaks.toml` | The default secret rules, with two fixed test values allowed |

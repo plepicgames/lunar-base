@@ -1529,6 +1529,9 @@ Available plain controls glow on hover and keyboard focus; card buttons keep the
 The Shell uses the hero nebula and logo for Name, Lobby and Waiting; the
 table uses the darkened footer nebula. It credits Plepic with a 160 px
 wordmark on every screen. Name's contour panel is the model for later panels.
+Beside the wordmark the footer holds the "Report a problem" link and the
+build version (`src/client/ReportLink.tsx`); see
+[Overview, Problem reports](./overview.md#problem-reports).
 
 ### Cards
 

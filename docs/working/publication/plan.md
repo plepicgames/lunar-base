@@ -114,7 +114,8 @@ One row is one pull request in one repository. Rows run in the order given.
   tests. Verify: tests with a fake clock; `npm run replay` reads a written log.
 - [ ] **L9 Report a problem.** A "Report a problem" link in the lobby, at the
   table and on the result screen. It opens the issue form with the game ID,
-  seed, turn number and build version filled in. Adds
+  turn number, screen, build version and browser filled in, and never the
+  seed: the server log maps a game ID to its seed. Adds
   `.github/ISSUE_TEMPLATE/game-problem.yml` and `config.yml`, the labels
   `game-problem` and `agent-ready`, a `README.md` section for people, and an
   `AGENTS.md` section for agents (decision 9, and how to replay a logged game).
