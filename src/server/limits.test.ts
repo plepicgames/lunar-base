@@ -101,6 +101,17 @@ test.each([
   ["a query", "https://example.org?x", false],
   ["credentials", "https://user@example.org", false],
   ["the opaque origin", "null", false],
+  ["a fragment", "https://example.org#top", false],
+  ["a backslash", "https://example.org\\", false],
+  ["a backslash before another host", "https://example.org\\@evil.example", false],
+  ["a space inside", "https://example .org", false],
+  ["a space after", "https://example.org ", false],
+  ["a tab", "https://example.org\t", false],
+  ["a line break", "https://example.org\r\nX: y", false],
+  ["a control character", "https://example.org\u0000", false],
+  ["a password", "https://user:pass@example.org", false],
+  ["another scheme", "wss://example.org", false],
+  ["a scheme with no host", "https://", false],
   ["garbage", "not an origin", false],
   ["empty", "", false],
   ["missing", undefined, false],
@@ -112,9 +123,33 @@ test.each([
 test.each([
   ["http://127.0.0.1:4780", "127.0.0.1:4780", true],
   ["http://LOCALHOST:4780", "localhost:4780", true],
+  ["https://example.org", "example.org", true],
+  ["https://example.org", "EXAMPLE.org:443", true],
+  ["https://example.org:443", "example.org", true],
+  ["http://example.org", "example.org:80", true],
+  ["http://example.org:80", "example.org", true],
+  ["http://[2001:db8::1]:4780", "[2001:db8::1]:4780", true],
+  ["https://[2001:db8::80]", "[2001:db8::80]", true],
+  // The default port of the other scheme is a different port.
+  ["https://example.org", "example.org:80", false],
+  ["http://example.org", "example.org:443", false],
+  ["https://example.org", "example.org:8443", false],
   ["http://elsewhere.example", "127.0.0.1:4780", false],
   ["http://127.0.0.1:4781", "127.0.0.1:4780", false],
+  ["http://127.0.0.1:4780/", "127.0.0.1:4780", false],
+  ["http://127.0.0.1:4780/play", "127.0.0.1:4780", false],
+  ["http://127.0.0.1:4780?x", "127.0.0.1:4780", false],
+  ["http://127.0.0.1:4780#x", "127.0.0.1:4780", false],
+  ["http://user@127.0.0.1:4780", "127.0.0.1:4780", false],
+  ["http://elsewhere.example\\@127.0.0.1:4780", "127.0.0.1:4780", false],
+  ["http://127.0.0.1:4780\\", "127.0.0.1:4780", false],
+  [" http://127.0.0.1:4780", "127.0.0.1:4780", false],
+  ["http://127.0.0.1:4780\n", "127.0.0.1:4780", false],
+  ["ws://127.0.0.1:4780", "127.0.0.1:4780", false],
+  ["ftp://127.0.0.1:4780", "127.0.0.1:4780", false],
+  ["null", "null", false],
   ["nonsense", "127.0.0.1:4780", false],
+  ["", "", false],
   [undefined, "127.0.0.1:4780", false],
   ["http://127.0.0.1:4780", undefined, false],
 ])("with no list, Origin %j and Host %j give %s", (origin, host, allowed) => {
@@ -193,7 +228,8 @@ test("the ninth connection of an address is refused; a closed one frees its plac
   visitors.disconnect("192.0.2.1");
   expect(visitors.connect("192.0.2.1")).toBe(true);
   expect(visitors.connect("192.0.2.1")).toBe(false);
-  expect(lines).toHaveLength(2);
+  // The second refusal of the same address is counted, not written.
+  expect(lines).toHaveLength(1);
   visitors.stop();
 });
 
@@ -202,10 +238,10 @@ test("an address with no connection left is forgotten", () => {
   visitors.connect("192.0.2.1");
   visitors.connect("192.0.2.1");
   visitors.disconnect("192.0.2.1");
-  expect(visitors.size()).toEqual({ connections: 1, newGames: 0 });
+  expect(visitors.size()).toEqual({ connections: 1, newGames: 0, refusals: 0 });
   visitors.disconnect("192.0.2.1");
   visitors.disconnect("192.0.2.1");
-  expect(visitors.size()).toEqual({ connections: 0, newGames: 0 });
+  expect(visitors.size()).toEqual({ connections: 0, newGames: 0, refusals: 0 });
   for (let index = 0; index < 8; index++) expect(visitors.connect("192.0.2.1")).toBe(true);
   visitors.stop();
 });
@@ -259,12 +295,64 @@ test("a refusal logs the reason and a tag, never the address", () => {
   visitors.connect("192.0.2.2");
   visitors.connect("192.0.2.2");
   expect(lines).toHaveLength(3);
-  expect(lines[0]).toMatch(/^limit refused=connections address=[0-9a-f]{8}$/);
-  expect(lines[1]).toMatch(/^limit refused=new_games address=[0-9a-f]{8}$/);
+  expect(lines[0]).toMatch(/^limit refused=connections address=[0-9a-f]{16}$/);
+  expect(lines[1]).toMatch(/^limit refused=new_games address=[0-9a-f]{16}$/);
   expect(lines.join("\n")).not.toContain("192.0.2");
-  const tag = (line: string) => line.slice(-8);
+  const tag = (line: string) => line.slice(-16);
   expect(tag(lines[1])).toBe(tag(lines[0]));
   expect(tag(lines[2])).not.toBe(tag(lines[0]));
+  visitors.stop();
+});
+
+test("after the first refusal a tag and reason get one counted line a minute", () => {
+  const { visitors, lines, clock } = limits({ maxConnectionsPerAddress: 1 });
+  visitors.connect("192.0.2.1");
+  for (let index = 0; index < 500; index++) visitors.connect("192.0.2.1");
+  expect(lines).toHaveLength(1);
+  const first = lines[0];
+  clock.now += 59_999;
+  visitors.connect("192.0.2.1");
+  expect(lines).toHaveLength(1);
+  // A minute after the first line: the 501 refusals since then, this one included.
+  clock.now += 1;
+  visitors.connect("192.0.2.1");
+  expect(lines).toEqual([first, `${first} count=501`]);
+  for (let index = 0; index < 3; index++) visitors.connect("192.0.2.1");
+  expect(lines).toHaveLength(2);
+  // Nobody asks again: the timer's pass writes what was counted and forgets the tag.
+  clock.now += 60_000;
+  visitors.prune();
+  expect(lines).toEqual([first, `${first} count=501`, `${first} count=3`]);
+  expect(visitors.size().refusals).toBe(0);
+  visitors.prune();
+  expect(lines).toHaveLength(3);
+  // Forgotten, so the next refusal is a first one again.
+  visitors.connect("192.0.2.1");
+  expect(lines.at(-1)).toBe(first);
+  visitors.stop();
+});
+
+test("the refusal bookkeeping is bounded: past 1000 tags the rest share one line", () => {
+  const { visitors, lines, clock } = limits({ maxNewGamesPerHour: 1 });
+  for (let round = 0; round < 2; round++)
+    for (let index = 0; index < 1500; index++)
+      visitors.newGame(`2001:db8:0:${index.toString(16)}::/64`);
+  expect(visitors.size().refusals).toBe(1001);
+  expect(lines).toHaveLength(1001);
+  expect(lines.at(-1)).toBe("limit refused=new_games address=other");
+  clock.now += 60_000;
+  visitors.prune();
+  expect(lines.at(-1)).toBe("limit refused=new_games address=other count=499");
+  expect(visitors.size().refusals).toBe(0);
+  visitors.stop();
+});
+
+test("a new game from a socket with no recorded address is refused and logged", () => {
+  const { visitors, lines } = limits();
+  expect(visitors.newGame(undefined)).toBe(false);
+  expect(visitors.newGame(undefined)).toBe(false);
+  expect(lines).toEqual(["limit refused=new_games address=none"]);
+  expect(visitors.size().newGames).toBe(0);
   visitors.stop();
 });
 

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
 import type { DecisionMaker } from "../bots/maker.ts";
 import { builtinMaker } from "../bots/builtin/index.ts";
@@ -53,7 +54,32 @@ export interface ServerOptions {
 
 export interface RunningServer {
   readonly port: number;
+  /** The TCP connections this server holds open, for the tests of what a refusal leaves behind. */
+  connections(): Promise<number>;
   close(): Promise<void>;
+}
+
+/** How long a refused upgrade may take to flush its answer before the socket is dropped. */
+const REFUSAL_CLOSE_MS = 2_000;
+
+/**
+ * Answers an upgrade with an HTTP status and closes the socket from this
+ * side. Ending it alone would only half-close it: a peer that never closes
+ * its own side would keep the connection open, outside the connection count
+ * and the heartbeat. Every refusal goes through here.
+ */
+function refuseUpgrade(socket: Duplex, status: string): void {
+  const drop = () => socket.destroy();
+  // The answer cannot be flushed, for example because the peer reads nothing.
+  const timer = setTimeout(drop, REFUSAL_CLOSE_MS);
+  timer.unref();
+  socket.once("close", () => {
+    clearTimeout(timer);
+  });
+  // A client reset while the refusal is sent must not stop the server.
+  socket.once("error", drop);
+  socket.once("finish", drop);
+  socket.end(`HTTP/1.1 ${status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n`);
 }
 
 /** Start the one-process HTTP and WebSocket game server. */
@@ -73,10 +99,9 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const lobby = createLobby({
     jev: options.jev !== undefined,
     maxGames: limits.maxGames,
-    mayCreate(session) {
-      const address = session.connection ? addresses.get(session.connection) : undefined;
-      return address === undefined || visitors.newGame(address);
-    },
+    // A socket with no recorded address is refused, not let past the cap.
+    mayCreate: (session) =>
+      visitors.newGame(session.connection ? addresses.get(session.connection) : undefined),
     onStart(game) {
       const seed = options.seed ?? randomBytes(16).toString("hex");
       const config = {
@@ -144,15 +169,11 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const server = createServer(staticHandler(basePath, options.clientDir));
   const sockets = new WebSocketServer({ noServer: true });
   server.on("upgrade", (request, socket, head) => {
-    const refuse = (status: string) => {
-      socket.once("error", () => socket.destroy());
-      socket.end(`HTTP/1.1 ${status}\r\nConnection: close\r\n\r\n`);
-    };
     if (
       request.url?.split("?", 1)[0] !== socketPath ||
       !originAllowed(limits.allowedOrigins, request.headers.origin, request.headers.host)
     ) {
-      refuse("403 Forbidden");
+      refuseUpgrade(socket, "403 Forbidden");
       return;
     }
     // A socket that is already gone would never report its close.
@@ -163,7 +184,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       request.socket.remoteAddress,
     );
     if (!visitors.connect(address)) {
-      refuse("429 Too Many Requests");
+      refuseUpgrade(socket, "429 Too Many Requests");
       return;
     }
     // The place is held by the TCP socket, so every end gives it back: a
@@ -197,6 +218,13 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       : startGameLogSweep({ directory: logDirectory, days, open: openLogs, log: options.log });
   return {
     port: (server.address() as AddressInfo).port,
+    connections: () =>
+      new Promise<number>((resolve, reject) => {
+        server.getConnections((error, count) => {
+          if (error) reject(error);
+          else resolve(count);
+        });
+      }),
     async close() {
       sweep?.stop();
       visitors.stop();

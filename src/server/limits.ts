@@ -15,7 +15,10 @@ export const FINISHED_GAME_TTL_MS = 10 * 60_000;
 export const IDLE_SESSION_TTL_MS = 30 * 60_000;
 
 const HOUR_MS = 60 * 60_000;
-const PRUNE_INTERVAL_MS = 10 * 60_000;
+const MINUTE_MS = 60_000;
+const PRUNE_INTERVAL_MS = MINUTE_MS;
+/** Tags and reasons whose refusals are counted apart; the rest share one line. */
+const MAX_REFUSAL_LINES = 1000;
 
 // This module never reads `process.env`. `main` reads the settings once for a
 // server and hands them on.
@@ -110,26 +113,49 @@ export function describeLimits(settings: LimitSettings): string {
   );
 }
 
-/** Scheme, host and optional port: what a browser sends as `Origin`. */
-const BARE_ORIGIN = /^[a-z][a-z0-9+.-]*:\/\/[^/?#@\s]+$/i;
+/** A backslash, a space or a control character: none belongs in an origin. */
+// eslint-disable-next-line no-control-regex -- control characters are what it looks for
+const NOT_IN_AN_ORIGIN = /[\\\s\u0000-\u001f\u007f]/;
+/** `http` or `https`, a host and an optional port: what a browser sends as `Origin`. */
+const BARE_ORIGIN = /^https?:\/\/[^/?#@]+$/i;
+
+/** The header as a URL when it is a bare origin and nothing else. */
+function bareOrigin(header: string | undefined): URL | undefined {
+  if (header === undefined || NOT_IN_AN_ORIGIN.test(header) || !BARE_ORIGIN.test(header))
+    return undefined;
+  try {
+    const url = new URL(header);
+    const bare =
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      url.username === "" &&
+      url.password === "" &&
+      url.pathname === "/";
+    return bare ? url : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
- * Whether an upgrade with this `Origin` is accepted. With a list, the origin
- * must be one of its entries. With none, its host must equal the request's
- * `Host`. A missing or malformed origin is refused either way.
+ * Whether an upgrade with this `Origin` is accepted. The header must be a
+ * bare origin: `http` or `https`, a host, an optional port, and no path,
+ * query, fragment, credentials, backslash, space or control character. With
+ * a list, it must be one of the entries. With none, its host and port must
+ * equal the request's `Host`, which may name the scheme's default port.
  */
 export function originAllowed(
   allowed: readonly string[] | null,
   origin: string | undefined,
   host: string | undefined,
 ): boolean {
-  try {
-    const url = new URL(origin ?? "");
-    if (allowed === null) return url.host.toLowerCase() === host?.toLowerCase();
-    return BARE_ORIGIN.test(origin ?? "") && allowed.includes(url.origin);
-  } catch {
-    return false;
-  }
+  const url = bareOrigin(origin);
+  if (url === undefined) return false;
+  if (allowed !== null) return allowed.includes(url.origin);
+  if (host === undefined) return false;
+  // `url.host` leaves the default port out; the `Host` header may spell it.
+  const defaultPort = url.protocol === "https:" ? ":443" : ":80";
+  const named = host.toLowerCase();
+  return url.host === (named.endsWith(defaultPort) ? named.slice(0, -defaultPort.length) : named);
 }
 
 /** The eight 16-bit groups of an IPv6 address that `isIP` accepted. */
@@ -190,16 +216,19 @@ export function visitorAddress(
 }
 
 export interface VisitorLimits {
-  /** Takes a connection place for the address. False, and one log line, at the cap. */
+  /** Takes a connection place for the address. False at the cap. */
   connect(address: string): boolean;
   /** Gives back a place that `connect` granted. */
   disconnect(address: string): void;
-  /** Counts a new game for the address. False, and one log line, at the cap. */
-  newGame(address: string): boolean;
-  /** Forgets every new game older than an hour. */
+  /**
+   * Counts a new game for the address. False at the cap, and false for a
+   * socket whose address was not recorded: nobody creates a game uncounted.
+   */
+  newGame(address: string | undefined): boolean;
+  /** Forgets every new game older than an hour and writes the refusals counted since a minute. */
   prune(): void;
-  /** How many addresses are remembered, for the tests of the memory bound. */
-  size(): { connections: number; newGames: number };
+  /** How many entries are remembered, for the tests of the memory bound. */
+  size(): { connections: number; newGames: number; refusals: number };
   /** Stops the prune timer. */
   stop(): void;
 }
@@ -221,11 +250,41 @@ export function createVisitorLimits(options: VisitorLimitsOptions): VisitorLimit
   // A log line names an address by a tag that cannot be turned back into it:
   // the salt lives in this process only.
   const salt = randomBytes(16);
-  const refuse = (reason: string, address: string) => {
-    const tag = createHash("sha256").update(salt).update(address).digest("hex").slice(0, 8);
-    log(`limit refused=${reason} address=${tag}`);
+  const tagOf = (address: string) =>
+    createHash("sha256").update(salt).update(address).digest("hex").slice(0, 16);
+  /** Per line, when it was last written and the refusals since. At most `MAX_REFUSAL_LINES` + 2. */
+  const refusals = new Map<string, { since: number; count: number }>();
+
+  /**
+   * Refuses, and keeps a flood out of the log: the first refusal of a tag and
+   * reason is written at once, later ones are counted and written as one
+   * line a minute.
+   */
+  function refuse(reason: string, tag: string): false {
+    const known = refusals.has(`limit refused=${reason} address=${tag}`);
+    const line = `limit refused=${reason} address=${known || refusals.size < MAX_REFUSAL_LINES ? tag : "other"}`;
+    const entry = refusals.get(line);
+    if (entry === undefined) {
+      refusals.set(line, { since: now(), count: 0 });
+      log(line);
+      return false;
+    }
+    entry.count += 1;
+    if (now() - entry.since >= MINUTE_MS) {
+      log(`${line} count=${String(entry.count)}`);
+      refusals.set(line, { since: now(), count: 0 });
+    }
     return false;
-  };
+  }
+
+  /** Writes what a quiet line still counted, and forgets every line a minute old. */
+  function pruneRefusals(): void {
+    for (const [line, entry] of [...refusals]) {
+      if (now() - entry.since < MINUTE_MS) continue;
+      if (entry.count > 0) log(`${line} count=${String(entry.count)}`);
+      refusals.delete(line);
+    }
+  }
 
   function recent(address: string): number[] {
     const cutoff = now() - HOUR_MS;
@@ -237,6 +296,7 @@ export function createVisitorLimits(options: VisitorLimitsOptions): VisitorLimit
 
   function prune(): void {
     for (const address of [...newGames.keys()]) recent(address);
+    pruneRefusals();
   }
 
   const timer = setInterval(prune, PRUNE_INTERVAL_MS);
@@ -246,7 +306,7 @@ export function createVisitorLimits(options: VisitorLimitsOptions): VisitorLimit
   return {
     connect(address) {
       const open = connections.get(address) ?? 0;
-      if (open >= settings.maxConnectionsPerAddress) return refuse("connections", address);
+      if (open >= settings.maxConnectionsPerAddress) return refuse("connections", tagOf(address));
       connections.set(address, open + 1);
       return true;
     },
@@ -256,13 +316,18 @@ export function createVisitorLimits(options: VisitorLimitsOptions): VisitorLimit
       else connections.delete(address);
     },
     newGame(address) {
+      if (address === undefined) return refuse("new_games", "none");
       const times = recent(address);
-      if (times.length >= settings.maxNewGamesPerHour) return refuse("new_games", address);
+      if (times.length >= settings.maxNewGamesPerHour) return refuse("new_games", tagOf(address));
       newGames.set(address, [...times, now()]);
       return true;
     },
     prune,
-    size: () => ({ connections: connections.size, newGames: newGames.size }),
+    size: () => ({
+      connections: connections.size,
+      newGames: newGames.size,
+      refusals: refusals.size,
+    }),
     stop() {
       clearInterval(timer);
     },

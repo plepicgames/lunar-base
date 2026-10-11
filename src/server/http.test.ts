@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createConnection } from "node:net";
+import { createConnection, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import WebSocket from "ws";
@@ -519,7 +519,7 @@ test("the ninth connection of an address gets 429; a closed one frees its place"
   for (let index = 0; index < 8; index++) open.push(await connect(running.port, origin));
   await expect(connect(running.port, origin)).rejects.toThrow("429");
   expect(lines).toHaveLength(1);
-  expect(lines[0]).toMatch(/^limit refused=connections address=[0-9a-f]{8}$/);
+  expect(lines[0]).toMatch(/^limit refused=connections address=[0-9a-f]{16}$/);
   open[0].close();
   open[0] = await eventually(running.port, origin);
   await expect(connect(running.port, origin)).rejects.toThrow("429");
@@ -672,7 +672,7 @@ test("an address makes its new games per hour and no more; joining and other add
   };
   expect(await create(alice.socket, "Alice")).toEqual(refused);
   expect(lines.filter((line) => line.startsWith("limit"))).toEqual([
-    expect.stringMatching(/^limit refused=new_games address=[0-9a-f]{8}$/),
+    expect.stringMatching(/^limit refused=new_games address=[0-9a-f]{16}$/),
   ]);
   // Another socket of the same address is the same visitor.
   const again = await named(port, origin, "Alice again", from("192.0.2.1"));
@@ -728,4 +728,50 @@ test("two servers in one process count their visitors apart", async () => {
   } finally {
     await other.close();
   }
+});
+
+/** A client that asks for an upgrade and then never closes its side. */
+function lingering(port: number, headers: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const socket = createConnection({ port, host: "127.0.0.1", allowHalfOpen: true });
+    held.push(socket);
+    socket.once("error", reject);
+    socket.once("data", (data) => {
+      resolve(data.toString());
+    });
+    socket.write(
+      `GET /ws HTTP/1.1\r\nHost: 127.0.0.1:${String(port)}\r\n${headers}Connection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n`,
+    );
+  });
+}
+const held: Socket[] = [];
+afterEach(() => {
+  for (const socket of held.splice(0)) socket.destroy();
+});
+
+test("a refused upgrade is closed by the server, also when the client never closes its side", async () => {
+  running = await startServer({ port: 0, log: () => {}, limits: { maxConnectionsPerAddress: 1 } });
+  const { port } = running;
+  const origin = `http://127.0.0.1:${String(port)}`;
+  const none = () => running?.connections();
+  expect(await none()).toBe(0);
+  const refusal = (status: string) =>
+    `HTTP/1.1 ${status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n`;
+  // A foreign Origin, and then the wrong path.
+  expect(await lingering(port, "Origin: http://evil.example\r\n")).toBe(refusal("403 Forbidden"));
+  expect(await lingering(port, "")).toBe(refusal("403 Forbidden"));
+  await vi.waitFor(async () => {
+    expect(await none()).toBe(0);
+  });
+  // Over the connection cap: only the one accepted socket stays.
+  const socket = await connect(port, origin);
+  expect(await running.connections()).toBe(1);
+  for (let attempt = 0; attempt < 5; attempt++)
+    expect(await lingering(port, `Origin: ${origin}\r\n`)).toBe(refusal("429 Too Many Requests"));
+  await vi.waitFor(async () => {
+    expect(await none()).toBe(1);
+  });
+  // None of them held a place.
+  socket.close();
+  (await eventually(port, origin)).close();
 });

@@ -112,7 +112,7 @@ test("startup reads the limits and the server uses them", async () => {
     "403",
   );
   expect(output.filter((line) => line.startsWith("limit"))).toEqual([
-    expect.stringMatching(/^limit refused=connections address=[0-9a-f]{8}$/),
+    expect.stringMatching(/^limit refused=connections address=[0-9a-f]{16}$/),
   ]);
   expect(output.join("\n")).not.toContain("192.0.2");
   first.close();
