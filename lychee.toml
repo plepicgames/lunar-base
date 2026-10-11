@@ -1,0 +1,22 @@
+# Link checking for this repository's Markdown.
+#
+# Internal links are checked strictly. External links are checked, except the
+# ones below. Each exclusion says why.
+
+exclude_path = [
+  "node_modules",
+  "dist",
+]
+
+exclude = [
+  # These two repositories are private. An anonymous checker gets 404 for a
+  # private repository that exists. That is a false failure, not a finding.
+  "^https://github\\.com/hannosirkel/(orange|orange-inventory)(/|$)",
+]
+
+# GitHub rate-limits anonymous requests hard enough to make a run flaky.
+max_concurrency = 4
+max_retries = 2
+timeout = 20
+
+accept = ["200", "204", "206", "429"]
