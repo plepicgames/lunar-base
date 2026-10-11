@@ -1095,16 +1095,39 @@ environment and listens.
 | `sessions` | Token to session: name, connection, game and seat |
 | `lobby` | Open games, create, join, leave, the lobby broadcast |
 | `room` | One game: engine state, seat table, decision makers, one event history per seat. Applies choices one at a time from a queue, sends updates, asks a bot when a bot's seat must decide, runs the disconnect and turn limits, and ends the game if the engine throws |
-| `gamelog` | Appends `(config, seed)` and every choice to `.data/games/<id>.jsonl` (ignored by Git). `npm run replay -- <file>` replays it through the engine. The file holds the seed: it is a debugging aid for the person who runs the server, not for players |
+| `gamelog` | Appends a header and every choice to `<id>.jsonl` in the log directory, and deletes old logs. `npm run replay -- <file>` replays a log through the engine. The file holds the seed: it is a debugging aid for the person who runs the server, not for players |
 | `static` | Serves `dist/client` with `sirv` below the base path. The bare base redirects to `<base>/` with 308. A path outside the base, or one that names no file, is 404 |
 | `base-path` | Checks and normalises `LUNAR_BASE_PATH` |
 
-The first JSONL line is `{config,seed}`. Each later line has `seat`, `decision`,
-`option` and `by` for an accepted choice. Writes are synchronous and a write
-failure logs `gamelog_write_error` without stopping play. An `engine_error`
-line includes the log path. Replay prints the turn number, choice count,
-result reason and winners; `--at <n>` also prints the public view after the
-first `n` choices (`0` is the opening view).
+The log directory is `LUNAR_LOG_DIR`, or `.data/games` under the working
+directory (ignored by Git) when that is unset or blank. It is created when the
+first game is logged.
+
+The first JSONL line is `{config,seed,build,protocol,created}`: the build is
+`LUNAR_BUILD` or `dev`, the protocol is `PROTOCOL_VERSION`, and `created` is
+the UTC time in ISO 8601 form. A log written before these fields existed has
+`{config,seed}` only and still replays. Each later line has exactly `seat`,
+`decision`, `option` and `by` for an accepted choice. A log holds seat numbers
+only: no player name, session token, address or account
+([decision 0007](../decisions/0007-keep-game-logs-for-30-days.md)). Writes are
+synchronous and a write failure logs `gamelog_write_error` without stopping
+play. An `engine_error` line includes the log path. Replay reads a log in any
+directory. It prints the turn number, choice count, result reason and winners;
+`--at <n>` also prints the public view after the first `n` choices (`0` is the
+opening view).
+
+`main.ts` sweeps the log directory at startup and then once a day, on a timer
+that does not keep the process alive; the `close()` that `main()` returns
+stops it. A sweep deletes each log last written
+more than `LUNAR_LOG_DAYS` days ago (default 30); a log exactly that old stays.
+The value must be a whole number, 1 or more: anything else, a fraction
+included, stops the start with an error. A sweep deletes only a regular file
+directly in the log directory whose name is a UUID game ID and `.jsonl`. It
+never deletes a symbolic link, a directory, another file, or the log of a game
+whose room still exists in this process. It never throws: it logs one
+`gamelog_sweep_error` line with the count and the first error code, and the
+next sweep tries again. A sweep that deleted something logs one
+`gamelog_sweep deleted=<n>` line.
 
 `http.startServer(options)` owns the HTTP listener, WebSocket upgrade and
 session/lobby/room wiring. It returns the bound port (including the assigned
@@ -1119,7 +1142,9 @@ Each room receives its own random 16-byte seed, unless
 non-empty, using `LUNAR_JEV_MODEL` or `jev-latest`. The adapter and its
 breaker serve every game in the process. `http.startServer` receives that
 maker; its presence controls both `welcome.jev` and the lobby's acceptance
-of `botBrain: "jev"`. The startup line prints only whether Jev is on.
+of `botBrain: "jev"`. The startup line prints only whether Jev is on. A
+second startup line names the log directory, the days a log is kept and the
+build.
 
 | Game brain | Maker for each non-human seat |
 | --- | --- |
@@ -1137,6 +1162,9 @@ passed to the lobby, room, client or game log; only the adapter holds it.
 | `TYPESAFE_API_KEY` | not set | Turns Jev on. Read from the environment only. Never written, logged or sent to a client |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Model name for Jev |
 | `LUNAR_SEED` | random | Fixed seed for every new game, for reproduction |
+| `LUNAR_LOG_DIR` | `.data/games` | Directory of the game logs |
+| `LUNAR_LOG_DAYS` | 30 | Whole days a game log is kept, 1 or more |
+| `LUNAR_BUILD` | `dev` | Build version in the log header and the startup line; the client build reads it too |
 | `LUNAR_BOT_DELAY_MS` | 700 | Smallest time a bot takes to answer, so people can follow. 0 in tests |
 | `LUNAR_TAKEOVER_DELAY_MS` | 60000 | Grace period in milliseconds before the built-in player takes an absent seat's decisions. 1000 in browser tests |
 

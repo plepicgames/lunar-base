@@ -32,9 +32,11 @@ Problem reports are GitHub issues in this repository
   `lobby`, `waiting`, `table` or `result`.
 - The link never holds the seed, a hand, a session token or a player's name.
 - The version is the value of `LUNAR_BUILD` when the client is built, or
-  `dev`. The server does not log it.
+  `dev`. The server writes its own `LUNAR_BUILD` in each game log's first
+  line and in its startup output.
 - A maintainer finds the game's log by its ID and replays it; see
-  [`AGENTS.md`](../../AGENTS.md). No log is deleted by this repository yet
+  [`AGENTS.md`](../../AGENTS.md). The server deletes a log 30 days after its
+  last write, or after `LUNAR_LOG_DAYS` days
   ([decision 0007](../decisions/0007-keep-game-logs-for-30-days.md)).
 
 ## Layout

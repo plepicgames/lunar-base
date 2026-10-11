@@ -152,6 +152,7 @@ export function createRoom(game: LobbyGameRoom, options: RoomOptions): Room {
         disposed = true;
         for (const session of members.keys()) options.onLeave(session);
         members.clear();
+        options.gameLog?.close();
         options.onEmpty();
       });
     }, FINISHED_GAME_TTL_MS);
@@ -322,6 +323,7 @@ export function createRoom(game: LobbyGameRoom, options: RoomOptions): Room {
               disposed = true;
               stopAutomation();
               clearTimeout(expiryTimer);
+              options.gameLog?.close();
               options.onEmpty();
             } else {
               broadcast();
