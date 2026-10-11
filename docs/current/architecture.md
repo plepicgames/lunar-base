@@ -36,7 +36,7 @@ table names a newer release, it says why that one is not used.
 | Validation | `zod` | 4.6.5 | Checks every message at the server boundary and the Jev response |
 | Jev | `@typesafe-ai/sdk` | 0.6.0 | Official client for `POST /v1/systemone`. Takes an injected `fetch`, a per-call `AbortSignal`, a timeout and a retry policy |
 | UI | `react`, `react-dom` | 19.3.0 | A widely known UI library. No router, no state library |
-| Build | `vite`, `@vitejs/plugin-react` | 8.3.4, 6.1.2 | Client build and dev server. Proxies `/ws` to the game server in development |
+| Build | `vite`, `@vitejs/plugin-react` | 8.3.4, 6.1.2 | Client build and dev server. Builds with `base: "./"`, so every URL in the build is relative and one build serves any base path. Proxies `/ws` to the game server in development |
 | UI font | `@fontsource-variable/outfit` | 5.3.0 | OFL-1.1, served from the game itself. See [Tokens](#tokens) |
 | Tests | `vitest` | 5.0.3 | One runner for engine, server and client tests (`test.projects`) |
 | Property tests | `fast-check` | 4.10.2 | Random legal games; shrinks a failure to a short decision list |
@@ -948,7 +948,8 @@ same. Hiding it would need fake prompts and delays; that is not built.
 
 ## Protocol
 
-One WebSocket per browser tab at `/ws`. Messages are JSON objects with a
+One WebSocket per browser tab at `<base>/ws`; the base path is `/` unless
+`LUNAR_BASE_PATH` sets another. Messages are JSON objects with a
 `type`. `src/protocol` defines every message as a zod schema; server and
 client share the inferred types. The server validates every incoming
 message, limits it to 16 KiB, and rejects an upgrade whose `Origin` host
@@ -1073,8 +1074,8 @@ answer, so a dead connection is noticed.
 
 | Detail | Choice |
 | --- | --- |
-| Socket | One `WebSocket` to `/ws` on the page's host, opened by `useConnection` and closed on unmount. Status: `connecting`, `resuming`, `open`, `closed` |
-| Token | Kept in `sessionStorage`. On open, a stored token is sent as `hello` at once. If the server answers `name_invalid` the token is forgotten without an error and the Name screen shows |
+| Socket | One `WebSocket` to `ws` beside the page (`/ws` at the root, `/play/lunar-base/ws` under that base), opened by `useConnection` and closed on unmount. Status: `connecting`, `resuming`, `open`, `closed` |
+| Token | Kept in `sessionStorage` under `lunar-base.token`, with `:<base>/` appended when the base path is not `/`, so two games on one origin keep separate tokens. On open, a stored token is sent as `hello` at once. If the server answers `name_invalid` the token is forgotten without an error and the Name screen shows |
 | Server messages | Parsed with `serverMessageSchema`. A frame that is not JSON or does not parse is dropped: no state change, no notification |
 | Stale update | A `game.update` of the current game with a lower `seq` is dropped. Another game starts again from its own `seq` |
 | State | `session` (from `welcome`), `lobby` (from `lobby.state`, which clears `game`), `game` (from `game.update`, which clears `lobby`), `error` (the latest refusal; the next send or four-second timeout clears it) |
@@ -1095,7 +1096,8 @@ environment and listens.
 | `lobby` | Open games, create, join, leave, the lobby broadcast |
 | `room` | One game: engine state, seat table, decision makers, one event history per seat. Applies choices one at a time from a queue, sends updates, asks a bot when a bot's seat must decide, runs the disconnect and turn limits, and ends the game if the engine throws |
 | `gamelog` | Appends `(config, seed)` and every choice to `.data/games/<id>.jsonl` (ignored by Git). `npm run replay -- <file>` replays it through the engine. The file holds the seed: it is a debugging aid for the person who runs the server, not for players |
-| `static` | Serves `dist/client` with `sirv` |
+| `static` | Serves `dist/client` with `sirv` below the base path. The bare base redirects to `<base>/` with 308. A path outside the base, or one that names no file, is 404 |
+| `base-path` | Checks and normalises `LUNAR_BASE_PATH` |
 
 The first JSONL line is `{config,seed}`. Each later line has `seat`, `decision`,
 `option` and `by` for an accepted choice. Writes are synchronous and a write
@@ -1107,7 +1109,7 @@ first `n` choices (`0` is the opening view).
 `http.startServer(options)` owns the HTTP listener, WebSocket upgrade and
 session/lobby/room wiring. It returns the bound port (including the assigned
 port when asked for 0) and an async `close()` for tests. The static handler
-answers 404 until a client build exists. An upgrade requires `/ws` and an
+answers 404 until a client build exists. An upgrade requires `<base>/ws` and an
 `Origin` whose host matches the request `Host`; malformed or missing origins
 are refused. A client reset while the refusal is sent leaves the server running.
 Each room receives its own random 16-byte seed, unless
@@ -1131,6 +1133,7 @@ passed to the lobby, room, client or game log; only the adapter holds it.
 | --- | --- | --- |
 | `PORT` | 4780 | HTTP and WebSocket port |
 | `HOST` | 127.0.0.1 | Set to `0.0.0.0` to let other machines on the network join |
+| `LUNAR_BASE_PATH` | `/` | The URL path the game is served under, for example `/play/lunar-base`. A trailing slash is dropped. The server stops at startup on any other form: a relative path, an empty segment, `.` or `..`, a query, or a character outside `A-Z a-z 0-9 . _ ~ -` |
 | `TYPESAFE_API_KEY` | not set | Turns Jev on. Read from the environment only. Never written, logged or sent to a client |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Model name for Jev |
 | `LUNAR_SEED` | random | Fixed seed for every new game, for reproduction |
@@ -1451,7 +1454,9 @@ with its own manifest (source label, SHA-256): the logo, the three
 backgrounds, the type badges cut from the card type tabs image, the web
 icons, the Plepic wordmark, and the 16 achievement icons cut from a render
 of rulebook page 10. Vite serves `assets/` as its public directory, so the
-client loads `/cards/w240/<id>.webp`.
+client loads `cards/w240/<id>.webp` below the page's base. `assetUrl` and
+`socketUrl` in `src/client/base.ts` read that base from `document.baseURI`;
+no base path is written into the build.
 
 `npm run assets:brand` copies the two Lunar Base logo forms, website logo and
 icon, six web icons, and Plepic wordmark from the directory in
@@ -1880,6 +1885,11 @@ that names it; the tests never download a browser. Install it with
 tests own port 4791. Longer random runs are `npm run soak`, outside both
 commands.
 
+The suite runs at `/`. `e2e/base-path.spec.ts` starts a second server in its
+own process under `/play/lunar-base` and loads the page, its files and its
+socket there. `LUNAR_BASE_PATH=/play/lunar-base npx playwright test` runs the
+whole suite under that path.
+
 `npm run soak` plays 2,000 base games through the engine, rotating through
 2 to 6 seats. `npm run soak -- --influences` enables Influences for all games.
 `--kickstarter` enables Kickstarter independently; combine both flags for all cards.
@@ -1901,7 +1911,7 @@ npm start
 | Install | Runs `npm ci` if `node_modules` is missing or the SHA-256 of `package-lock.json` differs from the one stored in `node_modules/.lock-sha256` after the last install |
 | Build | Always runs `vite build`. It takes about a second, and no freshness test can then miss an input (a nested component, `cards.json`, the Vite configuration) |
 | Serve | `node src/server/main.ts`: one process, one port, client and WebSocket together |
-| Tell | Prints `Lunar Base is running at http://localhost:4780` and whether Jev is on |
+| Tell | Prints `Lunar Base is running at http://localhost:4780`, with `<base>/` appended when the base path is not `/`, and whether Jev is on |
 
 - Nothing else is needed: no database, no container, no print files, no
   credential. With no credential every non-human player uses the built-in

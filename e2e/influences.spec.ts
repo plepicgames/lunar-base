@@ -5,7 +5,7 @@ for (const kickstarter of [false, true]) {
     page,
   }) => {
     test.setTimeout(60_000);
-    await page.goto("/");
+    await page.goto("./");
     await page
       .getByRole("textbox", { name: "Name" })
       .fill(kickstarter ? "Kickstarter tester" : "Influence tester");

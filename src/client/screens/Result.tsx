@@ -1,6 +1,7 @@
 import type { GameView } from "../../protocol/messages.ts";
 import type { GameState } from "../connection.ts";
 import { Card } from "../cards/Card.tsx";
+import { assetUrl } from "../base.ts";
 import styles from "./Result.module.css";
 
 interface ResultProps {
@@ -41,7 +42,7 @@ function met(value: number, target: number): string {
 function condition(label: string, value: number, target: number, badge: string) {
   return (
     <li className={`${styles.condition} ${value >= target ? styles.met : styles.unmet}`}>
-      <img src={`/brand/badges/${badge}.webp`} alt="" />
+      <img src={assetUrl(`brand/badges/${badge}.webp`)} alt="" />
       <span>
         {label} {met(value, target)}
       </span>

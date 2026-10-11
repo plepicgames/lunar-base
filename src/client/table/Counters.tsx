@@ -4,6 +4,7 @@
 // opponent Influences, and no card of an opponent hand (architecture, Hidden information).
 
 import type { GameView } from "../../protocol/messages.ts";
+import { assetUrl } from "../base.ts";
 import { Card, DECK_BACK } from "../cards/Card.tsx";
 import styles from "./Counters.module.css";
 
@@ -33,7 +34,7 @@ function Counter({ name, value, target, badge, tone }: CounterProps) {
       aria-label={`${name} ${String(value)} of ${String(target)}`}
       className={`${styles.counter} ${tone}`}
     >
-      <img className={styles.badge} src={`/brand/badges/${badge}.webp`} alt="" />
+      <img className={styles.badge} src={assetUrl(`brand/badges/${badge}.webp`)} alt="" />
       <span className={styles.value}>
         {value}/{target}
       </span>
@@ -129,7 +130,11 @@ export function Counters({ player, targets, label, influenceCount }: CountersPro
           aria-label={`Achievements ${String(player.achievements.length)} of ${String(targets.achievements)}`}
           className={`${styles.counter} ${styles.achievements}`}
         >
-          <img className={styles.badge} src="/brand/badges/scientific-achievement.webp" alt="" />
+          <img
+            className={styles.badge}
+            src={assetUrl("brand/badges/scientific-achievement.webp")}
+            alt=""
+          />
           <span className={styles.value}>
             {player.achievements.length}/{targets.achievements}
           </span>
@@ -138,7 +143,7 @@ export function Counters({ player, targets, label, influenceCount }: CountersPro
               <img
                 key={name}
                 className={styles.icon}
-                src={`/brand/achievements/${name}.webp`}
+                src={assetUrl(`brand/achievements/${name}.webp`)}
                 alt={`Achievement ${name.replace("_", " ")}`}
               />
             ))}

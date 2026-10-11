@@ -55,6 +55,7 @@ All are optional environment variables, for example `PORT=4800 npm start`.
 | --- | --- | --- |
 | `PORT` | `4780` | HTTP and WebSocket port |
 | `HOST` | `127.0.0.1` | Use `0.0.0.0` to accept other devices on the local network |
+| `LUNAR_BASE_PATH` | `/` | URL path the game is served under, for example `/play/lunar-base` |
 | `TYPESAFE_API_KEY` | unset | Offers Jev as a choice for non-human players |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Jev model name |
 | `LUNAR_SEED` | random per game | Fixed seed, to reproduce a game |

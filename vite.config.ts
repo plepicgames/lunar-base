@@ -8,6 +8,8 @@ const serverPort = Number(process.env["PORT"] ?? 4780);
 export default defineConfig({
   root: resolve(root, "src/client"),
   publicDir: resolve(root, "assets"),
+  // Relative URLs: one build serves any `LUNAR_BASE_PATH`.
+  base: "./",
   plugins: [react()],
   // The version the client shows and puts in a problem report.
   define: { __LUNAR_BUILD__: JSON.stringify(process.env["LUNAR_BUILD"] || "dev") },

@@ -1,21 +1,42 @@
 import { afterEach, expect, test, vi } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createConnection } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import WebSocket from "ws";
+import { normalizeBasePath } from "./base-path.ts";
 import { startServer, type RunningServer } from "./http.ts";
 
 let running: RunningServer | undefined;
+let clientDir: string | undefined;
 afterEach(async () => {
   await running?.close();
   running = undefined;
+  if (clientDir !== undefined) rmSync(clientDir, { recursive: true, force: true });
+  clientDir = undefined;
 });
+
+/** A stand-in client build: an index and one asset. */
+function fakeClient(): string {
+  clientDir = mkdtempSync(join(tmpdir(), "lunar-base-client-"));
+  writeFileSync(join(clientDir, "index.html"), "<!doctype html><title>Lunar Base</title>");
+  mkdirSync(join(clientDir, "brand"));
+  writeFileSync(join(clientDir, "brand", "icon.svg"), "<svg xmlns='http://www.w3.org/2000/svg'/>");
+  return clientDir;
+}
+
+async function get(port: number, path: string): Promise<Response> {
+  return await fetch(`http://127.0.0.1:${String(port)}${path}`, { redirect: "manual" });
+}
 
 function connect(
   port: number,
   origin?: string,
   options: WebSocket.ClientOptions = {},
+  path = "/ws",
 ): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
-    const socket = new WebSocket(`ws://127.0.0.1:${String(port)}/ws`, {
+    const socket = new WebSocket(`ws://127.0.0.1:${String(port)}${path}`, {
       ...options,
       ...(origin ? { origin } : {}),
     });
@@ -330,4 +351,92 @@ test("a malformed frame drops that socket and leaves the server available", asyn
   socket.send(JSON.stringify({ type: "hello", protocol: 1, name: "Alice" }));
   expect(await welcome).toMatchObject({ type: "welcome", name: "Alice" });
   socket.close();
+});
+
+test("at the root base the index, an asset and /ws are served as before", async () => {
+  running = await startServer({ port: 0, host: "127.0.0.1", clientDir: fakeClient() });
+  const index = await get(running.port, "/");
+  expect(index.status).toBe(200);
+  expect(await index.text()).toContain("<title>Lunar Base</title>");
+  expect((await get(running.port, "/index.html?plain=1")).status).toBe(200);
+  const asset = await get(running.port, "/brand/icon.svg");
+  expect(asset.status).toBe(200);
+  expect(asset.headers.get("content-type")).toContain("image/svg+xml");
+  expect((await get(running.port, "/brand/missing.svg")).status).toBe(404);
+  const socket = await connect(running.port, `http://127.0.0.1:${String(running.port)}`);
+  socket.close();
+});
+
+test("under a base path the index, the assets and the socket live below it and nowhere else", async () => {
+  running = await startServer({
+    port: 0,
+    host: "127.0.0.1",
+    clientDir: fakeClient(),
+    basePath: "/play/lunar-base/",
+  });
+  const { port } = running;
+  const origin = `http://127.0.0.1:${String(port)}`;
+
+  const index = await get(port, "/play/lunar-base/");
+  expect(index.status).toBe(200);
+  expect(await index.text()).toContain("<title>Lunar Base</title>");
+  expect((await get(port, "/play/lunar-base/?plain=1")).status).toBe(200);
+  expect((await get(port, "/play/lunar-base/brand/icon.svg")).status).toBe(200);
+
+  const bare = await get(port, "/play/lunar-base?plain=1");
+  expect(bare.status).toBe(308);
+  expect(bare.headers.get("location")).toBe("/play/lunar-base/?plain=1");
+
+  for (const outside of ["/", "/index.html", "/brand/icon.svg", "/play", "/play/lunar-basement/"]) {
+    expect((await get(port, outside)).status, outside).toBe(404);
+  }
+  expect((await get(port, "/play/lunar-base/ws")).status).toBe(404);
+
+  const socket = await connect(port, origin, {}, "/play/lunar-base/ws");
+  const welcome = until(socket, "welcome");
+  socket.send(JSON.stringify({ type: "hello", protocol: 1, name: "Alice" }));
+  expect(await welcome).toMatchObject({ type: "welcome", name: "Alice" });
+  socket.close();
+
+  await expect(connect(port, origin)).rejects.toThrow("403");
+  await expect(connect(port, origin, {}, "/play/lunar-base")).rejects.toThrow("403");
+  await expect(
+    connect(port, "http://elsewhere.example", {}, "/play/lunar-base/ws"),
+  ).rejects.toThrow("403");
+});
+
+test.each([
+  ["/", "/"],
+  ["/play", "/play"],
+  ["/play/lunar-base", "/play/lunar-base"],
+  ["/play/lunar-base/", "/play/lunar-base"],
+  ["/a.b_c~d-9", "/a.b_c~d-9"],
+])("the base path %j is normalised to %j", (value, expected) => {
+  expect(normalizeBasePath(value)).toBe(expected);
+});
+
+test.each([
+  "",
+  " ",
+  "play/lunar-base",
+  "//",
+  "//play",
+  "/play//lunar-base",
+  "/play/lunar-base//",
+  "/play/../lunar-base",
+  "/..",
+  "/./play",
+  "/play?x=1",
+  "/play#top",
+  "/play/lunar base",
+  " /play",
+  "/play\n",
+  "/play/%2e%2e",
+  "/pl\\ay",
+  "https://example.com/play",
+])("the base path %j is rejected", async (value) => {
+  expect(() => normalizeBasePath(value)).toThrow("LUNAR_BASE_PATH");
+  await expect(startServer({ port: 0, host: "127.0.0.1", basePath: value })).rejects.toThrow(
+    "LUNAR_BASE_PATH",
+  );
 });

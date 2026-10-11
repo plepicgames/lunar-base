@@ -3,6 +3,7 @@
 // the corners from the width.
 
 import type { CSSProperties } from "react";
+import { assetUrl } from "../base.ts";
 import { cardName } from "../cards.ts";
 import styles from "./Card.module.css";
 
@@ -34,7 +35,7 @@ export function Card({ cardId, width, turns = 0 }: CardProps) {
     <span className={styles.card} style={style} data-rotation={degrees}>
       <img
         className={styles.image}
-        src={`/cards/w240/${cardId}.webp`}
+        src={assetUrl(`cards/w240/${cardId}.webp`)}
         alt={cardLabel(cardId)}
         draggable={false}
       />

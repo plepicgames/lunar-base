@@ -59,7 +59,7 @@ function answerLater(): { previous: string; selected: boolean } | null {
 }
 
 async function enter(page: Page, name: string): Promise<void> {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("textbox", { name: "Name" }).fill(name);
   await page.getByRole("button", { name: "Enter the lobby" }).click();
   await expect(page.getByRole("heading", { name: "Create a game" })).toBeVisible();
@@ -222,7 +222,7 @@ test("one player Builds and Drafts on the picture table, then reaches the result
 });
 
 test("the plain table keeps a short named decision flow", async ({ page }) => {
-  await page.goto("/?plain=1");
+  await page.goto("./?plain=1");
   await page.getByRole("textbox", { name: "Name" }).fill("Plain");
   await page.getByRole("button", { name: "Enter the lobby" }).click();
   await create(page, 2, 1);
@@ -251,7 +251,7 @@ test("a request to another host is aborted and recorded", async ({ page, guard }
 
 test("a WebSocket to another host is closed and recorded", async ({ page, guard }) => {
   guard.acknowledge();
-  await page.goto("/");
+  await page.goto("./");
   const outcome = await page.evaluate(
     (url) =>
       new Promise<string>((resolve) => {
@@ -278,7 +278,7 @@ test("a service worker never becomes active", async ({ page }) => {
     .route("**/sw.js", (route) =>
       route.fulfill({ contentType: "text/javascript", body: "self.onfetch = () => {};" }),
     );
-  await page.goto("/");
+  await page.goto("./");
   const outcome = await page.evaluate(async () => {
     try {
       await navigator.serviceWorker.register("/sw.js");

@@ -3,6 +3,7 @@
 // session, the lobby and the game; it holds no rules.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { socketUrl, tokenKey } from "./base.ts";
 import {
   PROTOCOL_VERSION,
   serverMessageSchema,
@@ -12,7 +13,10 @@ import {
   type ServerMessage,
 } from "../protocol/messages.ts";
 
-/** Where the tab keeps its session token. Each tab is its own player. */
+/**
+ * Where the tab keeps its session token when the game is served at the root;
+ * `tokenKey` adds the base path elsewhere. Each tab is its own player.
+ */
 export const TOKEN_KEY = "lunar-base.token";
 
 type Message<T extends ServerMessage["type"]> = Extract<ServerMessage, { type: T }>;
@@ -76,7 +80,7 @@ const INITIAL: ConnectionState = {
 
 function readToken(): string | null {
   try {
-    return window.sessionStorage.getItem(TOKEN_KEY);
+    return window.sessionStorage.getItem(tokenKey());
   } catch {
     return null;
   }
@@ -84,16 +88,11 @@ function readToken(): string | null {
 
 function writeToken(token: string | null): void {
   try {
-    if (token === null) window.sessionStorage.removeItem(TOKEN_KEY);
-    else window.sessionStorage.setItem(TOKEN_KEY, token);
+    if (token === null) window.sessionStorage.removeItem(tokenKey());
+    else window.sessionStorage.setItem(tokenKey(), token);
   } catch {
     // Storage can be blocked. The session then lasts until the socket drops.
   }
-}
-
-function socketUrl(): string {
-  const scheme = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${scheme}://${window.location.host}/ws`;
 }
 
 /** A message as the server sent it, or null when it is not one. */

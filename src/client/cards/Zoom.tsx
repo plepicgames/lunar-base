@@ -5,6 +5,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
+import { assetUrl } from "../base.ts";
 import { cardTexts } from "../cards.ts";
 import { Card, DECK_BACK, cardLabel } from "./Card.tsx";
 import type { CardProps } from "./Card.tsx";
@@ -52,7 +53,7 @@ export function ZoomView({
         if (event.key === "Escape") onEscape();
       }}
     >
-      <img className={styles.image} src={`/cards/w591/${cardId}.webp`} alt="" />
+      <img className={styles.image} src={assetUrl(`cards/w591/${cardId}.webp`)} alt="" />
       <div className={styles.text}>
         <h2 id={titleId} className={styles.name}>
           {name}

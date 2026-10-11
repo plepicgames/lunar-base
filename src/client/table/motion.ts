@@ -11,6 +11,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
+import { assetUrl } from "../base.ts";
 import type { GameState } from "../connection.ts";
 import { DECK_BACK } from "../cards/Card.tsx";
 
@@ -168,7 +169,7 @@ function ghostOf(cardId: string, at: Point): HTMLElement {
     zIndex: "30",
   });
   const image = document.createElement("img");
-  image.src = `/cards/w240/${cardId}.webp`;
+  image.src = assetUrl(`cards/w240/${cardId}.webp`);
   image.alt = "";
   image.draggable = false;
   Object.assign(image.style, { width: "100%", height: "100%", borderRadius: "6px" });

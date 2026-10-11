@@ -2,6 +2,10 @@ import { existsSync } from "node:fs";
 import { defineConfig } from "@playwright/test";
 
 const port = 4791;
+// `LUNAR_BASE_PATH=/play/lunar-base npx playwright test` runs the suite under
+// that path. The specs open `./`, which is relative to this address.
+const basePath = (process.env["LUNAR_BASE_PATH"] ?? "/").replace(/\/+$/, "");
+const address = `http://127.0.0.1:${String(port)}${basePath}/`;
 
 // The browser tests use the Chromium that is already installed and never
 // download one. Playwright finds it in its own cache; when it is missing the
@@ -23,19 +27,20 @@ export default defineConfig({
   timeout: 20_000,
   reporter: [["list"]],
   use: {
-    baseURL: `http://127.0.0.1:${String(port)}`,
+    baseURL: address,
     headless: true,
     serviceWorkers: "block",
     launchOptions: { executablePath: chromium },
   },
   webServer: {
     command: "npm start",
-    url: `http://127.0.0.1:${String(port)}`,
+    url: address,
     reuseExistingServer: false,
     timeout: 60_000,
     stdout: "pipe",
     env: {
       PORT: String(port),
+      LUNAR_BASE_PATH: `${basePath}/`,
       LUNAR_SEED: "e2e-walking-skeleton",
       LUNAR_BOT_DELAY_MS: "0",
       LUNAR_TAKEOVER_DELAY_MS: "1000",
