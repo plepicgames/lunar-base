@@ -161,7 +161,8 @@ eventFor(event: GameEvent, seat: Seat | null): ViewEvent | null
 | `GameEvent` | One thing that happened, already split by audience (see [Hidden information](#hidden-information)) |
 
 - `createGame` runs setup (section 3 of the rules), starts the first turn
-  and stops at the first decision: the starting seat's D2.
+  and stops at the first decision: the starting seat's D1 when that seat
+  holds an Agent it can pay for, otherwise its D2.
 - `applyChoice` rejects a choice that is not the pending decision, not from
   its seat, or not one of its options. It checks in that order and returns
   the first error: `stale_decision`, `wrong_seat` or `unknown_option`. A

@@ -186,5 +186,5 @@ These change something outside Git. Each needs the operator's word at the time.
 
 - No sign-in, no accounts, no saved games across a restart.
 - No translation of the game. It is English.
-- No change to the rules. The 44 open rule readings stay as they are in
+- No change to the rules. The 49 open rule readings stay as they are in
   `docs/current/open-questions.md`.

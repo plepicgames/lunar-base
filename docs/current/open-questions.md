@@ -1,6 +1,6 @@
 # Open questions
 
-44 points where the rulebook or the cards are unclear, silent or disagree.
+49 points where the rulebook or the cards are unclear, silent or disagree.
 Each has the reading that [`rules.md`](./rules.md) uses and the reason. The
 operator can overturn any reading; the rule numbers show what to change.
 
@@ -8,17 +8,14 @@ Highest impact, worth an operator look: Q1 and Q2 (placement), Q4 and Q5
 (when the game ends), Q9 (which icons are achievements), Q18 (Influence
 defence), Q30 and Q36 (Kickstarter cards), Q39 to Q42 (product choices).
 
-An independent rules review revised Q5, Q18, Q23, Q30 and Q34 and added Q36
-to Q38. An architecture review added Q42.
-
 Sources: `p.` is a printed rulebook page; `card` is the print file;
 `draft` is an older rulebook draft, used only as a hint.
 
 ## Client decision detail
 
-| Question | Current reading | Follow-up |
+| Question | Present behaviour | Known gap |
 | --- | --- | --- |
-| How should D12 identify the exact Agent action being defended? | The client shows the Agent's printed actions. Each D12 option carries the pending public `action` and its `actor` seat; the dialog does not show them. | Show the pending action in the dialog. Preserve the hidden-information rules. |
+| How should D12 identify the exact Agent action being defended? | Each D12 option carries the pending public `action` and its `actor` seat. The dialog shows the Agent's printed actions. | The dialog does not show which action is pending. |
 
 ## Base, Orbs and placement
 
@@ -105,22 +102,22 @@ that the operator may want to overturn.
 | Q45 | How does Jev retain every offered Module when there are more than 59 Modules plus skip? | architecture, Jev adapter | Treat 60 as a target: retain the best placement per physical Module and skip, even above 60. Return `"too many"` above 255. | Hands have no size limit; preserving each Module is more useful than silently excluding legal cards. |
 | Q46 | What if required visible state and choices alone exceed the approximate 6k-token prompt target? | architecture, Jev adapter | Drop recent events oldest first; retain choices, visible state and current-turn hand reveals. Estimate four JSON characters per token. The transport must handle the model's hard context limit separately. | The 6k target is soft; truncating a legal choice set or a seen hand would violate the prompt contract. |
 | Q47 | Does "Budget used up" count for the breaker? The failures table says so for a timeout and not for the budget. | architecture, Limits and failures | Yes. A decision whose signal aborts after a request was made is a failed decision. A signal that is already aborted before the request is not. | Two 4 s attempts and the wait between them take about 8.5 s, so a Jev that hangs always ends by the 8 s budget, never by the second timeout. If the budget did not count, a dead service would cost every decision 8 s for ever. The adapter cannot tell the budget from another abort of the signal; the room aborts for no other reason today. |
-| Q48 | How can a seed-only game log demonstrate replay to `step_limit` through a room when the known cycle test starts from a constructed state? | Q42 | Keep the log seed-only and retain the constructed-state engine and room tests; add the replay acceptance test when a reproducible seeded game is found. | A search of 2,000 two-seat seeded games with Influences and random legal choices found no `step_limit`; the largest observed turn used 116 of 5,000 steps. Logging the constructed state would change the log contract. |
+| Q48 | How can a seed-only game log demonstrate replay to `step_limit` through a room when the known cycle test starts from a constructed state? | Q42 | Keep the log seed-only. The engine and room tests reach `step_limit` from a constructed state. | Logging the constructed state would change the log contract. |
 | Q49 | How can Lobby and Waiting list the chosen eight Influences once the game starts? | architecture, Behaviour | Show the names on the Table from `view.influencesInGame` once setup has picked them. | Lobby and Waiting exist only before setup and their `LobbyGame` data has no selected list. The client cannot publish names before they are picked. |
 
-## Corrections to an earlier rulebook transcription
+## Readings of rulebook pictures and card faces
 
-| # | Point | Where | Correction |
+| # | Point | Where | Reading |
 | --- | --- | --- | --- |
-| Q28 | An earlier text transcription of the rulebook said Terran Outpost shows two colonists, a red icon and four action buttons; that Rebel Captain has three options; and named a card "Indigo Ecocore". | Sheets 4, 18, 22 of the rulebook | The print and the rulebook show Terran Outpost with no colonists, no achievement and three boxes (Draft / Build / Resell x2, Draw). Rebel Captain has two boxes. The Module is Indigo Egregore. |
-| Q43 | The same transcription said Hayashi Dome lies underneath the Terran Outpost on p. 24 and that the Smart Spaceship meets mismatched colours. | Sheet 14 of the rulebook | A 900 dpi render shows Hayashi Dome on the left, a second Dome on the right and the Smart Spaceship lying over that Dome: its fault is rule 3 of the page (R5.10), marked by the orange border. The three red circles are on Hayashi Dome and Beruang Engineers. The three INCORRECT placements are read as these three cards: Hayashi Dome, Beruang Engineers, Smart Spaceship. The Bases are in `src/engine/testing/rulebook-bases.ts`. |
+| Q28 | What Terran Outpost shows, how many boxes Rebel Captain has, and the name of the Module Indigo Egregore. | Sheets 4, 18, 22 of the rulebook | The print and the rulebook show Terran Outpost with no colonists, no achievement and three boxes (Draft / Build / Resell x2, Draw). Rebel Captain has two boxes. The Module is Indigo Egregore. |
+| Q43 | Which cards are the three INCORRECT placements on p. 24, and what is the fault of each. | Sheet 14 of the rulebook | The picture shows Hayashi Dome on the left, a second Dome on the right and the Smart Spaceship lying over that Dome: its fault is rule 3 of the page (R5.10), marked by the orange border. The three red circles are on Hayashi Dome and Beruang Engineers. The three INCORRECT placements are read as these three cards: Hayashi Dome, Beruang Engineers, Smart Spaceship. The Bases are in `src/engine/testing/rulebook-bases.ts`. |
 
 ## Not verified
 
 | Point | State |
 | --- | --- |
-| Card texts and values | Read by eye from 300 dpi renders of every print page. Half-orb colours of all 62 Station and Module pages were also measured from pixels and match `cards.json`. Costs, colonists and icons were checked on enlarged crops of all 50 Module pages. |
-| Rules R5 and R6 | 22 pictured examples from the rulebook pass a model fed with `cards.json`. The engine tests hold the pictures of p. 23 and 24 (`src/engine/placement.test.ts`) and those of p. 12, 18, 20, 27 to 30 and 32 (`src/engine/rulebook.test.ts`). They show no disagreement. |
-| Agent and Influence duplicates | The two copies of each Agent were compared on contact sheets, not pixel by pixel. |
+| Card texts and values | `cards.json` holds them as read from the print pages. No test compares `cards.json` with the print files, which are not in this repository. |
+| Rules R5 and R6 | The engine tests hold the rulebook pictures of p. 23 and 24 (`src/engine/placement.test.ts`) and those of p. 12, 18, 20, 27 to 30 and 32 (`src/engine/rulebook.test.ts`). Other pages are not tested. |
+| Agent and Influence duplicates | The copies of one face are not compared pixel by pixel. |
 | Print rulebook among the print files (48 pages, outlined) | Not compared with the published rulebook. |
 | Rulebook thumbnails of cards | Not compared one by one with the print files, except those cited above. |
