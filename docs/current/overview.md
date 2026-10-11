@@ -6,10 +6,14 @@ engine decides everything. A small WebSocket server owns the games and sends
 each player only what that player may see. A React client draws the table
 from that view. Games live in the memory of one process.
 
-The rules specification, the full architecture document and the list of open
-rule readings are not here yet. They arrive in row L4 of the
-[plan](../working/publication/plan.md). No container image is built and
-nothing is deployed from this repository.
+| Document | Holds |
+| --- | --- |
+| [`rules.md`](./rules.md) | The rules the engine implements, with rule numbers |
+| [`architecture.md`](./architecture.md) | The engine, the protocol, the server, the non-human players, the client and the tests |
+| [`open-questions.md`](./open-questions.md) | The points where the rulebook is unclear, and the reading chosen |
+
+No container image is built and nothing is deployed from this repository.
+The [plan](../working/publication/plan.md) lists the work that remains.
 
 ## Layout
 
