@@ -2068,6 +2068,75 @@ npm start
   to a game server on `PORT` (default 4780). Start that server separately
   with `node src/server/main.ts`.
 
+## Image
+
+The `Dockerfile` builds one image, `ghcr.io/plepicgames/lunar-base`, in three
+stages on one Node.js base image pinned by digest.
+
+| Stage | Does |
+| --- | --- |
+| `build` | `npm ci`, then `vite build` with `LUNAR_BUILD` from the build argument |
+| `runtime-dependencies` | `npm ci --omit=dev` |
+| `runtime` | Holds only what the server reads, and removes npm, corepack and yarn |
+
+`/app` in the image holds `package.json` (for `"type": "module"`),
+`node_modules` without development packages, `docs/design/cards.json`,
+`src/engine`, `src/protocol`, `src/bots`, `src/server` and `dist/client`.
+Tests, fixtures, `src/client` and `tools/` are not in it; `assets/` is there
+only as the copy Vite put into `dist/client`. Node runs the `.ts` files by
+type stripping, so there is no compile step for the server.
+
+The contract with the Deployment in `hannosirkel/deploys`:
+
+| Point | Image |
+| --- | --- |
+| User | Numeric UID and GID 10001 |
+| File system | Read-only root. The server writes only below `LUNAR_LOG_DIR`; the Deployment mounts a volume at `/var/lib/lunar-base/games`, which exists in the image and belongs to 10001. There is no `/tmp` volume and the server needs none |
+| Process | `node src/server/main.ts` in exec form with an empty entrypoint: Node is process 1 and handles `SIGTERM` itself, as in [Health and shutdown](#health-and-shutdown). No init wrapper, because the server starts no child process |
+| Port | 4780, when `PORT` says so |
+| Settings | None is baked in. `HOST`, `PORT`, `LUNAR_BASE_PATH`, `LUNAR_LOG_DIR` and the others come from the Deployment. Without `HOST=0.0.0.0` the server listens on loopback only, and without `LUNAR_LOG_DIR` it cannot write a game log in the image |
+| Base path | Any: the client is built with relative addresses |
+| Build | `LUNAR_BUILD` is the Git commit, set once as a build argument. The client shows it and the server writes it into each game log |
+| Labels | `org.opencontainers.image.source` (links the package to this repository), `revision` (the commit) and `licenses` (`LicenseRef-Proprietary`) |
+
+`scripts/smoke-image.sh <image> [<build>]` runs an image under that contract:
+user 10001, read-only root, no capabilities, a volume at the log directory,
+`LUNAR_BASE_PATH=/play/lunar-base` and no Jev key. It requires `200` from
+`/play/lunar-base/healthz` and from the index, exit code 0 within 15 seconds
+of `SIGTERM`, no `EROFS` or `EACCES` in the output and, when a build is named,
+that build in the start lines. The `image` job of `validate.yml` runs it on
+each pull request and the `build` job of `release.yml` on the pushed digest.
+
+### Release
+
+`.github/workflows/release.yml` runs on a push to `main` that changes a file
+the image is built from, and on a manual run from `main`. Its `paths` list is
+a superset of the allow-list in `.dockerignore`: it holds every file the build
+context admits, and also `Dockerfile`, `.dockerignore`, the two release
+scripts and the workflow itself, which decide how a release runs. A promotion restarts
+the single replica and ends the games in progress
+([decision 0005](../decisions/0005-run-one-replica-with-recreate.md)), so a
+merge of documents or tests alone does not run it.
+
+| Job | Permissions | Does |
+| --- | --- | --- |
+| `validate` | `contents: read` | The gate and the browser tests |
+| `gate` | `contents: read` | Refuses a ref other than `main`. Reads `scripts/update-gitops-digest.sh` from the pushed commit through the API and hands it on |
+| `build` | `contents: read`, `packages: write` | Builds and pushes `sha-<commit>` with provenance and an SBOM, runs the smoke script on the pushed digest, scans the digest and fails on a critical vulnerability that has a fix |
+| `promote` | none; environment `live` | Mints a GitHub App token for `hannosirkel/deploys` alone, checks out only that repository, runs the guard, runs `lunar-base/tests/manifests.sh`, schema-checks the rendered overlay with a checksum-pinned `kubeconform -strict`, pushes one commit that changes one file, and revokes the token, also after a failure. The token is asked for with `contents: write` only |
+
+`scripts/update-gitops-digest.sh <digest> <overlay>` is the guard. It accepts
+`sha256:` and 64 lower-case hexadecimal digits, not all zero. The overlay must
+be `lunar-base/overlays/live` of a clean Git checkout. The file must hold one
+`images:` block with exactly the lines `name`, `newName` and `digest` for
+`ghcr.io/plepicgames/lunar-base`, followed by a top-level key. It rewrites the
+`digest:` line and nothing else, and changes nothing when the digest is
+already there. `test/update-gitops-digest.test.ts` covers each refusal.
+
+The workflow-level `concurrency` group lets one release run at a time. The
+promotion job holds no code of this repository except the guard, and the
+build job holds no credential for `deploys`.
+
 ## Limits and non-goals
 
 | Not built | Why |

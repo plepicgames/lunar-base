@@ -1,0 +1,26 @@
+# An allow-list: the build context holds only what the image is built from.
+# The `paths` filter of `release.yml` holds these and the release files; change both.
+*
+!package.json
+!package-lock.json
+!.npmrc
+!vite.config.ts
+!tsconfig.base.json
+!src/
+!assets/
+!docs/
+docs/*
+!docs/design/
+docs/design/*
+!docs/design/cards.json
+
+# Refused at any depth of an admitted tree: tests and their fixtures, and
+# files that may hold a secret or a machine's output.
+**/*.test.ts
+**/*.test.tsx
+**/__snapshots__/
+**/testing/
+**/scenarios/
+**/.env
+**/.env.*
+**/*.log
