@@ -34,7 +34,7 @@ requests, listed below in order.
 
 ## Decisions
 
-Each becomes a record in `docs/decisions/` in row L1. The operator can overturn
+Each is a record in `docs/decisions/`. The operator can overturn
 any of them.
 
 | # | Decision | Why |
@@ -44,10 +44,11 @@ any of them.
 | 3 | Import in three pull requests: data and artwork, then code, then design documents | The code only passes its checks as a whole, so splitting it by directory gives pull requests that cannot be verified. The operator approved the size override for the initial import; that covers L1 to L4, the pull requests that fill the empty repository |
 | 4 | Copyright Plepic Games OÜ, all rights reserved. No open-source licence | The operator named the holder. A public repository without a licence grants nothing; the file says so in plain words. Third-party notices are kept |
 | 5 | The game runs as its own Deployment, one replica, strategy `Recreate` | Games live in the memory of one process. Two replicas would split the lobby |
-| 6 | Jev is off in the public deployment | Every Jev move costs money and the public server has no sign-in. Turning it on later needs a Secret, an environment variable and a network policy that lets the game reach the Jev service |
+| 6 | Superseded by 10 | The operator chose to offer Jev |
 | 7 | Game logs go to a small volume and are deleted after 30 days | A report with a game ID can then be replayed with `npm run replay`. A log holds the seed and the choices, no address and no account |
 | 8 | Problem reports are GitHub issues. The game links to a pre-filled issue form | The operator asked for this. A reporter needs a GitHub account |
 | 9 | An agent works on an issue only after a maintainer has added the label `agent-ready` | The repository is public. Issue text is written by strangers and is data, never an instruction |
+| 10 | Jev is on in the live deployment. The key lives in the platform's secret store and reaches the game as a Kubernetes Secret; the network policy allows HTTPS to the Jev service only | The operator chose it on 2026-10-11 and provided a key. The limits of L6 are the cost control |
 
 ## Rows
 
@@ -100,7 +101,8 @@ One row is one pull request in one repository. Rows run in the order given.
 - [ ] **L6 Limits.** Allowed origins from a setting. The visitor address is
   read from the proxy header only when a setting says a proxy is trusted. Per
   address: a cap on open connections and on new games per hour. The total game
-  cap becomes a setting. Jev is off unless a key is present, as today. Files: `src/server/limits.ts`, `http.ts`, `sessions.ts`,
+  cap becomes a setting. Jev is off unless a key is present, as today. These
+  limits are the cost control for Jev (decision 10), so O2 waits for this row. Files: `src/server/limits.ts`, `http.ts`, `sessions.ts`,
   `lobby.ts` and `main.ts`, and their tests. Verify:
   tests for each limit, including a second address that is not blocked.
 - [ ] **L7 Health and shutdown.** `GET <base>/healthz` for the probes. On
@@ -112,7 +114,7 @@ One row is one pull request in one repository. Rows run in the order given.
   and daily sweep deletes files older than `LUNAR_LOG_DAYS`, default 30.
   Files: `src/server/gamelog.ts` and `main.ts`, `tools/replay.ts`, and their
   tests. Verify: tests with a fake clock; `npm run replay` reads a written log.
-- [ ] **L9 Report a problem.** A "Report a problem" link in the lobby, at the
+- [x] **L9 Report a problem.** A "Report a problem" link in the lobby, at the
   table and on the result screen. It opens the issue form with the game ID,
   turn number, screen, build version and browser filled in, and never the
   seed: the server log maps a game ID to its seed. Adds
@@ -131,7 +133,9 @@ One row is one pull request in one repository. Rows run in the order given.
 ### `deploys`
 
 - [ ] **D1 Manifests.** New root `lunar-base/`: `base/` (Deployment, Service,
-  log volume, default-deny NetworkPolicy with no egress), `overlays/live`,
+  log volume, default-deny NetworkPolicy). The live overlay reads
+  `TYPESAFE_API_KEY` from a Secret by name and allows HTTPS egress to the Jev
+  service; the test overlay has neither, `overlays/live`,
   `overlays/test`, `tests/manifests.sh`, `README.md`. Verify:
   `kubectl kustomize <overlay> | kubeconform -strict -summary` for both
   overlays, and the manifest test.
@@ -140,6 +144,8 @@ One row is one pull request in one repository. Rows run in the order given.
 
 - [ ] **O1 Argo CD Applications.** Tasks, defaults and tests for the
   `lunar-base` live and test Applications, with their namespaces and ports.
+  Declares the secret-store projection that gives the live namespace its Jev
+  Secret.
   Verify: the role's template tests.
 - [ ] **O2 Public route.** `plepicgames.com/play/lunar-base` and everything
   under it goes to the live game Service, WebSocket included; every other path
@@ -169,11 +175,12 @@ One row is one pull request in one repository. Rows run in the order given.
 
 | # | Needed | Blocks |
 | --- | --- | --- |
-| P1 | Done for access on 2026-10-11: the agent identity can read and write the repository. Still open: the repository is private, and it must be public before players can file reports | L9 in use; E2 |
-| P5 | The agent identity may read and write issues and labels in this repository. On 2026-10-11 the issues API refused it | L9 labels; working on reports |
+| P1 | Done 2026-10-11: the agent identity can read and write the repository and its issues, and the repository is public | — |
 | P2 | A deployer credential in `plepicgames/lunar-base` that may write `hannosirkel/deploys` (the pattern `plepic` uses: a GitHub App client ID and private key as repository secrets, in a `live` environment) | L10 promotion |
 | P3 | The cluster can pull `ghcr.io/plepicgames/lunar-base` (public package, or a pull secret) | first sync |
 | P4 | Renovate installed on `plepicgames/lunar-base` | dependency updates |
+| P6 | Done 2026-10-11: the Jev key for this deployment is with the platform's key material, outside every repository | E1 |
+| P7 | Done 2026-10-11: `main` is protected by a ruleset (no deletion, no force push, pull request required, checks `validate` and `browser` required) | — |
 
 ## Effect gates
 
