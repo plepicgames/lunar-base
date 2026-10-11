@@ -1,4 +1,4 @@
-// Test support: the Bases pictured in docs/inputs/lunar-base-rulebook.pdf,
+// Test support: the Bases pictured in the printed rulebook (lunar-base-rulebook.pdf),
 // read by eye from renders of its sheets. Pages 23 and 24 ("Building a
 // Module") come from a 900 dpi render of sheet 14. Engine tests use them;
 // engine code does not.

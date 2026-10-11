@@ -1,5 +1,5 @@
 // Test support: the sample turn of rulebook pages 27 to 30, read by eye from
-// a 500 dpi render of sheets 16 and 17 of docs/inputs/lunar-base-rulebook.pdf.
+// a 500 dpi render of sheets 16 and 17 of the printed rulebook (lunar-base-rulebook.pdf).
 // Engine tests use it; engine code does not.
 
 import type { Base, BaseModule } from "../base.ts";

@@ -10,7 +10,7 @@ import { sourceLocation } from "./sources.ts";
 const pages = [4, 21, 22, 23, 24, 25, 26] as const;
 // The label recorded in assets/help/manifest.json. The rulebook PDF is not in
 // this repository; a build reads it from LUNAR_RULEBOOK_PDF.
-const source = "docs/inputs/lunar-base-rulebook.pdf";
+const source = "lunar-base-rulebook.pdf";
 type Entry = {
   file: string;
   page: number;
