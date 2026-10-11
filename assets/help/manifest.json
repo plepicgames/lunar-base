@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "source": "docs/inputs/lunar-base-rulebook.pdf",
+  "files": [
+    {
+      "file": "page-4.webp",
+      "page": 4,
+      "sheet": 4,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "3e08f1bfc687e932e948c9105b7497d57820e9ab05bc2bc54976e135b91ea6a7"
+    },
+    {
+      "file": "page-21.webp",
+      "page": 21,
+      "sheet": 13,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "f59827ed6f790ca7ec8201cfbcaaade5b9b4a6c95fb2a1401c62dea80b6bd46b"
+    },
+    {
+      "file": "page-22.webp",
+      "page": 22,
+      "sheet": 13,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "d240139c5e2671ffacaaec23c455342d0c2cb9f620456f5050f6cfdcc8d9df84"
+    },
+    {
+      "file": "page-23.webp",
+      "page": 23,
+      "sheet": 14,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "a3db1ccaec6f047869131d70ae0ab23b49d8524b25372cc15b446785f9b6dd73"
+    },
+    {
+      "file": "page-24.webp",
+      "page": 24,
+      "sheet": 14,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "51f95efe1c2e4657f27f8046b7b6d3d826d2d3a1bfcffd8d39f9daef08b933e8"
+    },
+    {
+      "file": "page-25.webp",
+      "page": 25,
+      "sheet": 15,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "791397a4633dafc26ec486e37ec5bfa81cf6b16d5b5c5c0b75a46241ce169b7e"
+    },
+    {
+      "file": "page-26.webp",
+      "page": 26,
+      "sheet": 15,
+      "width": 1000,
+      "height": 1000,
+      "sha256": "205df897b2ca1d8b91b37c32c5b76976043266176ce5850ccdae89456e086acf"
+    }
+  ]
+}

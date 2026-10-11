@@ -1,0 +1,1505 @@
+{
+  "version": 1,
+  "tools": {
+    "sharp": "0.35.5",
+    "pdftoppm": "pdftoppm version 25.03.0"
+  },
+  "files": [
+    {
+      "id": "stn-terran-outpost",
+      "file": "w591/stn-terran-outpost.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDBACK.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "8d4f48c50aac0aa2c692abe1c39edf2948c45f15fbeff8ac1f07dedc91bfd611"
+    },
+    {
+      "id": "stn-terran-outpost",
+      "file": "w240/stn-terran-outpost.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDBACK.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "0e9f088c4b944806a9abbb29c5867c2d57cc72654964bacac1667ec60a9d2327"
+    },
+    {
+      "id": "stn-shackleton",
+      "file": "w591/stn-shackleton.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "b0148d7a6e3530c89c0c728d1c422b50d48f9d0ad64e06733705d3edc27c9967"
+    },
+    {
+      "id": "stn-shackleton",
+      "file": "w240/stn-shackleton.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "2205ddffbf0e6a05e24ff1ff156f7e92c2197bd0cffe9dc0085a106b007e97cf"
+    },
+    {
+      "id": "stn-selene-labs",
+      "file": "w591/stn-selene-labs.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 2
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "e34330007e2adc538265a9a2ae5d282c97eb8775b71e3a3757f75f8e1f3e06e4"
+    },
+    {
+      "id": "stn-selene-labs",
+      "file": "w240/stn-selene-labs.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 2
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "3c3cebc086a242a58e043b7698619faa62b02fe79685ecd6374196cb62ff7989"
+    },
+    {
+      "id": "stn-taikotech",
+      "file": "w591/stn-taikotech.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 3
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "f4e9738450d063f70fbdf5d43e435e23c1eb0736d6e3678a2af21b4bde27fd84"
+    },
+    {
+      "id": "stn-taikotech",
+      "file": "w240/stn-taikotech.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 3
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "325f3e18cfdc36a06eb683ae9091dbe240d5536597fe62d1fb97f0806730e4c2"
+    },
+    {
+      "id": "stn-the-oasis",
+      "file": "w591/stn-the-oasis.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 4
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "dbdeec9da3f44466bb945a8504e786ecf1e69506aff414f6c18621ef77e10e24"
+    },
+    {
+      "id": "stn-the-oasis",
+      "file": "w240/stn-the-oasis.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 4
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "7729867aead18ee2512b0b498d4380316ba9b188f784fbe0452c4cab1aa0a075"
+    },
+    {
+      "id": "stn-dark-side",
+      "file": "w591/stn-dark-side.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 5
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "f0caf66da67d138d315b8b6d722973161434c7dbfce2a120648659e0f80c5788"
+    },
+    {
+      "id": "stn-dark-side",
+      "file": "w240/stn-dark-side.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 5
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "db948a52088475738622e36f6fac6aeac5b18a9e7c8457e7746f96f6ae03da64"
+    },
+    {
+      "id": "stn-imbrium",
+      "file": "w591/stn-imbrium.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 6
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "c8110354e144e45751ccba5a343d352e858d680957ad06470890df0b7fe899d6"
+    },
+    {
+      "id": "stn-imbrium",
+      "file": "w240/stn-imbrium.webp",
+      "source": {
+        "pdf": "CARDS/SET 1/CARDFRONTS.pdf",
+        "page": 6
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "19aa2e85c03e8754b3bdd55cfdbab8c91587a48e0a90ce90b1ca8e2d62074a37"
+    },
+    {
+      "id": "ks-stn-braun",
+      "file": "w591/ks-stn-braun.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "8cf33d2806c10677da8508d63d777abc5448efb12dc72d333ff07618dccdd63a"
+    },
+    {
+      "id": "ks-stn-braun",
+      "file": "w240/ks-stn-braun.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "785a9fe2cab4d45449ae3a03487655af0d3b731bf2a4028a6bf5c79b6d35ac21"
+    },
+    {
+      "id": "ks-stn-korolev",
+      "file": "w591/ks-stn-korolev.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 2
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "7b45f326933627366a764beba86f29cd30cbfbe243bad50f3afe090b28d74001"
+    },
+    {
+      "id": "ks-stn-korolev",
+      "file": "w240/ks-stn-korolev.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 2
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "fe1950872dd3c8e73697945a8ec5455f035050501ce70b6e924b351751131840"
+    },
+    {
+      "id": "ks-stn-tipu",
+      "file": "w591/ks-stn-tipu.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 3
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "a90cd86d47c30fb62ab7a5ab7ef185e82d0ed786d15c4a177762f6d64b939e19"
+    },
+    {
+      "id": "ks-stn-tipu",
+      "file": "w240/ks-stn-tipu.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 3
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "83a952e78658e4c0a16a12f0e0ec1d2d53c03baa5ce6b06630ecf00986105280"
+    },
+    {
+      "id": "ks-stn-kafka",
+      "file": "w591/ks-stn-kafka.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 4
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "11667ef6d111cbe8a8dc4539acd410723ed788e5feb073d64f0140f629b8fa8e"
+    },
+    {
+      "id": "ks-stn-kafka",
+      "file": "w240/ks-stn-kafka.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 1/CARDFRONTS.pdf",
+        "page": 4
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "841af5bed88aaf40d4cd2e726a9021edd3047ec89d6aed4f3e4e7a3c038452ce"
+    },
+    {
+      "id": "mod-fusion-reactor",
+      "file": "w591/mod-fusion-reactor.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "ba582252b57cd70e625581306b883900f2727517d51ed9305627004ca3779745"
+    },
+    {
+      "id": "mod-fusion-reactor",
+      "file": "w240/mod-fusion-reactor.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "e9694b55ac649c208d90c00d523ac6b2de1f3b7ae4b1228eeaea952f177757be"
+    },
+    {
+      "id": "mod-beruang-engineers",
+      "file": "w591/mod-beruang-engineers.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 3
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "4d65a27ec12e15693351b71dce7e2ff512c85ce77fa77a542d79fab6962d7024"
+    },
+    {
+      "id": "mod-beruang-engineers",
+      "file": "w240/mod-beruang-engineers.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 3
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "e24bce1d88bdb20f2db416758afd3f5f3d46d83a12fe008dc7b439e1402c0517"
+    },
+    {
+      "id": "mod-indigo-egregore",
+      "file": "w591/mod-indigo-egregore.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 5
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "bbf0cc8a8ca8a64e3cfa6e5395af5b25066f96098308e8361b1ae205e12502f1"
+    },
+    {
+      "id": "mod-indigo-egregore",
+      "file": "w240/mod-indigo-egregore.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 5
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "8cb1a9cf9f667f6336f873b49e41467f3730b83fb97c457b5d9c8684a93052e7"
+    },
+    {
+      "id": "mod-lunar-capital",
+      "file": "w591/mod-lunar-capital.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 7
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "50149c2806ebb0dadacbf4e37fa1b1c67fbdca981e13b828310104dd29631946"
+    },
+    {
+      "id": "mod-lunar-capital",
+      "file": "w240/mod-lunar-capital.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 7
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "f923959041ef9890545595ac88f924923d13abd4f7aca1643ffec8948fa8b636"
+    },
+    {
+      "id": "mod-underground-headquarters",
+      "file": "w591/mod-underground-headquarters.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 9
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "6bda0cda3d5bb78ba192941f4eed2021d3cc70a01c25092cf5465c873a4a589f"
+    },
+    {
+      "id": "mod-underground-headquarters",
+      "file": "w240/mod-underground-headquarters.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 9
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "625ee3df6ca69510544376215bfb0e47be1f391062fb6d9794e9b03398b5a831"
+    },
+    {
+      "id": "mod-depot",
+      "file": "w591/mod-depot.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 11
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "824bf019e989069aaeb48b6d494f63d9f8beb4c9d817cdc9e62ed0366c3e7d6c"
+    },
+    {
+      "id": "mod-depot",
+      "file": "w240/mod-depot.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 11
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "6a4bfcf11a59c40e5fc522c9c85a2ead524395ef020547a8bd72dd5e81cdcecc"
+    },
+    {
+      "id": "mod-inflatable-habitat",
+      "file": "w591/mod-inflatable-habitat.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 13
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "11d818ccf5f231a28a3bc2ae8b1433a92e8203a478cf07f297c1e32d93a4180b"
+    },
+    {
+      "id": "mod-inflatable-habitat",
+      "file": "w240/mod-inflatable-habitat.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 13
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "24f4c483c629a0c89bea23ca5e4f61574682677689af9c9c0fee331692370b6b"
+    },
+    {
+      "id": "mod-laika-memorial",
+      "file": "w591/mod-laika-memorial.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 17
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "bebe48895f6328dfc1252239ca81b01ba341bbf3d8c9d81c5a4a00d579c61a06"
+    },
+    {
+      "id": "mod-laika-memorial",
+      "file": "w240/mod-laika-memorial.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 17
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "f871a982e23147fca729b6432c160662e3426a0bff8cb0ebf8c53a2d94eb5137"
+    },
+    {
+      "id": "mod-space-elevator",
+      "file": "w591/mod-space-elevator.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 19
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "aefc258f1a3f27f0f7f59fc05390c281cb4b22285c6d8b462411f1a0aed3b21b"
+    },
+    {
+      "id": "mod-space-elevator",
+      "file": "w240/mod-space-elevator.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 19
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "5eccc9cbcd743fc87319702f019935758b5cb324b6aad3cee268bb4e3376c42a"
+    },
+    {
+      "id": "mod-chandrasekhar-dome",
+      "file": "w591/mod-chandrasekhar-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 21
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "83e788d277b8412b6a25bf5ea6952b5b6b4a7a44ca8a4832067cee2503579fdb"
+    },
+    {
+      "id": "mod-chandrasekhar-dome",
+      "file": "w240/mod-chandrasekhar-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 21
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "85ca85f9e69927ca39af98844b806e4322bab26c418109d4fc3925089e8e6e2b"
+    },
+    {
+      "id": "mod-hayashi-dome",
+      "file": "w591/mod-hayashi-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 22
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "4004e9c0a94eb9d3c565bb08c3be15f138c79e44bcfeb061100bb6b2cd9f5f68"
+    },
+    {
+      "id": "mod-hayashi-dome",
+      "file": "w240/mod-hayashi-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 22
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "5372fcd44bcfdeef869509ae3a01f2ace508846d6f8db56a9bc10b7cf4f2664a"
+    },
+    {
+      "id": "mod-oort-dome",
+      "file": "w591/mod-oort-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 23
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "0b0ac0e9d57c59b07609749c5f289974dae2a758c9a965c78706338f433b04ab"
+    },
+    {
+      "id": "mod-oort-dome",
+      "file": "w240/mod-oort-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 23
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "dc0f8a5017f2a5621c236eb03b036f82a7df1bad7153e2d00b9f497e0d7b7f4e"
+    },
+    {
+      "id": "mod-struve-dome",
+      "file": "w591/mod-struve-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 24
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "35bbc99b60ceab22f6dc3a0fc2494735554781f5d35001a4090deb8a27062968"
+    },
+    {
+      "id": "mod-struve-dome",
+      "file": "w240/mod-struve-dome.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 24
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "0661f4dd2e7a83bc73f3654336d7135a40ae12d7ff7eafcd1c2d516f3b5df2ce"
+    },
+    {
+      "id": "mod-experimental-borehole",
+      "file": "w591/mod-experimental-borehole.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 25
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "49d0c3e2c0bbd44222df984ad964decbb36900bd54cdd6cda178e09accc8f81f"
+    },
+    {
+      "id": "mod-experimental-borehole",
+      "file": "w240/mod-experimental-borehole.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 25
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "c09a433c592639671546f816205be54b70fafd98afca173c9da3eca161e083d1"
+    },
+    {
+      "id": "mod-rover-1",
+      "file": "w591/mod-rover-1.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 29
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "e8b782a6a7735e25895e135b7cfe01e18dda5f58027c1fe51f7057a3f1df49e3"
+    },
+    {
+      "id": "mod-rover-1",
+      "file": "w240/mod-rover-1.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 29
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "9813787e5f38715c51a51d6fa14cc8c5415e09808ee172a51f92f1828f38ed3f"
+    },
+    {
+      "id": "mod-rover-2",
+      "file": "w591/mod-rover-2.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 30
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "f5f695387b0c7a1a16e0d7ac14189f9568aa96d1d0f66d2a3a99a5792e8d2194"
+    },
+    {
+      "id": "mod-rover-2",
+      "file": "w240/mod-rover-2.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 30
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "58fc068b92aa597bbe7424b26f0983f6167fdadeed9c37811641cdf1bc319b86"
+    },
+    {
+      "id": "mod-rover-3",
+      "file": "w591/mod-rover-3.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 31
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "a2b7118f4ec456841976941a7ae4f7c244138c52c0b332eee2cf325f18cd6584"
+    },
+    {
+      "id": "mod-rover-3",
+      "file": "w240/mod-rover-3.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 31
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "cc958691275531136e9de63380638ce2f61869be9a54a01aa874a3b767453287"
+    },
+    {
+      "id": "mod-rover-4",
+      "file": "w591/mod-rover-4.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 32
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "4457e22006e52c69ba8a8cb5344902310ee7fd92e31517dd7e46cd92f31215d0"
+    },
+    {
+      "id": "mod-rover-4",
+      "file": "w240/mod-rover-4.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 32
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "fca9c7f4000c08a964cb7fce7aad2e3d87238218b7dacbccb1cb259e5bea9a4a"
+    },
+    {
+      "id": "mod-satellite-1",
+      "file": "w591/mod-satellite-1.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 33
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "4853c5def731187d36151eee70e1e90c8ce3ca6b095eedfad28a53048c891d4d"
+    },
+    {
+      "id": "mod-satellite-1",
+      "file": "w240/mod-satellite-1.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 33
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "62882652c43545ba242731a5e7eedc85ae6610e4aaa9ccb5eafb6828807cf05a"
+    },
+    {
+      "id": "mod-satellite-2",
+      "file": "w591/mod-satellite-2.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 34
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "e97d1244e62f034f479640955152f81e286c78779814eeecf914863f07317d74"
+    },
+    {
+      "id": "mod-satellite-2",
+      "file": "w240/mod-satellite-2.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 34
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "b62cf57facc3dfdfd68470b23d77df5d2d67e855e47fcc91e9b7631a370d96ed"
+    },
+    {
+      "id": "mod-smart-spaceship",
+      "file": "w591/mod-smart-spaceship.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 35
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "6d0cc2c4d49cba251143cb254b06743507bb5823d2b4331151afb39a56606ba5"
+    },
+    {
+      "id": "mod-smart-spaceship",
+      "file": "w240/mod-smart-spaceship.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 35
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "ecce7ef9eda48a1c22f5ba5462f47aa2d4adcef1c0d1ddd809f037644e9c1dec"
+    },
+    {
+      "id": "mod-bacon-printer",
+      "file": "w591/mod-bacon-printer.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 37
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "0c3d335b185e8047d95280f6c4a8f6d4472f19692e3678bc47964cfe874d569a"
+    },
+    {
+      "id": "mod-bacon-printer",
+      "file": "w240/mod-bacon-printer.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 37
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "eab697d10755932ed058bdf03f623471b15f05714240754878012251cd118a9b"
+    },
+    {
+      "id": "mod-j-lagg-telescope",
+      "file": "w591/mod-j-lagg-telescope.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 39
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "37f527c3d206b310234e859a6230e7950276fade30472797ef44c51623a65ed4"
+    },
+    {
+      "id": "mod-j-lagg-telescope",
+      "file": "w240/mod-j-lagg-telescope.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 39
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "eb6f88097ec0437ff6ca6e3b2f9965e0439d26ab14577d2526d0cdd9ecf18733"
+    },
+    {
+      "id": "mod-asteroid-grinder",
+      "file": "w591/mod-asteroid-grinder.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 41
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "3a8a94c412411d66f18beb8dee34cb6e53c70caa8880d7e6e33ab8941c8c16a0"
+    },
+    {
+      "id": "mod-asteroid-grinder",
+      "file": "w240/mod-asteroid-grinder.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 41
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "7a342ed0381226b0eba2de018a14ba4914ea9d7c922662c0b947d54cf862fa35"
+    },
+    {
+      "id": "mod-lang-huan-concrete",
+      "file": "w591/mod-lang-huan-concrete.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 45
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "96e7618cd626b0e92f132dc497f5b01a8d90383798e8b65509c9696b5bff3917"
+    },
+    {
+      "id": "mod-lang-huan-concrete",
+      "file": "w240/mod-lang-huan-concrete.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 45
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "c84bf59bf6f52d0f6be0c3957d2193d099ffd8eb27519df557ce9e584fe3f34b"
+    },
+    {
+      "id": "mod-helium-factory",
+      "file": "w591/mod-helium-factory.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 47
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "745c7de2e80c634323c2a2c141d3d4ba8cc998404d26b64ebdbb498fb0f69854"
+    },
+    {
+      "id": "mod-helium-factory",
+      "file": "w240/mod-helium-factory.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 47
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "44f80ab305e7667a24a618f90be894a65b0e05f24932391fc2b0550154f11126"
+    },
+    {
+      "id": "mod-artificial-intellect",
+      "file": "w591/mod-artificial-intellect.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 49
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "561900bcead8620acde988e181d900de814fecc70ff1e1e16218f8472412ed22"
+    },
+    {
+      "id": "mod-artificial-intellect",
+      "file": "w240/mod-artificial-intellect.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - modules.pdf",
+        "page": 49
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "172dda2bc18b44758557321a5ab0420c12683f780f78a81cdf4bb3b43aaaa76f"
+    },
+    {
+      "id": "agt-double-agent",
+      "file": "w591/agt-double-agent.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "d2e169724a7b5d895455bf99e91224fb5764fa09f2c2a3d4cd84ac70cbef9ad8"
+    },
+    {
+      "id": "agt-double-agent",
+      "file": "w240/agt-double-agent.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "3c3ba6e01c7613064924e7c83b96a675d71d4af8992d12bff1ab1b37f2be4298"
+    },
+    {
+      "id": "agt-market-manipulator",
+      "file": "w591/agt-market-manipulator.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 3
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "a8d498d9a171ec71966dd016c19ec99964571af7a957767189c1c1b0adb81960"
+    },
+    {
+      "id": "agt-market-manipulator",
+      "file": "w240/agt-market-manipulator.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 3
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "1defce75e1daf534e448d3ba5c064a27799f48cec5411a87bb14d807f4935fd9"
+    },
+    {
+      "id": "agt-crazy-president",
+      "file": "w591/agt-crazy-president.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 5
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "c9e0f31621137a7753b056b616465b749bc4838769498525e308f9321220dd83"
+    },
+    {
+      "id": "agt-crazy-president",
+      "file": "w240/agt-crazy-president.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 5
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "e47247ee5fb9971bd99eb63907c8a06d10a3e2f78ddde247aae8e6d15c38becf"
+    },
+    {
+      "id": "agt-investor",
+      "file": "w591/agt-investor.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 7
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "b9843705f1f11e9f281fbff5881808439bb6f673009457ff9d33442af4ddfed0"
+    },
+    {
+      "id": "agt-investor",
+      "file": "w240/agt-investor.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 7
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "afc7ec0f1a1333569d79ee0012d0262f7e6dc12df4343f6c1e04d7906b1dd259"
+    },
+    {
+      "id": "agt-kim-the-mech-pilot",
+      "file": "w591/agt-kim-the-mech-pilot.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 9
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "283cb3dd3dcbee9eb629b70233f65f31407e5f5daa59b3152a4a6bbf4f5a7d46"
+    },
+    {
+      "id": "agt-kim-the-mech-pilot",
+      "file": "w240/agt-kim-the-mech-pilot.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 9
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "b75ff02e0b64db295fbb532dac4df408dec6de048d9f17820029e0a8aefea1aa"
+    },
+    {
+      "id": "agt-hacker-pirate",
+      "file": "w591/agt-hacker-pirate.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 11
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "b1b9a876bc24f4295021e74770b7eecfe8a590ca4b6c88433ce60d0baeea35af"
+    },
+    {
+      "id": "agt-hacker-pirate",
+      "file": "w240/agt-hacker-pirate.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 11
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "63e7f1a75a61c2be2532baec0ab1333614b1a7d87238f1b80922477dbeb9e9cf"
+    },
+    {
+      "id": "agt-space-unicorn",
+      "file": "w591/agt-space-unicorn.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 13
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "ce1bfa61b260620c02bbc14e188bc902e0643fd2290278f5687f9c9a8575b80f"
+    },
+    {
+      "id": "agt-space-unicorn",
+      "file": "w240/agt-space-unicorn.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 13
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "6148e6e0e3425a2072db186de141478c81a6c4eca03135bf94b69c5ac2173f4b"
+    },
+    {
+      "id": "agt-panaman-broker",
+      "file": "w591/agt-panaman-broker.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 15
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "159be583c072aad2482f72caea571392e315fbe3bccc2330a88ada467581e033"
+    },
+    {
+      "id": "agt-panaman-broker",
+      "file": "w240/agt-panaman-broker.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 15
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "149c03e407e016f91eec310cb6cd514a6c4d3fae9f9d6d97c0d61fb0b8d6821a"
+    },
+    {
+      "id": "agt-solicitor",
+      "file": "w591/agt-solicitor.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 17
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "10778132b2c809b8a1b38c2d6638b4939edf12bf569570980e372d4dc6d319cb"
+    },
+    {
+      "id": "agt-solicitor",
+      "file": "w240/agt-solicitor.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 17
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "6257129b67ac7b89d830c932c013c9f75c6dfd46e40a97714fd4247d2a3f6602"
+    },
+    {
+      "id": "agt-saboteur",
+      "file": "w591/agt-saboteur.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 19
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "9be23a1084154bb6708a1e28f4a6c0865c69ca251391051f88f3ce81c37bc332"
+    },
+    {
+      "id": "agt-saboteur",
+      "file": "w240/agt-saboteur.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 19
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "7c481ddab8a70e3feff4279a29a16895da56daaf7ba8d770a22749428d0cd194"
+    },
+    {
+      "id": "agt-mormon-scientist",
+      "file": "w591/agt-mormon-scientist.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 21
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "b5c1f4aa8356d1a0e440835433224cc4af1af57ee6d991511c670c4a45e7f7fb"
+    },
+    {
+      "id": "agt-mormon-scientist",
+      "file": "w240/agt-mormon-scientist.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 21
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "bdb6e876635d71a8180a71f18051feb42f698d9b1d5ab534f0c4b173c72df7f6"
+    },
+    {
+      "id": "agt-rebel-captain",
+      "file": "w591/agt-rebel-captain.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 23
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "5074a4c5ea261e3fe9a7d8ebba98944ac0ecdfb46e2c8f0b40bf562b849277f6"
+    },
+    {
+      "id": "agt-rebel-captain",
+      "file": "w240/agt-rebel-captain.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 23
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "779b862e2cf5a2b41c98d58492838a1ee6a95b7a3938ec925d7a7613c4332016"
+    },
+    {
+      "id": "agt-spybot-py",
+      "file": "w591/agt-spybot-py.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 25
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "58def4fc81af387b13aa6abef6de236ca40f1e7c70b03138bf467339a2df8f22"
+    },
+    {
+      "id": "agt-spybot-py",
+      "file": "w240/agt-spybot-py.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - agents.pdf",
+        "page": 25
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "93d27edab8c44001990fce05ba1054f60a1451b658f752be47b2b62988253809"
+    },
+    {
+      "id": "inf-quarantine",
+      "file": "w591/inf-quarantine.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "e3140d3eb934b05aede20c6b6363b7bd178965e61996ec54ca43396ae67de82b"
+    },
+    {
+      "id": "inf-quarantine",
+      "file": "w240/inf-quarantine.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "1563461eccc3b70c5d1caa0e675d1dcf4309dd4496265342342a33547c3bf333"
+    },
+    {
+      "id": "inf-lunar-alliance",
+      "file": "w591/inf-lunar-alliance.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 2
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "2c31c3d72ba4cf610e3b56be185e78d89ac3de82c650362edfb601627ff321c9"
+    },
+    {
+      "id": "inf-lunar-alliance",
+      "file": "w240/inf-lunar-alliance.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 2
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "0c1a5e8480622b0f2d226b00f87dc17f857ac3bc9e81703aac025b18b05db8b0"
+    },
+    {
+      "id": "inf-entropic-cascade",
+      "file": "w591/inf-entropic-cascade.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 3
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "71521f6ffdd2873038765aa4781f85cae5d2bccff47493b81f254520105c04f8"
+    },
+    {
+      "id": "inf-entropic-cascade",
+      "file": "w240/inf-entropic-cascade.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 3
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "ea13ad9e0c50c649920aee417cf7a42fc8a622dd63415c95d4ff5c7b48bd5de8"
+    },
+    {
+      "id": "inf-terran-embargo",
+      "file": "w591/inf-terran-embargo.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 4
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "63cf224eb026e1998a318a1f165ae391830357fa55d6366a8a983883f5718445"
+    },
+    {
+      "id": "inf-terran-embargo",
+      "file": "w240/inf-terran-embargo.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 4
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "363d6d309fc915598568d52bc44449d514d3f1f1b1950494d9a6762c5c21759c"
+    },
+    {
+      "id": "inf-terran-crackdown",
+      "file": "w591/inf-terran-crackdown.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 5
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "6a7da239b6a24866785060271c0cc015018e2da30a25056d1394cc00877daef2"
+    },
+    {
+      "id": "inf-terran-crackdown",
+      "file": "w240/inf-terran-crackdown.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 5
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "5e7861d8c29d565d63fbe47021ad95fd43fef2b076793f82fc53a5d882115ccf"
+    },
+    {
+      "id": "inf-laikas-paradise",
+      "file": "w591/inf-laikas-paradise.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 6
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "faff4f315a4b4d5922536d5604431f9d7cfd953995fc9e36c7a7730a0fb34b00"
+    },
+    {
+      "id": "inf-laikas-paradise",
+      "file": "w240/inf-laikas-paradise.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 6
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "651161ad0469fbcce4c7c1b4151d27a5fa9acd3bd45ee062bc276bc69552a2b0"
+    },
+    {
+      "id": "inf-space-cowboy-capitalism",
+      "file": "w591/inf-space-cowboy-capitalism.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 7
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "1ec2ad9e5628ee72853461989c33cb94d20d2650cb6204ee5d4357acc72807f5"
+    },
+    {
+      "id": "inf-space-cowboy-capitalism",
+      "file": "w240/inf-space-cowboy-capitalism.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 7
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "89701598773bededeee17c9c74461ada39ae703e04a0e0de5438cea670c279ab"
+    },
+    {
+      "id": "inf-runaway-bureaucracy",
+      "file": "w591/inf-runaway-bureaucracy.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 8
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "02dd9ab2605fefe72cc41f6cdf245e932178f9723fb2cb34712310d180e3811b"
+    },
+    {
+      "id": "inf-runaway-bureaucracy",
+      "file": "w240/inf-runaway-bureaucracy.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARD FRONTS/CARDFRONTS - influences.pdf",
+        "page": 8
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "21da36d9aa4c84131615f627819b75f293ebb962828ae1ca520351fec349c0e4"
+    },
+    {
+      "id": "ks-inf-transparency",
+      "file": "w591/ks-inf-transparency.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "0c8ef2801f62151a411c080d9caf4bd1d2326238e65f9eda982ff29c6e12cb9a"
+    },
+    {
+      "id": "ks-inf-transparency",
+      "file": "w240/ks-inf-transparency.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "66a43b7eb02c02883110a5bcc2990e9d8d8eb317f7786e62e3b64b3f68cd83fe"
+    },
+    {
+      "id": "ks-inf-blood-moon",
+      "file": "w591/ks-inf-blood-moon.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 2
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "a0aeae01520ba515d9c4eb85aef7852fcfbb8af6684a5556bfc7814843c787e3"
+    },
+    {
+      "id": "ks-inf-blood-moon",
+      "file": "w240/ks-inf-blood-moon.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 2
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "df09e664a70edb70016af3e443285d7116408fe02b0c7e5c536c8e9c62e544a1"
+    },
+    {
+      "id": "ks-inf-welfare",
+      "file": "w591/ks-inf-welfare.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 3
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "1566e1e2ea2083ba07d6d6b98e359283d8925084a4f9db89ebbd951dadcfd235"
+    },
+    {
+      "id": "ks-inf-welfare",
+      "file": "w240/ks-inf-welfare.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 3
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "2c698ed6be420b2c798380c8743aebe83a8b576ba45f6fd80945d290c74bc69b"
+    },
+    {
+      "id": "ks-inf-free-market",
+      "file": "w591/ks-inf-free-market.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 4
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "b15841347828212aa4cc493352d94ad076355637f63cbcdabc29307cb9497e1b"
+    },
+    {
+      "id": "ks-inf-free-market",
+      "file": "w240/ks-inf-free-market.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 4
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "f22653bf36d8c8184daa718d251ee8f294b06cbaf996960bad1d1cf757f9345a"
+    },
+    {
+      "id": "ks-inf-moonstone-cops",
+      "file": "w591/ks-inf-moonstone-cops.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 5
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "b3dc44d82aef1aa4bebbc009e56b981413f7480c7a2f3608c1be48c07005311a"
+    },
+    {
+      "id": "ks-inf-moonstone-cops",
+      "file": "w240/ks-inf-moonstone-cops.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 5
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "6d41907cccb0f0a5771736083caf953f5d8ec2943c1fc3ad2d548cf465af5f81"
+    },
+    {
+      "id": "ks-inf-metamorphosis",
+      "file": "w591/ks-inf-metamorphosis.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 6
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "69966ac2161238be5f6ea6526fb04daa2fb301d104c9fbbca8b7bc4854e1a3f8"
+    },
+    {
+      "id": "ks-inf-metamorphosis",
+      "file": "w240/ks-inf-metamorphosis.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 6
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "2208b3a853d83ae1149303de4f74145f8940fb67153081b9492790047c66439e"
+    },
+    {
+      "id": "ks-inf-credit-reform",
+      "file": "w591/ks-inf-credit-reform.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 7
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "58323f2081f1ad00463bb60558ac440c8e1378414757565fca7272a35c9c2b8b"
+    },
+    {
+      "id": "ks-inf-credit-reform",
+      "file": "w240/ks-inf-credit-reform.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 7
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "d4f0e9fc8c7cc8b144bc165674e62d0a8b37eccefa8534e2d7b64a054e4917a5"
+    },
+    {
+      "id": "ks-inf-longevity",
+      "file": "w591/ks-inf-longevity.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 8
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "8dc066372b7d178362e03ab8502f0e384d941afda09db703bd456ae6c2f9d096"
+    },
+    {
+      "id": "ks-inf-longevity",
+      "file": "w240/ks-inf-longevity.webp",
+      "source": {
+        "pdf": "CARDS/Kickstarter exclusives/SET 2/CARDFRONTS - KS influences.pdf",
+        "page": 8
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "4d3bdf25e27d67662f80d231c2d0e61559126f5c45d048920efec9ab44d65e27"
+    },
+    {
+      "id": "back-deck",
+      "file": "w591/back-deck.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARDBACK.pdf",
+        "page": 1
+      },
+      "width": 591,
+      "height": 1181,
+      "sha256": "6dd7f338c922bcf76357304265c0aa976d3bc7d9511ab33794090e320eb016a8"
+    },
+    {
+      "id": "back-deck",
+      "file": "w240/back-deck.webp",
+      "source": {
+        "pdf": "CARDS/SET 2/CARDBACK.pdf",
+        "page": 1
+      },
+      "width": 240,
+      "height": 480,
+      "sha256": "efb19ddb90173727a213d1fedf02f7930365731396b2271e3f31a587e4c82cbf"
+    }
+  ]
+}

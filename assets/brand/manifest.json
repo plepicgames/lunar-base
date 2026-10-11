@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "file": "lunar-base-logo-color.png",
+      "source": "LF/1_logos/Lunar base colored logo v1.png",
+      "sha256": "12ef4e94ed51453d7382885bca9f50b9fcbc5b19d7d2a91d7322ba477bb3b60b"
+    },
+    {
+      "file": "lunar-base-logo-white.svg",
+      "source": "LS/Lunar Base_Quatermaster_ package/Lunar Base logo/Lunar Base_logo_white.svg",
+      "sha256": "cd0cbbf64fb17bc61c4480fca32ecd1f67acc665820ad4f21a6a045c8ff20f43"
+    },
+    {
+      "file": "website-logo.svg",
+      "source": "LF/Web/Elements/Lunar Base website logo v1.svg",
+      "sha256": "c9d0e93b6e35da46e141a29d53e99937465ca0b4e1aa6b22d35242709937f711"
+    },
+    {
+      "file": "website-icon.svg",
+      "source": "LF/Web/Elements/Lunar Base website icon v1.svg",
+      "sha256": "3337b0bbffd1fce1bf4a3f6cedeb3abeeb2ec96d5a4fa38294436d58e03143c1"
+    },
+    {
+      "file": "hero-nebula.webp",
+      "source": "LF/Web/Elements/Hero image 1920 x 1200.jpg",
+      "sha256": "18a9bc8d14f0faa47332beadd854807a2c67260e9a9155cc5c791452dc21b5d5"
+    },
+    {
+      "file": "contour-background.webp",
+      "source": "LF/Web/Elements/About Game background.jpg",
+      "sha256": "427a3c26cc1c28ae0979fc616499c782386ba9d9def7a58753ddc2cda5ec11f3"
+    },
+    {
+      "file": "footer-nebula.webp",
+      "source": "LF/Web/Elements/Lunar Base web footer v1.jpg",
+      "sha256": "9cda870c872a96913a75dade70c014cc53250ed360b07e942fcd2d0950716667"
+    },
+    {
+      "file": "web-icon-1.svg",
+      "source": "LF/Web/Elements/Icons/LB web icons v1-01.svg",
+      "sha256": "b2d8bddeb8b57ab74bc601eadbebe02096c2b8449a37459f9fd3c744bb52b843"
+    },
+    {
+      "file": "web-icon-2.svg",
+      "source": "LF/Web/Elements/Icons/LB web icons v1-02.svg",
+      "sha256": "74649124ef155ec9f9136d4f883926d5a7048584f6050b1bef0d54fec1408202"
+    },
+    {
+      "file": "web-icon-3.svg",
+      "source": "LF/Web/Elements/Icons/LB web icons v1-03.svg",
+      "sha256": "4012b73ff8a3d6f283ee22a64e89c3b8fea3a95254a05f36aa6b76e30729f6fd"
+    },
+    {
+      "file": "web-icon-4.svg",
+      "source": "LF/Web/Elements/Icons/LB web icons v1-04.svg",
+      "sha256": "483e79d1f40a6c216be58171404395d705eb51f04ebb9d70c8cb50b96776ef01"
+    },
+    {
+      "file": "web-icon-5.svg",
+      "source": "LF/Web/Elements/Icons/LB web icons v1-05.svg",
+      "sha256": "c7702374dcfb3066d5b5b5dac8b5ddd387ca625c11acf1db4fa9114f639413ef"
+    },
+    {
+      "file": "right-arrow.svg",
+      "source": "LF/Web/Elements/Icons/right-arrow.svg",
+      "sha256": "b1dd434948f6ed1306fe8ba25a6b943148d476bdc3b98dbd9fe3c1e2d54f8652"
+    },
+    {
+      "file": "plepic-games-wordmark.svg",
+      "source": "PF/vector/plepic-games-wordmark-dark-background.svg",
+      "sha256": "1b8db25e5879eb62e348ffd5311338087ca73349c8257afc09bd2ebfa092ea53"
+    },
+    {
+      "file": "badges/station.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "e1ebd63d1e6718cfcd7a45b1517e6011ff373e105ec9935d839e337fd4a6be62"
+    },
+    {
+      "file": "badges/module.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "4d9aa45811fa933fad044e9c979c1e3b25a098da29cef3ced7c1aff250161bae"
+    },
+    {
+      "file": "badges/agent.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "dee88e47b2623543bebf66512aadefa061493f1fc740f4c1ccac0d50e8934f70"
+    },
+    {
+      "file": "badges/influence.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "0a26f6b5cf9a0d7120c8419808d6c562c833cb2f210ff5b4a51abaf563b758bc"
+    },
+    {
+      "file": "badges/scientific-achievement.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "cb60b4e4cf0d7ed5ea4f1efb0992f135d17a08377c40e09afaae510b32e7b780"
+    },
+    {
+      "file": "badges/credits.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "e425da7140e162d9f5b951c98e2153aa4b0e6f0d12f8d9b3563f1b370c1fa7fe"
+    },
+    {
+      "file": "badges/colonists.webp",
+      "source": "LF/Web/Elements/Card type tabs v1.png",
+      "sha256": "6244a484c09b1fcb54751ada6fb62ebfd3d3a8ffa09562b2fb31634997ffb9e6"
+    },
+    {
+      "file": "achievements/dog.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "7d9251e40cf95adb980e9ecb66d52357e6cd00fef7f06b9b3c8b7c129d59dc7b"
+    },
+    {
+      "file": "achievements/flask.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "9b534f45292c849efd4bcc36eebd2ced3b83e26f6f12c2bd18a7c683f05e52e8"
+    },
+    {
+      "file": "achievements/dna.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "911e1402a800bd41f88ef41d96d1a338336e293c100e204f585410f954644aee"
+    },
+    {
+      "file": "achievements/lotus.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "184863dab765c1fb8ebf6dd294fe98193d3538640f80d2fe51b9b5052b466c11"
+    },
+    {
+      "file": "achievements/cyber_head.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "8e259b180841df6413567924ec69d2cccf762a0865d01879024c1ab748f34cc9"
+    },
+    {
+      "file": "achievements/helmet.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "cf5bbc071e4c6e6b705cfa31c43e053aed64e714998e3487ead9c86283ab2a55"
+    },
+    {
+      "file": "achievements/printer.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "0b5c0cf49ca79b18b68ad145c803e26e4517957de5f0c1489232e5365e936ae9"
+    },
+    {
+      "file": "achievements/brain.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "56863d1557ba7abebc5b40b10c92d9e9ad90360abadb3ed27028969c06082374"
+    },
+    {
+      "file": "achievements/rover.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "599666dcbfcd2e580606fd87879a3236434b054ec754e8e2585fe6b7311d12ca"
+    },
+    {
+      "file": "achievements/elevator.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "7002a7c95b247bdc8cae25258bb6cd1a3be29c1fcded1fb30aa6577ad47ec40f"
+    },
+    {
+      "file": "achievements/satellite.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "9bd27e1951e07f3f30b9b5d337f5a5da267671588fce4f171af6802bc6478588"
+    },
+    {
+      "file": "achievements/rocket.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "ca370a28e4800a920d41deca50ac66bfaa4cbe2010e90a90667d43572af5740e"
+    },
+    {
+      "file": "achievements/atom.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "241966081e87dde70a6612e9a53615257578141f1c3f0e467a0ccccb0d483b34"
+    },
+    {
+      "file": "achievements/flag.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "5eb7d898d9b11d52046cf7a04d65043a5199efc5b71311ba613bffa186e12f4a"
+    },
+    {
+      "file": "achievements/dome.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "d9640156eba379dd1d5a6317b78a9008074660a85287a89a3508b0c1785f2cca"
+    },
+    {
+      "file": "achievements/observatory.webp",
+      "source": "RB/printed-page-10",
+      "sha256": "121777462db371ef29ab6c82430dc71a536b146ef08f76892ad3782302e2b9f6"
+    }
+  ]
+}
