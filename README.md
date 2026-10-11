@@ -173,7 +173,8 @@ the only writer of the deployed digest.
 
 **A release restarts the game and ends every game in progress.** The game runs
 as one process, so there is no rolling update. For that reason the workflow
-runs only on a merge to `main` that changes a file the image is built from:
+runs only on a merge to `main` that changes a file the image is built from,
+or when someone with write access starts it by hand from `main`:
 `src/` (tests excepted), `assets/`, `docs/design/cards.json`, the package
 files, the `Dockerfile` and the release files themselves. A merge that changes
 only documents or tests deploys nothing.
@@ -183,7 +184,7 @@ only documents or tests deploys nothing.
 | `validate` | `bash scripts/validate` and the browser tests |
 | `gate` | Refuses any ref but `main`. Reads `scripts/update-gitops-digest.sh` from the merged commit |
 | `build` | Builds the image with `LUNAR_BUILD` set to the commit, pushes it to `ghcr.io/plepicgames/lunar-base` as `sha-<commit>`, runs the pushed digest with `scripts/smoke-image.sh`, and scans it for critical vulnerabilities that have a fix |
-| `promote` | Writes the digest into `lunar-base/overlays/live/kustomization.yaml` in [`hannosirkel/deploys`](https://github.com/hannosirkel/deploys), runs that repository's manifest test, and pushes one commit: `deploy(live): lunar-base <commit> <digest>` |
+| `promote` | Writes the digest into `lunar-base/overlays/live/kustomization.yaml` in [`hannosirkel/deploys`](https://github.com/hannosirkel/deploys), runs that repository's manifest test and a schema check (`kubeconform`), and pushes one commit: `deploy(live): lunar-base <commit> <digest>` |
 
 Argo CD then applies the change; the Application and the public route are in
 `hannosirkel/orange`. The version at the bottom of the game is the commit the

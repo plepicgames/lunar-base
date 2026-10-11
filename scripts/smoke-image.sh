@@ -22,6 +22,8 @@ port=${SMOKE_PORT:-4780}
 base=/play/lunar-base
 url="http://127.0.0.1:${port}${base}"
 name="lunar-base-smoke-$$"
+# No request may hang the run: a stuck server is a failure, not a wait.
+fetch=(curl --silent --connect-timeout 2 --max-time 5 --output /dev/null --write-out '%{http_code}')
 
 fail() {
   printf 'smoke failed: %s\n' "$1" >&2
@@ -50,14 +52,14 @@ esac
 
 status=000
 for _ in $(seq 1 60); do
-  status=$(curl --silent --output /dev/null --write-out '%{http_code}' "$url/healthz" || true)
+  status=$("${fetch[@]}" "$url/healthz" || true)
   [ "$status" = 200 ] && break
   [ "$("$engine" inspect --format '{{.State.Running}}' "$name")" = true ] || fail 'the server exited'
   sleep 1
 done
 [ "$status" = 200 ] || fail "GET $base/healthz answered $status, not 200"
 
-status=$(curl --silent --output /dev/null --write-out '%{http_code}' "$url/")
+status=$("${fetch[@]}" "$url/" || true)
 [ "$status" = 200 ] || fail "GET $base/ answered $status, not 200"
 
 "$engine" kill --signal TERM "$name" >/dev/null

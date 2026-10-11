@@ -2110,8 +2110,10 @@ each pull request and the `build` job of `release.yml` on the pushed digest.
 ### Release
 
 `.github/workflows/release.yml` runs on a push to `main` that changes a file
-the image is built from, and on a manual run from `main`. Its `paths` list and
-the allow-list in `.dockerignore` name the same files. A promotion restarts
+the image is built from, and on a manual run from `main`. Its `paths` list is
+a superset of the allow-list in `.dockerignore`: it holds every file the build
+context admits, and also `Dockerfile`, `.dockerignore`, the two release
+scripts and the workflow itself, which decide how a release runs. A promotion restarts
 the single replica and ends the games in progress
 ([decision 0005](../decisions/0005-run-one-replica-with-recreate.md)), so a
 merge of documents or tests alone does not run it.
@@ -2121,7 +2123,7 @@ merge of documents or tests alone does not run it.
 | `validate` | `contents: read` | The gate and the browser tests |
 | `gate` | `contents: read` | Refuses a ref other than `main`. Reads `scripts/update-gitops-digest.sh` from the pushed commit through the API and hands it on |
 | `build` | `contents: read`, `packages: write` | Builds and pushes `sha-<commit>` with provenance and an SBOM, runs the smoke script on the pushed digest, scans the digest and fails on a critical vulnerability that has a fix |
-| `promote` | none; environment `live` | Mints a GitHub App token for `hannosirkel/deploys` alone, checks out only that repository, runs the guard, runs `lunar-base/tests/manifests.sh` and `kubectl kustomize`, and pushes one commit that changes one file |
+| `promote` | none; environment `live` | Mints a GitHub App token for `hannosirkel/deploys` alone, checks out only that repository, runs the guard, runs `lunar-base/tests/manifests.sh`, schema-checks the rendered overlay with a checksum-pinned `kubeconform -strict`, pushes one commit that changes one file, and revokes the token, also after a failure. The token is asked for with `contents: write` only |
 
 `scripts/update-gitops-digest.sh <digest> <overlay>` is the guard. It accepts
 `sha256:` and 64 lower-case hexadecimal digits, not all zero. The overlay must

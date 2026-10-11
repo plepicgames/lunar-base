@@ -52,13 +52,19 @@ if [ ! -f "$kustomization" ] || [ -L "$kustomization" ]; then
   reject 'kustomization is unavailable'
 fi
 [ -z "$(git -C "$repository" status --porcelain)" ] || reject 'checkout is not clean'
+# `grep` and `sed` below read text. A NUL byte would make `grep` treat the
+# file as binary and report matches in another form.
+[ "$(tr -d '\000' <"$kustomization" | wc -c)" -eq "$(wc -c <"$kustomization")" ] \
+  || reject 'kustomization is not text'
 
 # The entry must be exactly the three documented lines, directly below the one
 # top-level `images:` key and directly above the next top-level key. A second
 # entry, a fourth key such as `newTag`, or another name is refused.
 [ "$(grep -c '^images' "$kustomization" || true)" -eq 1 ] || reject 'expected one images block'
 start="$(grep -nx 'images:' "$kustomization" | cut -d: -f1)"
-[ -n "$start" ] || reject 'expected one images block'
+case "$start" in
+  '' | *[!0-9]*) reject 'expected one images block' ;;
+esac
 [ "$(grep -Ec '^[[:space:]-]*digest:' "$kustomization" || true)" -eq 1 ] \
   || reject 'expected one digest'
 
@@ -71,7 +77,10 @@ target=$((start + 3))
 current="$(line "$target")"
 printf '%s' "$current" | grep -Eqx '    digest: sha256:[0-9a-f]{64}' \
   || reject 'unexpected image entry'
-if [ "$(wc -l <"$kustomization")" -gt "$target" ]; then
+# `sed -n '$='` counts a final line without a line break as a line; `wc -l`
+# does not, and would let such a line follow the digest unchecked.
+total="$(sed -n '$=' "$kustomization")"
+if [ "$total" -gt "$target" ]; then
   line $((target + 1)) | grep -Eq '^[A-Za-z]' || reject 'unexpected image entry'
 fi
 

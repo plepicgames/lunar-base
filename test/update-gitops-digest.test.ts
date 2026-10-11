@@ -112,6 +112,27 @@ describe("update-gitops-digest.sh", () => {
     expect(file(repository)).toBe(content.replace(SENTINEL, FIRST));
   });
 
+  it("replaces a digest that is the last line and has no line break", () => {
+    const content = kustomization().split("patches:")[0]?.trimEnd() ?? "";
+    expect(content.endsWith(SENTINEL)).toBe(true);
+    const repository = checkout(content);
+    expect(run(FIRST, repository).status).toBe(0);
+    expect(file(repository)).toBe(content.replace(SENTINEL, FIRST));
+  });
+
+  it.each([
+    ["a newTag", "    newTag: latest"],
+    ["a second image entry", "  - name: ghcr.io/example/other"],
+    ["a top-level key after a blank line", "\npatches: []"],
+  ])("refuses %s on a last line without a line break", (_name, last) => {
+    const head = kustomization().split("patches:")[0] ?? "";
+    expectRefused(`${head}${last}`, "unexpected image entry");
+  });
+
+  it("refuses a file with a NUL byte", () => {
+    expectRefused(`${kustomization()}\0`, "kustomization is not text");
+  });
+
   it("changes nothing when the overlay already records the digest", () => {
     const repository = checkout(kustomization(entry(FIRST)));
     const result = run(FIRST, repository);
