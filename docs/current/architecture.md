@@ -952,8 +952,8 @@ One WebSocket per browser tab at `<base>/ws`; the base path is `/` unless
 `LUNAR_BASE_PATH` sets another. Messages are JSON objects with a
 `type`. `src/protocol` defines every message as a zod schema; server and
 client share the inferred types. The server validates every incoming
-message, limits it to 16 KiB, and rejects an upgrade whose `Origin` host
-differs from its `Host` header.
+message, limits it to 16 KiB, and rejects an upgrade whose `Origin` is not
+allowed (see [Visitor limits](#visitor-limits)).
 
 The server is authoritative and the protocol is snapshot-based: after every
 applied choice each seat receives its full view (a few kilobytes). The
@@ -1013,10 +1013,13 @@ every update; a client ignores an older one. A `game.decide` with an old
 | Creator leaves an open game | The game is closed; the others return to the lobby. A later join of that ID gets `game_not_found` |
 | Leave a running game | The seat becomes a connected non-human seat with the same name and a built-in maker, regardless of `botBrain`. The session returns to the lobby and cannot resume that seat. The room is dropped when its last human participant leaves (including the watching creator of an all-bot game) |
 | End | The result stays on screen. A finished game is dropped when its last human leaves, or after 10 minutes |
-| Limits | 20 games at a time. A game that passes 300 turns is ended with no winner (Q40). A turn that passes the engine's step budget ends the game with no winner (Q42) |
+| Limits | 20 games at a time, or `LUNAR_MAX_GAMES`. One visitor address creates at most 10 games in an hour, or `LUNAR_MAX_NEW_GAMES_PER_HOUR`. A game that passes 300 turns is ended with no winner (Q40). A turn that passes the engine's step budget ends the game with no winner (Q42) |
 
-The 20-game cap includes open, running, and finished rooms. A create request at
-the cap gets an `error`; it does not create a room. Finishing starts a 10-minute
+The game cap includes open, running, and finished rooms. A create request at
+the cap gets an `error` with the code `bad_message` and the text "The server
+is at its game limit."; it does not create a room. A create request over the
+visitor's hourly cap gets the same kind of `error` with the text "You have
+started too many games. Try again later." Joining a game is not counted. Finishing starts a 10-minute
 timer. At expiry the room releases every remaining participant to the lobby
 with `lobby.state`, then drops the room. Leaving first cancels that timer when
 the last participant goes.
@@ -1039,7 +1042,8 @@ schedule. When the room ends, a seated session already absent for 30 minutes
 expires immediately. Expiry removes an open-game seat or a room membership and
 frees the name and token. The limits named in the Lobby and Reconnect contracts,
 including protocol message size, history size, take-over delay, and ping interval,
-are defined in `src/server/limits.ts`; the server passes the message size to the
+are defined in `src/server/limits.ts`, beside the
+[visitor limits](#visitor-limits); the server passes the message size to the
 protocol parser.
 
 The session keeps the disconnect timestamp, including time spent in
@@ -1098,6 +1102,7 @@ environment and listens.
 | `gamelog` | Appends a header and every choice to `<id>.jsonl` in the log directory, and deletes old logs. `npm run replay -- <file>` replays a log through the engine. The file holds the seed: it is a debugging aid for the person who runs the server, not for players |
 | `static` | Serves `dist/client` with `sirv` below the base path. The bare base redirects to `<base>/` with 308. A path outside the base, or one that names no file, is 404 |
 | `base-path` | Checks and normalises `LUNAR_BASE_PATH` |
+| `limits` | The constants of the Lobby and Reconnect contracts. Reads and checks the five limit settings, decides whether an `Origin` is allowed, names the visitor address of a request, and counts connections and new games per address |
 
 The log directory is `LUNAR_LOG_DIR`, or `.data/games` under the working
 directory (ignored by Git) when that is unset or blank. It is created when the
@@ -1142,10 +1147,36 @@ next sweep tries again. A sweep that deleted something logs one
 session/lobby/room wiring. It returns the bound port (including the assigned
 port when asked for 0) and an async `close()` for tests. The static handler
 answers 404 until a client build exists. An upgrade requires `<base>/ws` and an
-`Origin` whose host matches the request `Host`; malformed or missing origins
-are refused. A client reset while the refusal is sent leaves the server running.
+allowed `Origin`; anything else gets 403. A client reset while the refusal is
+sent leaves the server running.
 Each room receives its own random 16-byte seed, unless
 `LUNAR_SEED` supplies the same seed for every new room.
+
+### Visitor limits
+
+The server has no sign-in. These limits make it safe to reach from the
+internet, and they bound what Jev can cost
+([decision 0010](../decisions/0010-turn-jev-on-in-the-public-deployment.md)).
+`main.ts` reads the settings once with `limitSettings`, stops the start on a
+bad value, prints one line with the counts, and passes them to
+`http.startServer` as `limits`. `limits.ts` never reads the environment.
+
+| Setting | Default | Rule |
+| --- | --- | --- |
+| `LUNAR_ALLOWED_ORIGINS` | unset | Unset: the host of the `Origin` must equal the request's `Host`. Set: a comma-separated list, and the `Origin` must be one entry: same scheme, host and port, with scheme and host compared without regard to case. The `Host` then plays no part. A missing or malformed `Origin`, or one with a path, is refused in both modes. An entry is `http` or `https`, a host and an optional port; a trailing `/` is accepted. A blank value, an empty entry, or an entry with a path, a query, a fragment or credentials stops the start. The error names the entry by its place, never by its text |
+| `LUNAR_TRUST_PROXY` | `false` | `true` or `false`; anything else stops the start. `false`: the visitor address is the socket's, and no header is read. `true`: it is `CF-Connecting-IP` when that is one valid IP address, else the right-most entry of `X-Forwarded-For` when that is one, else the socket's. Set it only behind a proxy that writes these headers itself |
+| `LUNAR_MAX_GAMES` | `20` | Games at a time. A whole number, 1 or more, like the two below |
+| `LUNAR_MAX_CONNECTIONS_PER_ADDRESS` | `8` | Open sockets of one visitor address. An upgrade over the cap gets 429 before a WebSocket exists, so no session is made |
+| `LUNAR_MAX_NEW_GAMES_PER_HOUR` | `10` | Games one visitor address creates in any 60 minutes. A create refused for another reason is not counted |
+
+| Detail | Behaviour |
+| --- | --- |
+| Address | An IPv4 address counts as itself, also when it arrives as `::ffff:a.b.c.d`. An IPv6 address counts by its /64 prefix, so one network is one visitor |
+| Connection place | Taken at the upgrade and held by the TCP socket. Its close gives the place back, whatever ended it: a close from either side, an error, a failed handshake, or the ping timeout |
+| Resume | A resuming socket is a new socket: it needs a free place, and the socket it replaces keeps its place until it has closed. A visitor whose places are all held by dead sockets gets 429 until the ping timeout frees them, at most two ping intervals (30 s). The client keeps retrying, and the token then resumes the session |
+| New games | One list of times per address. A time is forgotten 60 minutes after it was recorded: when that address next asks, and for every address every 10 minutes on a timer that does not keep the process alive and that `close()` stops. A refused request records nothing |
+| Whose counters | Each `startServer` call has its own counters, clock (`now`, for tests) and salt. Two servers in one process share none |
+| Log | No address is logged. A refusal logs `limit refused=connections address=<tag>` or `limit refused=new_games address=<tag>`. The tag is the first 8 hex characters of a SHA-256 over a random salt of this server and the counted address. The salt is never stored or logged |
 
 `main.ts` trims `TYPESAFE_API_KEY` and builds one `jevMaker` when it is
 non-empty, using `LUNAR_JEV_MODEL` or `jev-latest`. The adapter and its

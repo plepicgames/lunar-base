@@ -15,10 +15,17 @@ import {
   startGameLogSweep,
   type GameLogSettings,
 } from "./gamelog.ts";
+import {
+  createVisitorLimits,
+  DEFAULT_LIMITS,
+  originAllowed,
+  visitorAddress,
+  type LimitSettings,
+} from "./limits.ts";
 import { createRoom, type Room } from "./room.ts";
 import { createSessions, type Session } from "./sessions.ts";
 import { staticHandler } from "./static.ts";
-import { wsConnection } from "./transport.ts";
+import { wsConnection, type Connection } from "./transport.ts";
 
 export interface ServerOptions {
   readonly port?: number;
@@ -38,6 +45,10 @@ export interface ServerOptions {
    * build it names in them. Old logs are deleted only when `days` is given.
    */
   readonly logs?: Partial<GameLogSettings>;
+  /** What this server allows a visitor. A value left out is its default. */
+  readonly limits?: Partial<LimitSettings>;
+  /** The clock of the per-address limits. A test passes its own. */
+  readonly now?: () => number;
 }
 
 export interface RunningServer {
@@ -53,10 +64,19 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   refuseLinkedLogDirectory(logDirectory);
   /** The games of this server whose room still exists. Its sweep spares their logs. */
   const openLogs = new Set<string>();
+  const limits: LimitSettings = { ...DEFAULT_LIMITS, ...options.limits };
+  /** This server's counters per visitor address, and the address of each open socket. */
+  const visitors = createVisitorLimits({ settings: limits, now: options.now, log: options.log });
+  const addresses = new WeakMap<Connection, string>();
   const rooms = new Map<string, Room>();
   const roomFor = (session: Session) => [...rooms.values()].find((room) => room.has(session));
   const lobby = createLobby({
     jev: options.jev !== undefined,
+    maxGames: limits.maxGames,
+    mayCreate(session) {
+      const address = session.connection ? addresses.get(session.connection) : undefined;
+      return address === undefined || visitors.newGame(address);
+    },
     onStart(game) {
       const seed = options.seed ?? randomBytes(16).toString("hex");
       const config = {
@@ -123,25 +143,38 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   });
   const server = createServer(staticHandler(basePath, options.clientDir));
   const sockets = new WebSocketServer({ noServer: true });
-  sockets.on("connection", (socket) => {
-    sessions.accept(wsConnection(socket));
-  });
   server.on("upgrade", (request, socket, head) => {
-    let validOrigin = false;
-    try {
-      validOrigin =
-        new URL(request.headers.origin ?? "").host.toLowerCase() ===
-        request.headers.host?.toLowerCase();
-    } catch {
-      // Missing or malformed Origin is refused like a foreign host.
-    }
-    if (request.url?.split("?", 1)[0] !== socketPath || !validOrigin) {
+    const refuse = (status: string) => {
       socket.once("error", () => socket.destroy());
-      socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
+      socket.end(`HTTP/1.1 ${status}\r\nConnection: close\r\n\r\n`);
+    };
+    if (
+      request.url?.split("?", 1)[0] !== socketPath ||
+      !originAllowed(limits.allowedOrigins, request.headers.origin, request.headers.host)
+    ) {
+      refuse("403 Forbidden");
       return;
     }
+    // A socket that is already gone would never report its close.
+    if (socket.destroyed) return;
+    const address = visitorAddress(
+      limits.trustProxy,
+      request.headers,
+      request.socket.remoteAddress,
+    );
+    if (!visitors.connect(address)) {
+      refuse("429 Too Many Requests");
+      return;
+    }
+    // The place is held by the TCP socket, so every end gives it back: a
+    // close, an error, a failed handshake and a ping timeout.
+    socket.once("close", () => {
+      visitors.disconnect(address);
+    });
     sockets.handleUpgrade(request, socket, head, (webSocket) => {
-      sockets.emit("connection", webSocket, request);
+      const connection = wsConnection(webSocket);
+      addresses.set(connection, address);
+      sessions.accept(connection);
     });
   });
   try {
@@ -154,6 +187,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     });
   } catch (error) {
     sockets.close();
+    visitors.stop();
     throw error;
   }
   const days = options.logs?.days;
@@ -165,6 +199,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     port: (server.address() as AddressInfo).port,
     async close() {
       sweep?.stop();
+      visitors.stop();
       for (const socket of sockets.clients) socket.terminate();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {

@@ -29,6 +29,13 @@ interface OpenGame {
 
 export interface LobbyOptions {
   readonly jev?: boolean;
+  /** Games at a time: open, running and finished. Default `MAX_GAMES`. */
+  readonly maxGames?: number;
+  /**
+   * Asked last, once for each game that would otherwise be created, so the
+   * server can count new games per visitor. False refuses the game.
+   */
+  readonly mayCreate?: (session: Session) => boolean;
   readonly onStart: (game: LobbyGameRoom) => void;
 }
 
@@ -106,8 +113,12 @@ export function createLobby(options: LobbyOptions): Lobby {
       fail(session, "bad_message", "That game option is not available yet.");
       return;
     }
-    if (games.size >= MAX_GAMES) {
+    if (games.size >= (options.maxGames ?? MAX_GAMES)) {
       fail(session, "bad_message", "The server is at its game limit.");
+      return;
+    }
+    if (options.mayCreate?.(session) === false) {
+      fail(session, "bad_message", "You have started too many games. Try again later.");
       return;
     }
     const id = randomUUID();
