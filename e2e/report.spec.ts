@@ -23,7 +23,11 @@ async function reportQuery(page: Page, name: string): Promise<URLSearchParams> {
   expect(url.origin + url.pathname).toBe("https://github.com/plepicgames/lunar-base/issues/new");
   expect(url.searchParams.get("template")).toBe("game-problem.yml");
   for (const key of url.searchParams.keys()) expect(["template", ...REPORT_FIELDS]).toContain(key);
-  const token = await page.evaluate(() => window.sessionStorage.getItem("lunar-base.token"));
+  // The key carries the base path when the game runs under one.
+  const token = await page.evaluate(() => {
+    const key = Object.keys(window.sessionStorage).find((k) => k.startsWith("lunar-base.token"));
+    return key === undefined ? null : window.sessionStorage.getItem(key);
+  });
   expect(token).toMatch(/^[0-9a-f]{32}$/);
   const text = decodeURIComponent(href).toLowerCase();
   for (const secret of [SEED, token ?? "", name.toLowerCase()]) expect(text).not.toContain(secret);
