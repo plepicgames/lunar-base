@@ -1111,7 +1111,7 @@ environment and listens.
 | `gamelog` | Appends a header and every choice to `<id>.jsonl` in the log directory, and deletes old logs. `npm run replay -- <file>` replays a log through the engine. The file holds the seed: it is a debugging aid for the person who runs the server, not for players |
 | `static` | Serves `dist/client` with `sirv` below the base path. The bare base redirects to `<base>/` with 308. A path outside the base, or one that names no file, is 404 |
 | `base-path` | Checks and normalises `LUNAR_BASE_PATH` |
-| `limits` | The constants of the Lobby and Reconnect contracts. Reads and checks the five limit settings, decides whether an `Origin` is allowed, names the visitor address of a request, and counts connections and new games per address |
+| `limits` | The constants of the Lobby and Reconnect contracts. Reads and checks the five limit settings and the Jev budget setting, decides whether an `Origin` is allowed, names the visitor address of a request, and counts connections and new games per address |
 
 The log directory is `LUNAR_LOG_DIR`, or `.data/games` under the working
 directory (ignored by Git) when that is unset or blank. It is created when the
@@ -1165,7 +1165,8 @@ Each room receives its own random 16-byte seed, unless
 ### Visitor limits
 
 The server has no sign-in. These limits make it safe to reach from the
-internet, and they bound what Jev can cost
+internet. They cap the games that are started, not the Jev requests those
+games make: the [Jev budget](#jev-budget) bounds what Jev can cost
 ([decision 0010](../decisions/0010-turn-jev-on-in-the-public-deployment.md)).
 `main.ts` reads the settings once with `limitSettings`, stops the start on a
 bad value, prints one line with the counts, and passes them to
@@ -1226,14 +1227,20 @@ a message.
 non-empty, using `LUNAR_JEV_MODEL` or `jev-latest`. The adapter and its
 breaker serve every game in the process. `http.startServer` receives that
 maker; its presence controls both `welcome.jev` and the lobby's acceptance
-of `botBrain: "jev"`. The startup line prints only whether Jev is on. A
-second startup line names the log directory, the days a log is kept and the
-build.
+of `botBrain: "jev"`. `main.ts` also reads `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`
+once with `jevBudgetSetting`, stops the start on a bad value and passes the
+number on as `jevDecisionsPerHour`. `http.startServer` builds one budget from
+it and wraps the Jev maker once (see [Jev budget](#jev-budget)). The startup
+line says whether Jev is on and states the budget:
+`Jev is on, at most 2000 decisions per hour`, `Jev is off` without a
+credential, or `Jev is off because the budget is 0 decisions per hour`. It
+never prints the credential. A second startup line names the log directory,
+the days a log is kept and the build.
 
 | Game brain | Maker for each non-human seat |
 | --- | --- |
 | Omitted or `builtin` | Its own seeded built-in maker, wrapped with itself as fallback; no Jev request |
-| `jev` | `withFallback(sharedJev, builtinMaker(seed, seat))`; a failure never prevents built-in play |
+| `jev` | `withFallback(withDecisionBudget(sharedJev, serverBudget), builtinMaker(seed, seat))`; neither a failure nor a used-up budget prevents built-in play |
 
 An empty or whitespace-only credential means Jev is off. No credential is
 passed to the lobby, room, client or game log; only the adapter holds it.
@@ -1245,6 +1252,7 @@ passed to the lobby, room, client or game log; only the adapter holds it.
 | `LUNAR_BASE_PATH` | `/` | The URL path the game is served under, for example `/play/lunar-base`. A trailing slash is dropped. The server stops at startup on any other form: a relative path, an empty segment, `.` or `..`, a query, or a character outside `A-Z a-z 0-9 . _ ~ -` |
 | `TYPESAFE_API_KEY` | not set | Turns Jev on. Read from the environment only. Never written, logged or sent to a client |
 | `LUNAR_JEV_MODEL` | `jev-latest` | Model name for Jev |
+| `LUNAR_JEV_MAX_DECISIONS_PER_HOUR` | 2000 | Jev decisions the whole server makes in an hour, a whole number, 0 or more. 0: no Jev request is ever made. See [Jev budget](#jev-budget) |
 | `LUNAR_SEED` | random | Fixed seed for every new game, for reproduction |
 | `LUNAR_LOG_DIR` | `.data/games` | Directory of the game logs |
 | `LUNAR_LOG_DAYS` | 30 | Whole days a game log is kept, 1 or more |
@@ -1323,8 +1331,30 @@ type DecisionRequest = {
 | Result | `decideBy(request, signal)` resolves `{ option, by }`, where `by` is the label for the log. `decide` gives the option alone |
 | Budget | `limits.budgetMs`, default `DECISION_BUDGET_MS` = 8000. The primary gets its own signal. It is aborted when the budget is used up or when the caller's signal aborts. The timer is cleared as soon as the primary settles |
 | Fallback asked | When the primary rejects, throws, is aborted, or answers an id that is not offered. An answer that comes after the abort is ignored. The fallback gets the caller's signal. The wrapper does not check the fallback's answer; the room does |
-| Labels | `jev`: the primary named an offered option. `builtin-after-jev-failure`: the fallback after any failure of the primary. A primary that makes no attempt rejects with `Declined`: `Declined("too-many-options")` gives `builtin-too-many-options`, `Declined("off")` (breaker open, or Jev off after a 401) gives `builtin` |
+| Labels | `jev`: the primary named an offered option. `builtin-after-jev-failure`: the fallback after any failure of the primary. A primary that makes no attempt rejects with `Declined`: `Declined("too-many-options")` gives `builtin-too-many-options`, `Declined("off")` (breaker open, Jev off after a 401, or the [Jev budget](#jev-budget) used up) gives `builtin` |
 | One maker | `withFallback(maker, maker)` has no primary: the maker is asked once, without a budget, and the label is `builtin`. The server gives a non-human seat of a `builtin` game, and a seat a bot took over, `withFallback(builtin, builtin)` |
+
+### Jev budget
+
+The visitor limits cap games, and one game can ask Jev for hundreds of
+decisions. Without a budget the ceiling is about 100,000 Jev decisions an
+hour. With it, at the default, the whole server makes at most 2,000 Jev
+decisions an hour, however many games and visitors there are.
+
+`src/bots/budget.ts`. `http.startServer` creates one budget for the server
+and wraps the shared Jev maker in it; `src/bots` knows nothing of the server.
+
+| Budget detail | Contract |
+| --- | --- |
+| Setting | `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`, default 2000. `ServerOptions.jevDecisionsPerHour` for a server started in a test |
+| Scope | One `createDecisionBudget` per server, shared by every Jev seat of every game. A game with the built-in brain, and a seat a bot took over, never touch it |
+| One decision | A decision that `withDecisionBudget` passes to the Jev maker counts once, whatever its retries and whether Jev answers, fails or runs out of time. A decision the Jev maker declines (`Declined`: too many options, breaker open, off after a 401) made no request and is taken back. A decision the engine forces reaches no maker and is not counted |
+| Refund | `take()` returns the refund of that one decision. It takes from the minute the decision was counted in, never from another decision's minute, and once only: a second call, and a call after the minute left the window, change nothing |
+| Window | The last 60 minutes, counted per clock minute: at most 61 numbers are remembered. A decision stays counted for 60 to 61 minutes, so no 60 minutes hold more than the limit. The clock is `ServerOptions.now`, in production `Date.now`, a wall clock. The budget keeps the latest time it has read: an earlier reading, from a clock that was set back, counts as no time passed, so no decision is freed early and no more than 61 minutes are remembered. A clock set forward frees decisions early by that much |
+| Over the budget | The wrapper rejects with `Declined("off")` before the Jev maker is asked. `withFallback` asks the built-in maker and labels the decision `builtin`. Jev is not contacted, the breaker hears nothing, and no failure is logged. When the window has room again, later decisions of the same game go to Jev |
+| Budget 0 | No Jev request is ever made. `main.ts` builds no Jev maker, also with a credential: `welcome.jev` is off and the lobby refuses `botBrain: "jev"`, as without a credential. A server started with a maker and `jevDecisionsPerHour: 0` refuses every decision |
+| Log | `jev budget exhausted limit=<n> window=60m` at the first refused decision, and `jev budget resumed limit=<n> window=60m` at the next decision that is let through. One pair per exhaustion, never a line per refused decision. Nothing with a budget of 0 |
+| Players | Nothing changes in the protocol or the client. A seat over the budget plays as a seat does whose Jev request failed: the built-in maker's choice is applied, and no message says which maker chose |
 
 ### Built-in maker
 
@@ -1518,7 +1548,9 @@ message. The room logs which maker decided.
 
 `npm run jev:probe` plays one seeded two-seat game with Jev as both seats'
 primary maker and the usual built-in fallback. It is a manual command, outside
-the gate, `npm run check` and every test. Without `TYPESAFE_API_KEY`, it prints one
+the gate, `npm run check` and every test. It asks Jev directly, outside the
+server's [Jev budget](#jev-budget): it ignores
+`LUNAR_JEV_MAX_DECISIONS_PER_HOUR`, also when that is 0. Without `TYPESAFE_API_KEY`, it prints one
 missing-credential line and exits without constructing the adapter or making a
 request. With a credential, it prints each decision's kind, elapsed time for
 `decideBy` (including fallback), maker label and the sanitized response model

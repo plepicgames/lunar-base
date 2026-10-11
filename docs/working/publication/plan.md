@@ -107,9 +107,10 @@ One row is one pull request in one repository. Rows run in the order given.
   limits are the cost control for Jev (decision 10), so O2 waits for this row. Files: `src/server/limits.ts`, `http.ts`, `sessions.ts`,
   `lobby.ts` and `main.ts`, and their tests. Verify:
   tests for each limit, including a second address that is not blocked.
-- [ ] **L6b Jev budget.** A cap on Jev decisions per hour for the whole
+- [x] **L6b Jev budget.** A cap on Jev decisions per hour for the whole
   server, `LUNAR_JEV_MAX_DECISIONS_PER_HOUR`, default 2000. Over the cap, a
-  non-human seat uses the built-in player until the hour rolls over. The limits
+  non-human seat uses the built-in player until the sliding 60-minute window
+  has room again. The limits
   of L6 cap games started, not Jev requests: without this row the ceiling is
   about 100,000 decisions an hour. Files: `src/bots/` (the fallback maker),
   `src/server/main.ts`, `limits.ts`, and their tests. Verify: tests on an

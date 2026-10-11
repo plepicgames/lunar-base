@@ -3,7 +3,7 @@ import { jevMaker } from "../bots/jev/adapter.ts";
 import { normalizeBasePath } from "./base-path.ts";
 import { gameLogSettings } from "./gamelog.ts";
 import { startServer, type RunningServer } from "./http.ts";
-import { describeLimits, limitSettings } from "./limits.ts";
+import { describeJev, describeLimits, jevBudgetSetting, limitSettings } from "./limits.ts";
 
 export async function main(): Promise<RunningServer> {
   // Read once, before listening: a bad LUNAR_LOG_DAYS stops the start, and
@@ -11,13 +11,17 @@ export async function main(): Promise<RunningServer> {
   const logs = gameLogSettings(process.env);
   // Likewise: a bad limit stops the start, and the server keeps these values.
   const limits = limitSettings(process.env);
+  // Likewise: a bad Jev budget stops the start, and the server keeps this value.
+  const jevDecisionsPerHour = jevBudgetSetting(process.env);
   const port = Number(process.env.PORT ?? 4780);
   const botDelayMs = Number(process.env.LUNAR_BOT_DELAY_MS ?? 700);
   const takeoverDelayMs = Number(process.env.LUNAR_TAKEOVER_DELAY_MS ?? 60_000);
   const apiKey = process.env.TYPESAFE_API_KEY?.trim();
-  const jev = apiKey
-    ? jevMaker({ apiKey, fetch: globalThis.fetch, model: process.env.LUNAR_JEV_MODEL })
-    : undefined;
+  // With a budget of 0 no maker is built: the lobby then offers no Jev.
+  const jev =
+    apiKey && jevDecisionsPerHour > 0
+      ? jevMaker({ apiKey, fetch: globalThis.fetch, model: process.env.LUNAR_JEV_MODEL })
+      : undefined;
   const basePath = normalizeBasePath(process.env.LUNAR_BASE_PATH ?? "/");
   const running = await startServer({
     port,
@@ -27,12 +31,13 @@ export async function main(): Promise<RunningServer> {
     botDelayMs,
     takeoverDelayMs,
     jev,
+    jevDecisionsPerHour,
     logs,
     limits,
   });
   const path = basePath === "/" ? "" : `${basePath}/`;
   console.log(`Lunar Base is running at http://localhost:${String(running.port)}${path}`);
-  console.log(`Jev is ${jev ? "on" : "off"}`);
+  console.log(describeJev(Boolean(apiKey), jevDecisionsPerHour));
   console.log(
     `Game logs go to ${logs.directory} and are kept for ${String(logs.days)} ${logs.days === 1 ? "day" : "days"}; build ${logs.build}`,
   );

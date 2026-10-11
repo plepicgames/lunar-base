@@ -2,7 +2,9 @@ import { expect, test } from "vitest";
 import {
   createVisitorLimits,
   DEFAULT_LIMITS,
+  describeJev,
   describeLimits,
+  jevBudgetSetting,
   limitSettings,
   originAllowed,
   visitorAddress,
@@ -75,6 +77,35 @@ test.each([
   ["LUNAR_MAX_NEW_GAMES_PER_HOUR", "0x10"],
 ])("%s=%j stops the start with an error that names the setting", (name, value) => {
   expect(() => limitSettings({ [name]: value })).toThrow(name);
+});
+
+test.each([
+  [undefined, 2000],
+  ["0", 0],
+  ["1", 1],
+  ["2000", 2000],
+  [" 5 ", 5],
+])("LUNAR_JEV_MAX_DECISIONS_PER_HOUR=%j allows %i Jev decisions an hour", (value, expected) => {
+  expect(jevBudgetSetting({ LUNAR_JEV_MAX_DECISIONS_PER_HOUR: value })).toBe(expected);
+});
+
+test.each(["-1", "1.5", "abc", "", "   ", "1e3", "0x10", "00", "99999999999999999999"])(
+  "LUNAR_JEV_MAX_DECISIONS_PER_HOUR=%j stops the start with an error that names the setting",
+  (value) => {
+    expect(() => jevBudgetSetting({ LUNAR_JEV_MAX_DECISIONS_PER_HOUR: value })).toThrow(
+      `LUNAR_JEV_MAX_DECISIONS_PER_HOUR must be a whole number, 0 or more; got "${value}"`,
+    );
+  },
+);
+
+test.each([
+  [false, 2000, "Jev is off"],
+  [false, 0, "Jev is off"],
+  [true, 2000, "Jev is on, at most 2000 decisions per hour"],
+  [true, 1, "Jev is on, at most 1 decision per hour"],
+  [true, 0, "Jev is off because the budget is 0 decisions per hour"],
+])("the startup line for credential %j and budget %i is %j", (credential, budget, line) => {
+  expect(describeJev(credential, budget)).toBe(line);
 });
 
 test("a refused origin is named by its place, so a credential in it is not repeated", () => {
