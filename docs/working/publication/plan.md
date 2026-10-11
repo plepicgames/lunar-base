@@ -92,7 +92,7 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### This repository: make it fit for the public internet
 
-- [ ] **L5 Base path.** One setting, `LUNAR_BASE_PATH`, default `/`. The server
+- [x] **L5 Base path.** One setting, `LUNAR_BASE_PATH`, default `/`. The server
   serves the client, the assets and the WebSocket under it; the client builds
   its WebSocket and asset addresses from it. Files: `src/server/http.ts`,
   `static.ts` and `main.ts`, `src/client/connection.ts` and `index.html`,
@@ -110,7 +110,7 @@ One row is one pull request in one repository. Rows run in the order given.
   closes. Files: `src/server/http.ts`, `main.ts` and `room.ts`,
   `src/protocol/` for the new message, the client screen that shows it, and
   their tests. Verify: tests; `curl` against a started server.
-- [ ] **L8 Game logs.** Logs go to the directory in `LUNAR_LOG_DIR`. A startup
+- [x] **L8 Game logs.** Logs go to the directory in `LUNAR_LOG_DIR`. A startup
   and daily sweep deletes files older than `LUNAR_LOG_DAYS`, default 30.
   Files: `src/server/gamelog.ts` and `main.ts`, `tools/replay.ts`, and their
   tests. Verify: tests with a fake clock; `npm run replay` reads a written log.
@@ -132,7 +132,7 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### `deploys`
 
-- [ ] **D1 Manifests.** New root `lunar-base/`: `base/` (Deployment, Service,
+- [x] **D1 Manifests.** New root `lunar-base/`: `base/` (Deployment, Service,
   log volume, default-deny NetworkPolicy). The live overlay reads
   `TYPESAFE_API_KEY` from a Secret by name and allows HTTPS egress to the Jev
   service; the test overlay has neither, `overlays/live`,
