@@ -29,6 +29,11 @@ jobs:
           pip install zizmor==1.29.0
           zizmor .github/workflows/
 
+      - name: Lint the shell scripts
+        run: |
+          set -euo pipefail
+          shellcheck -- .githooks/pre-commit
+
       - name: Check documentation links
         # lycheeverse/lychee-action v2.9.0
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8

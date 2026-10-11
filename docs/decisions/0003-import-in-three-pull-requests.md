@@ -32,4 +32,6 @@ the link check for documents.
 - Each of the three pull requests can be verified on its own terms.
 - The code pull request is large. Its review relies on the checks and on the
   search for private paths.
-- The size override applies to the import only.
+- The size override applies to the pull requests that fill the empty
+  repository: the governance files and the three import pull requests. Every
+  later pull request meets the size gate.

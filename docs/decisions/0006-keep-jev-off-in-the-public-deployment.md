@@ -29,4 +29,6 @@ code. The built-in player stays available.
 
 - A public game offers the built-in player only.
 - The public deployment holds no API key.
-- Turning Jev on later is one Secret and one environment variable.
+- Turning Jev on later needs three things: a Secret with the key, the
+  environment variable that reads it, and a network policy that lets the game
+  reach the Jev service. The deployment allows no egress until then.

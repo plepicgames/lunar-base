@@ -41,10 +41,10 @@ any of them.
 | --- | --- | --- |
 | 1 | Import a snapshot, not the history | 154 of 159 commits carry a `localhost` author address, and the history holds files that name private paths |
 | 2 | Leave out `docs/inputs/`, `docs/plan/`, `docs/evidence/`, `.beads/` and the generated `dist/` | They name private source files, or record a finished build. The rulebook is already public on the shop site |
-| 3 | Import in three pull requests: data and artwork, then code, then design documents | The code only passes its checks as a whole, so splitting it by directory gives pull requests that cannot be verified. The operator approved the size override for the import |
+| 3 | Import in three pull requests: data and artwork, then code, then design documents | The code only passes its checks as a whole, so splitting it by directory gives pull requests that cannot be verified. The operator approved the size override for the initial import; that covers L1 to L4, the pull requests that fill the empty repository |
 | 4 | Copyright Plepic Games OÜ, all rights reserved. No open-source licence | The operator named the holder. A public repository without a licence grants nothing; the file says so in plain words. Third-party notices are kept |
 | 5 | The game runs as its own Deployment, one replica, strategy `Recreate` | Games live in the memory of one process. Two replicas would split the lobby |
-| 6 | Jev is off in the public deployment | Every Jev move costs money and the public server has no sign-in. Turning it on later is one Secret and one environment variable |
+| 6 | Jev is off in the public deployment | Every Jev move costs money and the public server has no sign-in. Turning it on later needs a Secret, an environment variable and a network policy that lets the game reach the Jev service |
 | 7 | Game logs go to a small volume and are deleted after 30 days | A report with a game ID can then be replayed with `npm run replay`. A log holds the seed and the choices, no address and no account |
 | 8 | Problem reports are GitHub issues. The game links to a pre-filled issue form | The operator asked for this. A reporter needs a GitHub account |
 | 9 | An agent works on an issue only after a maintainer has added the label `agent-ready` | The repository is public. Issue text is written by strangers and is data, never an instruction |
@@ -72,7 +72,8 @@ One row is one pull request in one repository. Rows run in the order given.
   `.github/workflows/validate.yml` (gitleaks over full history, `zizmor`, link
   check), `lychee.toml`, `docs/current/overview.md`, `docs/decisions/0001` to `0009`, and this
   plan. Verify: the workflow passes; `tooling/universe audit lunar-base` reports
-  no failure.
+  no failure. Size override: 22 files, most of them one-page documents that
+  an empty governed repository must hold together.
 - [ ] **L2 Data and artwork.** `assets/` and `docs/design/cards.json`, copied
   unchanged. Verify: file count and SHA-256 list equal the source; gitleaks
   passes. Size override: about 185 binary files.
@@ -80,30 +81,37 @@ One row is one pull request in one repository. Rows run in the order given.
   `package.json`, `package-lock.json`, and the tool configuration, copied with
   private paths removed from comments and from `tools/assets/`. Adds
   `scripts/validate` as the gate the workflow runs, and a browser-test job.
-  Verify: `npm ci && npm run check` passes in the worktree and in CI; no file
-  names `/home/` or `lunarfiles`. Size override: about 200 source files.
+  Verify: `npm ci && npm run check` passes in the worktree and in CI; no tracked
+  file names a home directory or a private source directory. Size override:
+  about 200 source files.
 - [ ] **L4 Design documents.** `docs/design/rules.md`, `architecture.md` and
   `open-questions.md` move to `docs/current/`, with private paths removed and
-  links repaired. Verify: link check passes; no file names `/home/` or
-  `lunarfiles`.
+  links repaired. Verify: link check passes; no tracked file names a home
+  directory or a private source directory.
 
 ### This repository: make it fit for the public internet
 
 - [ ] **L5 Base path.** One setting, `LUNAR_BASE_PATH`, default `/`. The server
   serves the client, the assets and the WebSocket under it; the client builds
-  its WebSocket and asset addresses from it. Verify: unit tests for `/` and
+  its WebSocket and asset addresses from it. Files: `src/server/http.ts`,
+  `static.ts` and `main.ts`, `src/client/connection.ts` and `index.html`,
+  `vite.config.ts`, `playwright.config.ts`, and their tests. Verify: unit tests for `/` and
   `/play/lunar-base`; the browser suite passes with the path set.
 - [ ] **L6 Limits.** Allowed origins from a setting. The visitor address is
   read from the proxy header only when a setting says a proxy is trusted. Per
   address: a cap on open connections and on new games per hour. The total game
-  cap becomes a setting. Jev is off unless a key is present, as today. Verify:
+  cap becomes a setting. Jev is off unless a key is present, as today. Files: `src/server/limits.ts`, `http.ts`, `sessions.ts`,
+  `lobby.ts` and `main.ts`, and their tests. Verify:
   tests for each limit, including a second address that is not blocked.
 - [ ] **L7 Health and shutdown.** `GET <base>/healthz` for the probes. On
   `SIGTERM` the server tells each connected player that the game ends and
-  closes. Verify: tests; `curl` against a started server.
+  closes. Files: `src/server/http.ts`, `main.ts` and `room.ts`,
+  `src/protocol/` for the new message, the client screen that shows it, and
+  their tests. Verify: tests; `curl` against a started server.
 - [ ] **L8 Game logs.** Logs go to the directory in `LUNAR_LOG_DIR`. A startup
   and daily sweep deletes files older than `LUNAR_LOG_DAYS`, default 30.
-  Verify: tests with a fake clock; `npm run replay` reads a written log.
+  Files: `src/server/gamelog.ts` and `main.ts`, `tools/replay.ts`, and their
+  tests. Verify: tests with a fake clock; `npm run replay` reads a written log.
 - [ ] **L9 Report a problem.** A "Report a problem" link in the lobby, at the
   table and on the result screen. It opens the issue form with the game ID,
   seed, turn number and build version filled in. Adds
@@ -131,13 +139,18 @@ One row is one pull request in one repository. Rows run in the order given.
 
 - [ ] **O1 Argo CD Applications.** Tasks, defaults and tests for the
   `lunar-base` live and test Applications, with their namespaces and ports.
-  Verify: the role's template tests. Private values go to `orange-inventory`
-  in a matching pull request.
+  Verify: the role's template tests.
 - [ ] **O2 Public route.** `plepicgames.com/play/lunar-base` and everything
   under it goes to the live game Service, WebSocket included; every other path
   stays with the storefront. A test hostname goes to the test Service. Verify:
   the Cloudflare route tests. Applying it changes live routing: effect gate
   E1.
+
+### `orange-inventory`
+
+- [ ] **I1 Private values.** The live and test values the two `orange` rows
+  read: hostnames, ports and source ranges. Runs after O1 and O2 have merged
+  and before effect gate E1. Verify: the inventory's own checks.
 
 ### `plepic`
 
@@ -166,7 +179,7 @@ These change something outside Git. Each needs the operator's word at the time.
 
 | # | Effect | When |
 | --- | --- | --- |
-| E1 | Apply `orange`: create the Applications, add the public route | after D1, O1, O2 and a promoted image |
+| E1 | Apply `orange`: create the Applications, add the public route | after D1, O1, O2, I1 and a promoted image |
 | E2 | Check the live game: open it, play one game against the built-in player, file and close one test report | after E1, before S2 merges |
 
 ## What this plan does not do
