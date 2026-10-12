@@ -4,7 +4,11 @@
 reach it from a "Play online" box on `https://plepicgames.com/games/lunar-base`,
 and report problems as GitHub issues in this repository.
 
-Status: in progress. Started 2026-10-11 on the operator's instruction. The import (L1 to L4) and the catalogue entry are done.
+Status: in progress. Started 2026-10-11 on the operator's instruction. **The game
+is live** at the public address since 2026-10-12: every code row is done, the
+operator's four steps are done, and the live check passed. What is left is the
+two shop rows, S1 and S2. They wait for the shop's translation stack to merge,
+because both change files that stack rewrites.
 
 ## Where things are
 
@@ -152,15 +156,15 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### `orange`
 
-- [ ] **O1a Secret delivery.** The secret store gets a namespace, a policy and
+- [x] **O1a Secret delivery.** The secret store gets a namespace, a policy and
   a role for the game, and the import that reads the Jev key from the
   platform's key material. The projection that gives the game's namespace its
   Jev Secret is declared. Verify: the repository's gate.
-- [ ] **O1b Argo CD Application.** Tasks, defaults, template and tests for the
+- [x] **O1b Argo CD Application.** Tasks, defaults, template and tests for the
   one `lunar-base` Application: its namespace, its project, the two patches
   (ingress source ranges and allowed origins), the image-digest gate and the
   health probe on port 8141. Verify: the repository's gate.
-- [ ] **O2 Public route.** The tunnel tool learns a path rule (decision 12):
+- [x] **O2 Public route.** The tunnel tool learns a path rule (decision 12):
   `/play/lunar-base` and everything under it goes to the game Service,
   WebSocket included; every other path stays with the storefront. Verify: the
   tool's tests and the repository's gate. Adding the route to the live tunnel
@@ -168,7 +172,7 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### `orange-inventory`
 
-- [ ] **I1 Private values.** The live values the `orange` rows read: the
+- [x] **I1 Private values.** The live values the `orange` rows read: the
   allowed origin, the port, the source range and the enabled secret source.
   Runs after O1a and O1b have merged and before effect gate E1c. Verify: the inventory's own checks.
 
@@ -189,10 +193,10 @@ One row is one pull request in one repository. Rows run in the order given.
 | # | Needed | Blocks |
 | --- | --- | --- |
 | P1 | Done 2026-10-11: the agent identity can read and write the repository and its issues, and the repository is public | — |
-| P2 | Done 2026-10-11: the `live` environment holds the deployer credential the shop uses, under the same two secret names. Still to do: restrict the environment to `main` | L10 promotion |
-| P3 | The cluster can pull `ghcr.io/plepicgames/lunar-base` (public package, or a pull secret) | first sync |
+| P2 | Done: the `live` environment holds the deployer credential the shop uses, under the same two secret names, and is restricted to `main` | — |
+| P3 | Done 2026-10-12: the published package is public; an anonymous pull succeeds | — |
 | P4 | Renovate installed on `plepicgames/lunar-base` | dependency updates |
-| P6 | Done 2026-10-11: the Jev key for this deployment is with the platform's key material, outside every repository | E1b |
+| P6 | Done 2026-10-11: the Jev key for this deployment is with the platform's key material, outside every repository | E1b | Done 2026-10-12: the Jev key is seeded, at version 1 | — |
 | P7 | Done 2026-10-11: `main` is protected by a ruleset (no deletion, no force push, pull request required, checks `validate` and `browser` required) | — |
 
 ## Effect gates
@@ -201,11 +205,35 @@ These change something outside Git. Each needs the operator's word at the time.
 
 | # | Effect | When |
 | --- | --- | --- |
-| E1a | The operator signs in to the secret store and runs the access playbook: the game's namespace, policy and role | after O1a |
+| E1a | Done 2026-10-12: the access playbook ran under the operator's sign-in; a second run changed nothing | — |
 | E1b | The operator seeds the Jev key | after E1a |
-| E1c | The operator applies the Argo CD role: namespace, Secret projection, Application | after O1b, I1 and a promoted image |
-| E1d | The operator runs the tunnel tool with the full route list plus the game's path route, dry run first | after O2, L6b and E1c |
-| E2 | Check the live game: open it, play one game against the built-in player, file and close one test report | after E1d, before S2 merges |
+| E1c | Done 2026-10-12: the reconcile created the namespace's Secret, the project and the Application; the rollout and the health probe passed | — |
+| E1d | Done 2026-10-12: the tunnel has the path route. The dry run reported the route table as its only change; the run applied it | — |
+| E2 | Done 2026-10-12, see below | — |
+
+## Live check, 2026-10-12
+
+| Check | Result |
+| --- | --- |
+| Health, index, a script and a card image under `/play/lunar-base` | 200 each |
+| The bare path, and the `www` form | redirect to the game |
+| A sibling path, `/play/lunar-base-evil` | the shop's 404, not the game |
+| The shop's home and product pages | 200, unchanged |
+| WebSocket through the tunnel with the site's origin | 101 |
+| WebSocket with a foreign origin | 403 |
+| A game against the built-in player, in a scripted browser | played; no failed request, no console error |
+| A game against Jev | played; the server logged 21 Jev decisions and no failure |
+| The report link at the table | carries the game ID, turn, screen and build; no seed |
+| A test report | filed with the label `game-problem` and closed (#19) |
+
+Not checked: how the issue form renders and pre-fills for a signed-in person.
+The form is on the default branch and the link redirects to the sign-in page
+for an anonymous visitor.
+
+One finding for later: during the check, a name used a few minutes earlier
+was refused with "Another player uses that name". The server keeps an idle
+session for 30 minutes, which would explain it; that cause is a reading of the
+constants, not something this check proved. A returning player can meet it.
 
 ## What this plan does not do
 
