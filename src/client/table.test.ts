@@ -216,6 +216,28 @@ describe("Table in the app", () => {
     ).toEqual(["Ann drew a card.", "Bea drew a card."]);
   });
 
+  test("Leave game, confirmed, sends one game.leave and the lobby returns", () => {
+    const socket = enterGame();
+    const before = socket.messages.length;
+    fireEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    const stay = screen.getByRole("dialog", { name: "Leave game?" });
+    fireEvent.click(within(stay).getByRole("button", { name: "Stay" }));
+    expect(socket.messages).toHaveLength(before);
+
+    fireEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    const leave = screen.getByRole("dialog", { name: "Leave game?" });
+    fireEvent.click(within(leave).getByRole("button", { name: "Leave game" }));
+    expect(socket.messages.slice(before)).toEqual([{ type: "game.leave" }]);
+
+    act(() => {
+      socket.receive({ type: "lobby.state", games: [] });
+    });
+    expect(screen.getByRole("button", { name: "Create game" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Table" })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Leave game" })).toBeNull();
+  });
+
   test("a finished game shows the result; Back to lobby sends game.leave and the lobby returns", () => {
     const socket = enterGame(view({ result: { reason: "victory", winners: [0], scores: [1, 0] } }));
     fireEvent.click(screen.getByRole("button", { name: "Back to lobby" }));

@@ -3,6 +3,7 @@ import { Result } from "../screens/Result.tsx";
 import { PictureTable } from "./PictureTable.tsx";
 import { PlainTable } from "./PlainTable.tsx";
 import { Help } from "./Help.tsx";
+import { Leave } from "./Leave.tsx";
 
 interface TableProps {
   readonly game: GameState;
@@ -25,6 +26,7 @@ export function Table({ game, onDecide, onLeave }: TableProps) {
         events={game.events}
         onDecide={onDecide}
       />
+      {game.view.you !== null && <Leave onLeave={onLeave} below={!plain} />}
       <Help />
     </>
   );

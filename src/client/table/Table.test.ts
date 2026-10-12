@@ -37,9 +37,10 @@ function threeSeats(overrides: Partial<View> = {}): View {
 
 function mount(gameView: View, log: readonly string[] = []) {
   const onDecide = vi.fn();
+  const onLeave = vi.fn();
   const game: GameState = { game: "g1", seq: 1, view: gameView, events: [], log };
-  const result = render(createElement(Table, { game, onDecide, onLeave: vi.fn() }));
-  return { onDecide, result };
+  const result = render(createElement(Table, { game, onDecide, onLeave }));
+  return { onDecide, onLeave, result };
 }
 
 function opponent(name: string): HTMLElement {
@@ -342,6 +343,101 @@ describe("Rulebook help", () => {
       expect(screen.getByRole("img", { name: `Rulebook page ${String(page)}` })).toBeTruthy();
       if (page !== 26) fireEvent.keyDown(document, { key: "ArrowRight" });
     }
+  });
+});
+
+describe("Leave game", () => {
+  const leaveButtons = () => screen.queryAllByRole("button", { name: "Leave game" });
+  const confirmation = () => screen.queryByRole("dialog", { name: "Leave game?" });
+  const open = () => {
+    fireEvent.click(screen.getByRole("button", { name: "Leave game" }));
+    return screen.getByRole("dialog", { name: "Leave game?" });
+  };
+
+  test("a seated player has one Leave game button on the picture table and on the plain table", () => {
+    const first = mount(threeSeats());
+    expect(leaveButtons()).toHaveLength(1);
+    expect(confirmation()).toBeNull();
+    first.result.unmount();
+
+    window.history.replaceState(null, "", "/?plain=1");
+    mount(threeSeats());
+    expect(leaveButtons()).toHaveLength(1);
+    expect(confirmation()).toBeNull();
+  });
+
+  test("a watcher has no Leave game button", () => {
+    const first = mount(threeSeats({ you: null }));
+    expect(screen.getByRole("button", { name: "Help" })).toBeTruthy();
+    expect(leaveButtons()).toHaveLength(0);
+    first.result.unmount();
+
+    window.history.replaceState(null, "", "/?plain=1");
+    mount(threeSeats({ you: null }));
+    expect(screen.getByRole("button", { name: "Help" })).toBeTruthy();
+    expect(leaveButtons()).toHaveLength(0);
+  });
+
+  test("the button asks once: a modal dialog with the focus on Stay, and nothing is sent", () => {
+    const { onLeave } = mount(threeSeats());
+    const dialog = open();
+    expect(onLeave).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.textContent).toContain("You cannot come back to this game.");
+    expect(dialog.textContent).toContain("a non-human player takes your seat");
+    const buttons = within(dialog).getAllByRole("button");
+    expect(buttons.map((button) => button.textContent)).toEqual(["Stay", "Leave game"]);
+    expect(document.activeElement).toBe(buttons[0]);
+
+    screen.getByRole("button", { name: "View Bea's Base" }).focus();
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    buttons[1]?.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(buttons[0]);
+    expect(onLeave).not.toHaveBeenCalled();
+  });
+
+  test("Stay and Escape close the dialog, send nothing and give the focus back", () => {
+    const { onLeave } = mount(threeSeats());
+    const button = screen.getByRole("button", { name: "Leave game" });
+    const closes = [
+      (dialog: HTMLElement) =>
+        fireEvent.click(within(dialog).getByRole("button", { name: "Stay" })),
+      () => fireEvent.keyDown(document, { key: "Escape" }),
+    ];
+    for (const close of closes) {
+      button.focus();
+      close(open());
+      expect(confirmation()).toBeNull();
+      expect(onLeave).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(button);
+      expect(screen.getByRole("region", { name: "Opponents" })).toBeTruthy();
+    }
+  });
+
+  test("Leave game in the dialog calls onLeave once and closes the dialog", () => {
+    const { onLeave } = mount(threeSeats());
+    fireEvent.click(within(open()).getByRole("button", { name: "Leave game" }));
+    expect(onLeave).toHaveBeenCalledOnce();
+    expect(confirmation()).toBeNull();
+  });
+
+  test("a result arriving while the dialog is open shows the Result and sends nothing", () => {
+    const { onLeave, result } = mount(threeSeats());
+    open();
+    const game: GameState = {
+      game: "g1",
+      seq: 2,
+      view: threeSeats({ result: { reason: "victory", winners: [1], scores: [0, 1, 0] } }),
+      events: [],
+      log: [],
+    };
+    result.rerender(createElement(Table, { game, onDecide: vi.fn(), onLeave }));
+    expect(confirmation()).toBeNull();
+    expect(screen.getByRole("button", { name: "Back to lobby" })).toBeTruthy();
+    expect(leaveButtons()).toHaveLength(0);
+    expect(onLeave).not.toHaveBeenCalled();
   });
 });
 

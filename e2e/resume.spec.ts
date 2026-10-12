@@ -72,3 +72,27 @@ test("an absent player shows as away and the one-second takeover advances play",
   await expect(observer.getByRole("region", { name: activeName })).toContainText("away");
   await expect.poll(async () => await log.count(), { timeout: 5000 }).toBeGreaterThan(before);
 });
+
+test("a player who leaves a running game returns to the lobby and the seat plays on as non-human", async ({
+  page,
+}) => {
+  const [ada, bo] = await twoHumanPlayers(page, "Exit");
+  const leaver = (await ada.getByRole("region", { name: "Your decision" }).count()) ? ada : bo;
+  const stayer = leaver === ada ? bo : ada;
+  const leaverName = leaver === ada ? "Exit Ada" : "Exit Bo";
+  const seat = stayer.getByRole("region", { name: leaverName });
+  await expect(seat).not.toContainText("non-human");
+
+  await leaver.getByRole("button", { name: "Leave game", exact: true }).click();
+  // Names match by substring: the second press is the one inside the dialog.
+  const dialog = leaver.getByRole("dialog", { name: "Leave game?" });
+  await dialog.getByRole("button", { name: "Leave game", exact: true }).click();
+  await expect(leaver.getByRole("heading", { name: "Create a game" })).toBeVisible();
+  await expect(leaver.getByRole("region", { name: "Table" })).toHaveCount(0);
+
+  await expect(seat).toContainText("non-human");
+  await expect(seat.getByRole("heading", { name: leaverName })).toBeVisible();
+  // The seat played on: the turn came round to the player who stayed.
+  const asked = stayer.getByRole("region", { name: "Your decision" }).getByRole("button");
+  await expect(asked.first()).toBeVisible({ timeout: 5000 });
+});
