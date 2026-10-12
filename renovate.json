@@ -1,14 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "local>hannosirkel/architecture//templates/default"
-  ],
+  "extends": ["local>hannosirkel/architecture//templates/default"],
   "packageRules": [
     {
       "description": "The engines field states the oldest Node.js the game runs on. It is raised on purpose, with the start script's check and the documents, not because a newer release exists.",
-      "matchDepTypes": [
-        "engines"
-      ],
+      "matchDepTypes": ["engines"],
       "enabled": false
     }
   ]
