@@ -1,4 +1,4 @@
-name: Problem in the game
+name: Report a problem in the online game
 description: Something went wrong while you played Lunar Base online.
 title: "[game] "
 labels: ["game-problem"]
@@ -8,6 +8,9 @@ body:
       value: |
         Thank you for telling us. This report is public: anyone can read it.
         Do not write a password, an e-mail address or anything else private.
+
+        If nothing went wrong and you would like the game to work differently,
+        use "Suggest a change to the online game" instead.
 
         If you opened this page from the game, the fields at the bottom are
         already filled in. Please leave them as they are.

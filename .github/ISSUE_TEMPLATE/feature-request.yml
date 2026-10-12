@@ -1,0 +1,60 @@
+name: Suggest a change to the online game
+description: You would like Lunar Base online to work differently or to do something new.
+title: "[idea] "
+labels: ["feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for telling us. This suggestion is public: anyone can read it.
+        Do not write a password, an e-mail address or anything else private.
+
+        If the game did something wrong, use "Report a problem in the online
+        game" instead.
+
+        If you opened this page from the game, the fields at the bottom are
+        already filled in. Please leave them as they are.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like the game to do?
+      description: Say what should change, in your own words. A sketch or a screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why, or when, would it help?
+      description: For example what you were trying to do when you missed it.
+  - type: input
+    id: game-id
+    attributes:
+      label: Game ID
+      description: Filled in by the game. Leave it empty if the idea is not about one game.
+  - type: input
+    id: turn
+    attributes:
+      label: Turn
+      description: The turn number when you opened this form.
+  - type: input
+    id: screen
+    attributes:
+      label: Screen
+      description: Where you were, for example lobby, table or result.
+  - type: input
+    id: build
+    attributes:
+      label: Game version
+      description: Shown at the bottom of the game, after "Version".
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: Filled in by the game. Otherwise the name of your browser and device.
+  - type: checkboxes
+    id: no-personal-data
+    attributes:
+      label: Before you send
+      options:
+        - label: This suggestion contains no personal data and no password
+          required: true

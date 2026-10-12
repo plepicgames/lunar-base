@@ -1,8 +1,11 @@
 .report {
   display: flex;
   min-width: 0;
+  /* Where the row is too narrow for both links and the version, the version takes a second line. */
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-3);
+  justify-content: center;
+  gap: 0 var(--spacing-3);
   margin: 0;
   font-size: 0.8125rem;
   white-space: nowrap;
