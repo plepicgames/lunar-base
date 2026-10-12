@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { REPORT_FIELDS, reportUrl } from "./report.ts";
+import { REPORT_FIELDS, reportUrl, type ReportKind } from "./report.ts";
 
 const game = "3f2b8c1e-6a4d-4b7e-9c1a-0d5e7f8a9b2c";
 const userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/141.0 Safari/537.36";
@@ -110,6 +110,75 @@ describe("reportUrl", () => {
     for (const turn of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
       const params = query(reportUrl({ screen: "table", build: "dev", userAgent, game, turn }));
       expect(params.has("turn")).toBe(false);
+    }
+  });
+
+  test("the kind chooses the form: a problem by default, an idea on request", () => {
+    const facts = { screen: "table", build: "1.4.0", userAgent, game, turn: 7 } as const;
+    expect(reportUrl(facts, "problem")).toBe(reportUrl(facts));
+    const idea = new URL(reportUrl(facts, "idea"));
+    expect(idea.origin + idea.pathname).toBe(
+      "https://github.com/plepicgames/lunar-base/issues/new",
+    );
+    expect(Object.fromEntries(idea.searchParams)).toEqual({
+      template: "feature-request.yml",
+      "game-id": game,
+      turn: "7",
+      screen: "table",
+      build: "1.4.0",
+      browser: userAgent,
+    });
+  });
+
+  test("an idea outside a game leaves the game fields out", () => {
+    const params = query(reportUrl({ screen: "lobby", build: "dev", userAgent }, "idea"));
+    expect([...params.keys()]).toEqual(["template", "screen", "build", "browser"]);
+  });
+
+  test("no other template name can reach the URL", () => {
+    const facts = { screen: "lobby", build: "dev", userAgent } as const;
+    for (const hostile of ["other.yml", "x&labels=agent-ready", "__proto__", "", undefined]) {
+      const params = query(reportUrl(facts, hostile as ReportKind));
+      expect(params.get("template")).toBe("game-problem.yml");
+      expect([...params.keys()]).toEqual(["template", "screen", "build", "browser"]);
+    }
+  });
+
+  test("an idea is encoded, closed to injection and cut like a problem", () => {
+    const hostile = "x&title=Injected&labels=agent-ready#body=owned";
+    const parsed = new URL(
+      reportUrl(
+        { screen: "table", build: hostile, userAgent: hostile, game: hostile, turn: 1 },
+        "idea",
+      ),
+    );
+    expect(parsed.hash).toBe("");
+    expect([...parsed.searchParams.keys()]).toEqual([
+      "template",
+      "game-id",
+      "turn",
+      "screen",
+      "build",
+      "browser",
+    ]);
+    expect(parsed.searchParams.get("template")).toBe("feature-request.yml");
+    expect(parsed.searchParams.get("browser")).toBe(hostile);
+    for (const long of ["A".repeat(10_000), "Ü ".repeat(5_000), "🚀".repeat(5_000)]) {
+      const url = reportUrl(
+        {
+          screen: "table",
+          build: "b".repeat(5_000),
+          userAgent: long,
+          game: "g".repeat(5_000),
+          turn: 12,
+        },
+        "idea",
+      );
+      expect(url.length).toBeLessThan(2000);
+      const browser = query(url).get("browser") ?? "";
+      expect(browser.length).toBeGreaterThan(100);
+      expect(long.startsWith(browser)).toBe(true);
+      expect(query(url).get("build")).toBe("b".repeat(64));
     }
   });
 });

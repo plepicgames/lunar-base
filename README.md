@@ -82,19 +82,27 @@ that time exits at once with code 1. In a container start
 `node src/server/main.ts` or `bash scripts/start.sh`: under `npm start` the
 signal does not reach the server.
 
-## Report a problem
+## Report a problem or suggest a change
 
-Use the **Report a problem** link at the bottom of the game, or open the
-[issue form](https://github.com/plepicgames/lunar-base/issues/new?template=game-problem.yml)
-yourself. You need a GitHub account.
+Use one of the two links at the bottom of the game, or open the same form on
+GitHub yourself. You need a GitHub account.
 
-- Say what happened and what you expected. A screenshot helps.
-- The link fills in the game ID, the turn number, the screen, the game
+| You want to say | Link in the game | Form on GitHub |
+| --- | --- | --- |
+| The game did something wrong | **Report a problem** | [Report a problem in the online game](https://github.com/plepicgames/lunar-base/issues/new?template=game-problem.yml) |
+| The game should behave differently, or do something new | **Suggest a change** | [Suggest a change to the online game](https://github.com/plepicgames/lunar-base/issues/new?template=feature-request.yml) |
+
+- For a problem, say what happened and what you expected. For a change, say
+  what the game should do and when it would help. A screenshot helps.
+- Your choice classes the report: a problem gets the label `game-problem`, a
+  suggestion gets `feature-request`. If you are not sure, pick either. A
+  maintainer may change the class when reading the report.
+- Either link fills in the game ID, the turn number, the screen, the game
   version and your browser. Leave them in. Without the link, copy the version
   from the bottom of the game.
-- A report is public. Do not put a password, an e-mail address or other
+- A report or a suggestion is public. Do not put a password, an e-mail address or other
   personal data in it.
-- The link never sends the game's seed, your cards, your name or your session.
+- Neither link sends the game's seed, your cards, your name or your session.
 
 The game ID lets a developer find the server's log of that game and replay it.
 The server keeps each log for 30 days and then deletes it

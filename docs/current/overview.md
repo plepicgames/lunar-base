@@ -16,22 +16,28 @@ The repository builds the game's container image and promotes its digest
 into the live environment; see [Image](./architecture.md#image). The
 [plan](../working/publication/plan.md) lists the work that remains.
 
-## Problem reports
+## Problem reports and suggestions
 
-Problem reports are GitHub issues in this repository
+Problem reports and suggested changes are GitHub issues in this repository
 ([decision 0008](../decisions/0008-take-problem-reports-as-github-issues.md)).
+The player chooses between two links, and each link opens its own issue form.
+The form sets the label, and the label is the class of the issue:
+`game-problem` is a bug, `feature-request` is a feature. A maintainer may
+change the label at triage; see [`AGENTS.md`](../../AGENTS.md).
 
 | Part | Does |
 | --- | --- |
-| `src/client/ReportLink.tsx` | Shows "Report a problem" and "Version …" in the footer of every screen. The link opens the issue form in a new tab |
-| `src/client/report.ts` | Builds the link. It fills the fields `game-id`, `turn`, `screen`, `build` and `browser`. Every value is percent-encoded, and the user agent is cut so the link stays below 2,000 characters |
-| `.github/ISSUE_TEMPLATE/game-problem.yml` | The issue form. Its field `id`s are the names above. It adds the label `game-problem` and the title prefix `[game] ` |
+| `src/client/ReportLink.tsx` | Shows "Report a problem", "Suggest a change" and "Version …" in the footer of every screen. Each link opens its issue form in a new tab. In a narrow footer the version takes a second line |
+| `src/client/report.ts` | Builds both links: `reportUrl(facts, kind)`, where `kind` is `problem` or `idea` and no other template name can reach the link. It fills the fields `game-id`, `turn`, `screen`, `build` and `browser`, the same for both. Every value is percent-encoded, and the user agent is cut so the link stays below 2,000 characters |
+| `.github/ISSUE_TEMPLATE/game-problem.yml` | The form "Report a problem in the online game". It asks what happened and what the player expected. It adds the label `game-problem` and the title prefix `[game] ` |
+| `.github/ISSUE_TEMPLATE/feature-request.yml` | The form "Suggest a change to the online game". It asks what the game should do and why. It adds the label `feature-request` and the title prefix `[idea] ` |
+| Both forms | Hold the five fields above under the same `id`s, and a required check that the text holds no personal data |
 | `.github/ISSUE_TEMPLATE/config.yml` | Allows blank issues. Sends questions about buying the board game to Plepic Games support |
 
 - The game ID and the turn number are public: `game.update` carries both to
-  every seat. Outside a game the link leaves both out. `screen` is `name`,
+  every seat. Outside a game the links leave both out. `screen` is `name`,
   `lobby`, `waiting`, `table` or `result`.
-- The link never holds the seed, a hand, a session token or a player's name.
+- Neither link holds the seed, a hand, a session token or a player's name.
 - The version is the value of `LUNAR_BUILD` when the client is built, or
   `dev`. The server writes its own `LUNAR_BUILD` in each game log's first
   line and in its startup output.
@@ -100,7 +106,7 @@ image build commands read their location from the environment; see
 
 | Path | Holds |
 | --- | --- |
-| `.github/ISSUE_TEMPLATE/` | The problem-report form and its contact link |
+| `.github/ISSUE_TEMPLATE/` | The two issue forms and their contact link |
 | `.github/workflows/validate.yml` | `scripts/validate`, the browser tests, an image build and smoke run, secret scan over full history, workflow lint, link check |
 | `.github/workflows/release.yml` | On a merge to `main` that changes the image: build, publish, scan and promote the digest into `hannosirkel/deploys` |
 | `.githooks/pre-commit` | Secret scan of staged changes |

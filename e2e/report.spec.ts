@@ -8,20 +8,27 @@ const TOKEN = "0123456789abcdef0123456789abcdef";
 const SEED = "e2e-walking-skeleton";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-function reportLink(page: Page): Locator {
-  return page.getByRole("link", { name: "Report a problem" });
+const LINKS = {
+  problem: { text: "Report a problem", template: "game-problem.yml" },
+  idea: { text: "Suggest a change", template: "feature-request.yml" },
+} as const;
+type Kind = keyof typeof LINKS;
+const KINDS: readonly Kind[] = ["problem", "idea"];
+
+function reportLink(page: Page, kind: Kind): Locator {
+  return page.getByRole("link", { name: LINKS[kind].text });
 }
 
-/** The link's query, after checking where it leads and that it holds nothing private. */
-async function reportQuery(page: Page, name: string): Promise<URLSearchParams> {
-  const link = reportLink(page);
+/** One link's query, after checking where it leads and that it holds nothing private. */
+async function linkQuery(page: Page, name: string, kind: Kind): Promise<URLSearchParams> {
+  const link = reportLink(page, kind);
   await expect(link).toBeVisible();
   await expect(link).toHaveAttribute("target", "_blank");
   await expect(link).toHaveAttribute("rel", "noopener noreferrer");
   const href = (await link.getAttribute("href")) ?? "";
   const url = new URL(href);
   expect(url.origin + url.pathname).toBe("https://github.com/plepicgames/lunar-base/issues/new");
-  expect(url.searchParams.get("template")).toBe("game-problem.yml");
+  expect(url.searchParams.get("template")).toBe(LINKS[kind].template);
   for (const key of url.searchParams.keys()) expect(["template", ...REPORT_FIELDS]).toContain(key);
   // The key carries the base path when the game runs under one.
   const token = await page.evaluate(() => {
@@ -38,9 +45,16 @@ async function reportQuery(page: Page, name: string): Promise<URLSearchParams> {
   return url.searchParams;
 }
 
-test("the lobby and the table link to the report form without a seed or a token", async ({
-  page,
-}) => {
+/** The query both links share. They differ in the template only. */
+async function reportQuery(page: Page, name: string): Promise<URLSearchParams> {
+  const problem = await linkQuery(page, name, "problem");
+  const idea = await linkQuery(page, name, "idea");
+  idea.set("template", LINKS.problem.template);
+  expect(Object.fromEntries(idea)).toEqual(Object.fromEntries(problem));
+  return problem;
+}
+
+test("the lobby and the table link to both forms without a seed or a token", async ({ page }) => {
   // The game ID as the server sends it to every seat.
   let game = "";
   page.on("websocket", (socket) => {
@@ -71,13 +85,15 @@ test("the lobby and the table link to the report form without a seed or a token"
   expect(table.get("game-id")).toBe(game);
   expect(Number(table.get("turn"))).toBeGreaterThanOrEqual(1);
 
-  // The link is reachable with the keyboard and shows the focus outline.
-  await reportLink(page).focus();
+  // Both links are reachable with the keyboard, one after the other, and show the focus outline.
+  await reportLink(page, "problem").focus();
   await page.keyboard.press("Shift+Tab");
-  await page.keyboard.press("Tab");
-  await expect(reportLink(page)).toBeFocused();
-  const outline = await reportLink(page).evaluate((element) => getComputedStyle(element).outline);
-  expect(outline).toContain("3px");
+  for (const kind of KINDS) {
+    await page.keyboard.press("Tab");
+    const link = reportLink(page, kind);
+    await expect(link).toBeFocused();
+    expect(await link.evaluate((element) => getComputedStyle(element).outline)).toContain("3px");
+  }
 });
 
 async function script(page: Page, scripted: Partial<GameView>): Promise<void> {
@@ -103,9 +119,7 @@ async function script(page: Page, scripted: Partial<GameView>): Promise<void> {
   await page.getByRole("button", { name: "Enter the lobby" }).click();
 }
 
-test("the result screen links to the report form with the game and its last turn", async ({
-  page,
-}) => {
+test("the result screen links to both forms with the game and its last turn", async ({ page }) => {
   await script(page, {
     turn: { number: 9, seat: 0, step: "main_action" },
     result: { reason: "victory", winners: [0], scores: [3, 1] },
@@ -119,33 +133,55 @@ test("the result screen links to the report form with the game and its last turn
   });
 });
 
-test("at 390 px the report link covers no control of the table", async ({ page }) => {
+test("at 390 px both links fit the footer and cover no control of the table", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await script(page, { pending: buildPending });
   await expect(page.getByRole("region", { name: "Opponents" })).toBeVisible();
-  const link = reportLink(page);
-  await expect(link).toBeVisible();
-  const overlaps = await link.evaluate((element) => {
-    const mine = element.getBoundingClientRect();
-    const inside = mine.left >= 0 && mine.right <= window.innerWidth;
-    const hit = [...document.querySelectorAll("main button, main a, main input")].filter(
-      (control) => {
-        const box = control.getBoundingClientRect();
-        if (box.width === 0 || box.height === 0) return false;
-        return (
-          box.left < mine.right &&
-          mine.left < box.right &&
-          box.top < mine.bottom &&
-          mine.top < box.bottom
-        );
-      },
-    );
-    const centre = document.elementFromPoint(
-      mine.left + mine.width / 2,
-      mine.top + mine.height / 2,
-    );
-    return { inside, hit: hit.length, onTop: centre === element };
-  });
-  expect(overlaps).toEqual({ inside: true, hit: 0, onTop: true });
+  const boxes: { left: number; right: number; top: number; bottom: number }[] = [];
+  for (const kind of KINDS) {
+    const link = reportLink(page, kind);
+    await expect(link).toBeVisible();
+    const measured = await link.evaluate((element) => {
+      const mine = element.getBoundingClientRect();
+      const footer = element.closest("footer")?.getBoundingClientRect();
+      const inside =
+        footer !== undefined &&
+        mine.left >= 0 &&
+        mine.right <= window.innerWidth &&
+        mine.top >= footer.top &&
+        mine.bottom <= footer.bottom;
+      const hit = [...document.querySelectorAll("main button, main a, main input")].filter(
+        (control) => {
+          const box = control.getBoundingClientRect();
+          if (box.width === 0 || box.height === 0) return false;
+          return (
+            box.left < mine.right &&
+            mine.left < box.right &&
+            box.top < mine.bottom &&
+            mine.top < box.bottom
+          );
+        },
+      );
+      const centre = document.elementFromPoint(
+        mine.left + mine.width / 2,
+        mine.top + mine.height / 2,
+      );
+      // The whole label shows: the link is not squeezed or clipped.
+      const whole = element.scrollWidth <= element.clientWidth + 1 && mine.height >= 24;
+      const box = { left: mine.left, right: mine.right, top: mine.top, bottom: mine.bottom };
+      return { box, inside, hit: hit.length, onTop: centre === element, whole };
+    });
+    const { box, ...checks } = measured;
+    expect(checks, kind).toEqual({ inside: true, hit: 0, onTop: true, whole: true });
+    boxes.push(box);
+  }
+  const [first, second] = boxes;
+  const apart =
+    first.right <= second.left ||
+    second.right <= first.left ||
+    first.bottom <= second.top ||
+    second.bottom <= first.top;
+  expect(apart).toBe(true);
+  await expect(page.getByText("Version dev")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
