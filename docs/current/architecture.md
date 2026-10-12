@@ -41,7 +41,7 @@ table names a newer release, it says why that one is not used.
 | Tests | `vitest` | 5.0.3 | One runner for engine, server and client tests (`test.projects`) |
 | Property tests | `fast-check` | 4.10.2 | Random legal games; shrinks a failure to a short decision list |
 | Component tests | `@testing-library/react`, `@testing-library/dom`, `jsdom` | 16.3.3, 10.4.2, 30.1.2 | Client tests without a browser |
-| Browser tests | `@playwright/test` | 1.57.0 | Not the newest (1.64.0): 1.57.0 drives Chromium build 1200. The tests never download a browser, so an upgrade must also change the Chromium that `.github/workflows/validate.yml` installs |
+| Browser tests | `@playwright/test` | 1.64.0 | Each Playwright release drives one Chromium build. The tests never download a browser: after an upgrade, run `npx playwright install chromium` once on a machine that runs them. `.github/workflows/validate.yml` installs the matching build itself |
 | Lint | `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `globals` | 10.12.0, 10.0.1, 8.71.1, 7.1.1, 17.13.0 | Type-aware rules: unhandled promises, exhaustive `switch`. Also enforces the import boundaries |
 | Format | `prettier` | 3.9.9 | One formatter, no options to argue about |
 | Images | `sharp` | 0.35.5 | Resize and WebP encoding with a prebuilt binary. No system package |
