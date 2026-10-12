@@ -195,6 +195,63 @@ for (const { width, seats, events } of CASES) {
   });
 }
 
+for (const { width, seats } of CASES.filter(({ events }) => events === 0)) {
+  test(`Leave game overlaps neither Help nor a table region at ${String(width)}x720 with ${String(seats)} seats`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 720 });
+    await showTable(page, seats, 0);
+    await expect(page.getByRole("button", { name: "Leave game", exact: true })).toBeVisible();
+
+    const found = await page.evaluate(() => {
+      const one = (selector: string, text?: string) => {
+        const element = [...document.querySelectorAll(selector)].find(
+          (candidate) => text === undefined || candidate.textContent === text,
+        );
+        if (element === undefined) throw new Error(`no ${selector} ${text ?? ""}`);
+        return element;
+      };
+      // What is drawn of an element: its box, cut by every ancestor that clips.
+      const drawn = (element: Element) => {
+        let { top, bottom, left, right } = element.getBoundingClientRect();
+        for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+          if (getComputedStyle(parent).overflow === "visible") continue;
+          const clip = parent.getBoundingClientRect();
+          top = Math.max(top, clip.top);
+          bottom = Math.min(bottom, clip.bottom);
+          left = Math.max(left, clip.left);
+          right = Math.min(right, clip.right);
+        }
+        return { top, bottom, left, right };
+      };
+      const button = one("button", "Leave game");
+      const { top, bottom, left, right } = button.getBoundingClientRect();
+      const regions = ["Opponents", "Supply", "Base", "Log", "Your decision", "Your hand"];
+      const others = [
+        one("button", "Help"),
+        ...document.querySelectorAll("footer a"),
+        ...[...regions, "Ann (you)"].map((name) => one(`section[aria-label="${name}"]`)),
+      ];
+      const overlapped = others.filter((element) => {
+        const box = drawn(element);
+        return box.left < right && left < box.right && box.top < bottom && top < box.bottom;
+      });
+      return {
+        box: { top, bottom, left, right },
+        overlapped: overlapped.map((element) => element.ariaLabel ?? element.textContent),
+        onTop: document.elementFromPoint((left + right) / 2, (top + bottom) / 2) === button,
+        page: document.documentElement.scrollHeight,
+      };
+    });
+
+    expect(found.overlapped).toEqual([]);
+    expect(found.onTop).toBe(true);
+    expect(Math.min(found.box.top, found.box.left)).toBeGreaterThanOrEqual(0);
+    expect(found.box.right).toBeLessThanOrEqual(width);
+    expect(Math.max(found.box.bottom, found.page)).toBeLessThanOrEqual(720);
+  });
+}
+
 // D2 groups the Main Action boxes by card; the bar must not take the board's room.
 for (const width of [1024, 1280]) {
   test(`a D2 decision leaves the Base board usable at ${String(width)}x720`, async ({ page }) => {

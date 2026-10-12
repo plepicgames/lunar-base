@@ -72,6 +72,63 @@ test("a drop keeps the table visible and disables its options until a resumed up
   expect(within(screen.getByRole("region", { name: "Opponents" })).queryByText(/away/)).toBeNull();
 });
 
+test("a drop disables Leave game and its open dialog; nothing is sent", () => {
+  const first = startGame();
+  const button = screen.getByRole("button", { name: "Leave game" });
+  fireEvent.click(button);
+  const dialog = screen.getByRole("dialog", { name: "Leave game?" });
+  const stay = within(dialog).getByRole("button", { name: "Stay" });
+  const leave = within(dialog).getByRole("button", { name: "Leave game" });
+  act(() => {
+    first.drop();
+  });
+  expect(screen.getByText("Reconnecting")).toBeTruthy();
+  for (const control of [button, stay, leave]) expect(control.matches(":disabled")).toBe(true);
+  expect(first.messages.map((message) => message.type)).not.toContain("game.leave");
+
+  act(() => {
+    vi.advanceTimersByTime(250);
+  });
+  const resumed = FakeWebSocket.current;
+  act(() => {
+    resumed.open();
+    resumed.receive({ type: "welcome", protocol: 1, token, name: "Ann", jev: false });
+    resumed.receive({ type: "game.update", game: "g1", seq: 2, view: gameView(), events: [] });
+  });
+  expect(resumed.messages.map((message) => message.type)).not.toContain("game.leave");
+  expect(button.isConnected).toBe(true);
+  expect(button.matches(":disabled")).toBe(false);
+});
+
+test("a game.leave lost in a drop can be sent again after the resume, once", () => {
+  const first = startGame();
+  const button = screen.getByRole("button", { name: "Leave game" });
+  const confirm = () => {
+    fireEvent.click(button);
+    for (const dialog of screen.queryAllByRole("dialog", { name: "Leave game?" }))
+      fireEvent.click(within(dialog).getByRole("button", { name: "Leave game" }));
+  };
+  const leaves = (socket: FakeWebSocket) =>
+    socket.messages.filter((message) => message.type === "game.leave");
+  confirm();
+  expect(leaves(first)).toHaveLength(1);
+  act(() => {
+    first.drop();
+    vi.advanceTimersByTime(250);
+  });
+  const resumed = FakeWebSocket.current;
+  act(() => {
+    resumed.open();
+    resumed.receive({ type: "welcome", protocol: 1, token, name: "Ann", jev: false });
+    resumed.receive({ type: "game.update", game: "g1", seq: 2, view: gameView(), events: [] });
+  });
+  expect(button.matches(":disabled")).toBe(false);
+  confirm();
+  confirm();
+  expect(leaves(resumed)).toHaveLength(1);
+  expect(button.matches(":disabled")).toBe(true);
+});
+
 test("a retry without a stored token returns to Name and clears the dead game", () => {
   const first = startGame();
   window.sessionStorage.removeItem(TOKEN_KEY);

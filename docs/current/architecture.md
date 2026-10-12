@@ -1706,7 +1706,7 @@ Beside the wordmark the footer holds the links "Report a problem" and
 | State | Screen |
 | --- | --- |
 | No `welcome` yet | Name |
-| `game` set (a `game.update` arrived), `view.result` null | Table: the picture table, or the plain table at `?plain=1` |
+| `game` set (a `game.update` arrived), `view.result` null | Table: the picture table, or the plain table at `?plain=1`, and, for a seated player, Leave game |
 | `game` set, `view.result` set | Result |
 | `lobby` holds a game whose `humans` has the player's name | Waiting: seats in seat order (creator, non-human, joined humans, free), and Leave (`game.leave`) |
 | Otherwise | Lobby |
@@ -1734,6 +1734,19 @@ against the view's `targets` with the engine's score, says plainly that a
 winner, and offers Back to lobby (`game.leave`). Condition 4 shows from
 the `influences_revealed` event. `?plain=1` selects the
 plain table over the picture table.
+
+Both tables show a seated player a "Leave game" button
+(`src/client/table/Leave.tsx`); the watching creator of an all-bot game has
+none. On the picture table in a window 48rem wide or more it sits at the
+right of the footer band, where it covers no table region
+(`e2e/table-layout.spec.ts`); on the plain table and in a narrower window it
+sits beside Help. It opens a confirmation dialog with "Stay", which has the
+focus and is what Escape does, and "Leave game". Only the latter sends
+`game.leave`, once: the button is then disabled until `lobby.state` takes the
+table away. A dropped connection enables it again, because the message may be
+lost with it. What follows is the row "Leave a running game" in Lobby. The
+button shares Help's layer, so a choice dialog or the Discard pile covers it:
+the player answers or closes that first.
 
 The picture table (`src/client/table/PictureTable.tsx`) lays out the
 regions below. Opponents and you share `Counters`
@@ -1824,13 +1837,15 @@ reached: an option that no card, Station or Module carries (its card is in no
 hand or Supply, its target has no seat) is a button in the decision bar.
 
 **Dialogs.** A modal dialog (a choice, a private look at a hand, a zoom view
-opened by the space bar or from the log) takes the focus when it opens, keeps
+opened by the space bar or from the log, the leave confirmation) takes the
+focus when it opens, keeps
 Tab and Shift+Tab inside it, pulls back focus that lands outside, closes on
 Escape wherever the focus is, and gives the focus back to the control that had
 it. When that control is gone, the focus goes to the first control of the
 decision bar or the hand. `src/client/cards/modal-focus.ts` holds the rules.
 When dialogs overlap, only the last dialog in document order traps focus and
-handles Escape. Help follows the table dialogs and stays active above them.
+handles Escape. The leave confirmation follows the table dialogs, and Help
+follows both and stays active above them.
 
 ```
 +----------------------------------------------------------------+
