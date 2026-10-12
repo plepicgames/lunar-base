@@ -238,6 +238,30 @@ describe("Table in the app", () => {
     expect(screen.queryByRole("button", { name: "Leave game" })).toBeNull();
   });
 
+  test("Leave game cannot be confirmed a second time while the lobby has not answered", () => {
+    const socket = enterGame();
+    const before = socket.messages.length;
+    const button = screen.getByRole("button", { name: "Leave game" });
+    const confirm = () => {
+      fireEvent.click(button);
+      for (const dialog of screen.queryAllByRole("dialog", { name: "Leave game?" }))
+        fireEvent.click(within(dialog).getByRole("button", { name: "Leave game" }));
+    };
+    confirm();
+    // No lobby.state yet, as on a slow connection: the table is still there.
+    expect(screen.getByRole("region", { name: "Table" })).toBeTruthy();
+    confirm();
+    expect(socket.messages.slice(before)).toEqual([{ type: "game.leave" }]);
+    expect(button.matches(":disabled")).toBe(true);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    act(() => {
+      socket.receive({ type: "lobby.state", games: [] });
+    });
+    expect(screen.getByRole("button", { name: "Create game" })).toBeTruthy();
+    expect(socket.messages.slice(before)).toEqual([{ type: "game.leave" }]);
+  });
+
   test("a finished game shows the result; Back to lobby sends game.leave and the lobby returns", () => {
     const socket = enterGame(view({ result: { reason: "victory", winners: [0], scores: [1, 0] } }));
     fireEvent.click(screen.getByRole("button", { name: "Back to lobby" }));

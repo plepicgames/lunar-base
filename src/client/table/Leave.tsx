@@ -40,20 +40,26 @@ function LeaveDialog({ onStay, onLeave }: LeaveDialogProps) {
 }
 
 interface LeaveProps {
-  /** Called once, after the player confirmed. */
+  /** Called after the player confirmed: once, unless the connection dropped since. */
   readonly onLeave: () => void;
   /** The picture table: a wide window has the button in the footer band, off the table. */
   readonly below: boolean;
+  /** The connection is down, so a `game.leave` sent on it may be lost. */
+  readonly interrupted: boolean;
 }
 
 /** The way out of a running game for a seated player: a button and one confirmation. */
-export function Leave({ onLeave, below }: LeaveProps) {
+export function Leave({ onLeave, below, interrupted }: LeaveProps) {
   const [open, setOpen] = useState(false);
+  // The table stays until lobby.state answers; a second game.leave would be refused.
+  const [sent, setSent] = useState(false);
+  if (sent && interrupted) setSent(false);
   return (
     <>
       <button
         type="button"
         className={`${styles.leaveButton} ${below ? styles.below : ""}`}
+        disabled={sent}
         onClick={() => {
           setOpen(true);
         }}
@@ -67,6 +73,7 @@ export function Leave({ onLeave, below }: LeaveProps) {
           }}
           onLeave={() => {
             setOpen(false);
+            setSent(true);
             onLeave();
           }}
         />

@@ -1742,9 +1742,11 @@ right of the footer band, where it covers no table region
 (`e2e/table-layout.spec.ts`); on the plain table and in a narrower window it
 sits beside Help. It opens a confirmation dialog with "Stay", which has the
 focus and is what Escape does, and "Leave game". Only the latter sends
-`game.leave`, once; what follows is the row "Leave a running game" in Lobby.
-The button shares Help's layer, so a choice dialog or the Discard pile covers
-it: the player answers or closes that first.
+`game.leave`, once: the button is then disabled until `lobby.state` takes the
+table away. A dropped connection enables it again, because the message may be
+lost with it. What follows is the row "Leave a running game" in Lobby. The
+button shares Help's layer, so a choice dialog or the Discard pile covers it:
+the player answers or closes that first.
 
 The picture table (`src/client/table/PictureTable.tsx`) lays out the
 regions below. Opponents and you share `Counters`

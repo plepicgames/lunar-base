@@ -47,6 +47,7 @@ export function App() {
         onLeave={() => {
           connection.send({ type: "game.leave" });
         }}
+        interrupted={connection.interruption !== "none"}
       />
     );
   } else if (open !== undefined) {

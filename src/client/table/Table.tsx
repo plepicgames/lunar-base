@@ -9,10 +9,12 @@ interface TableProps {
   readonly game: GameState;
   readonly onDecide: (decision: string, option: string) => void;
   readonly onLeave: () => void;
+  /** The connection is down. Leave game may be confirmed again after it. */
+  readonly interrupted?: boolean;
 }
 
 /** The picture table, the plain table at `?plain=1`, or the result once the game has one. */
-export function Table({ game, onDecide, onLeave }: TableProps) {
+export function Table({ game, onDecide, onLeave, interrupted = false }: TableProps) {
   if (game.view.result !== null)
     return <Result view={game.view} history={game.history ?? game.events} onBack={onLeave} />;
   const plain = new URLSearchParams(window.location.search).get("plain") === "1";
@@ -26,7 +28,9 @@ export function Table({ game, onDecide, onLeave }: TableProps) {
         events={game.events}
         onDecide={onDecide}
       />
-      {game.view.you !== null && <Leave onLeave={onLeave} below={!plain} />}
+      {game.view.you !== null && (
+        <Leave onLeave={onLeave} below={!plain} interrupted={interrupted} />
+      )}
       <Help />
     </>
   );
