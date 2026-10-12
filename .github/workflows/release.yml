@@ -57,7 +57,7 @@ permissions: {}
 jobs:
   # The gate and the browser tests that `validate.yml` runs on a pull request.
   validate:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -98,7 +98,7 @@ jobs:
           npx playwright test
 
   gate:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -152,7 +152,7 @@ jobs:
 
   build:
     needs: [validate, gate]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -236,7 +236,7 @@ jobs:
 
   promote:
     needs: [validate, gate, build]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     environment: live
     permissions: {}
