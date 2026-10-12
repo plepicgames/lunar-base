@@ -4,7 +4,12 @@
 reach it from a "Play online" box on `https://plepicgames.com/games/lunar-base`,
 and report problems as GitHub issues in this repository.
 
-Status: in progress. Started 2026-10-11 on the operator's instruction. The import (L1 to L4) and the catalogue entry are done.
+Status: in progress. Started 2026-10-11 on the operator's instruction. All code
+rows are done: the import, the hardening rows, the image and its release, the
+manifests, and the platform's secret path, Application and tunnel path rule.
+The first image is published and its digest is promoted. What is left is the
+operator's steps (E1a to E1d), the private values (I1, opened as a pull
+request), the live check (E2) and the two shop rows (S1, S2).
 
 ## Where things are
 
@@ -152,15 +157,15 @@ One row is one pull request in one repository. Rows run in the order given.
 
 ### `orange`
 
-- [ ] **O1a Secret delivery.** The secret store gets a namespace, a policy and
+- [x] **O1a Secret delivery.** The secret store gets a namespace, a policy and
   a role for the game, and the import that reads the Jev key from the
   platform's key material. The projection that gives the game's namespace its
   Jev Secret is declared. Verify: the repository's gate.
-- [ ] **O1b Argo CD Application.** Tasks, defaults, template and tests for the
+- [x] **O1b Argo CD Application.** Tasks, defaults, template and tests for the
   one `lunar-base` Application: its namespace, its project, the two patches
   (ingress source ranges and allowed origins), the image-digest gate and the
   health probe on port 8141. Verify: the repository's gate.
-- [ ] **O2 Public route.** The tunnel tool learns a path rule (decision 12):
+- [x] **O2 Public route.** The tunnel tool learns a path rule (decision 12):
   `/play/lunar-base` and everything under it goes to the game Service,
   WebSocket included; every other path stays with the storefront. Verify: the
   tool's tests and the repository's gate. Adding the route to the live tunnel
@@ -190,7 +195,7 @@ One row is one pull request in one repository. Rows run in the order given.
 | --- | --- | --- |
 | P1 | Done 2026-10-11: the agent identity can read and write the repository and its issues, and the repository is public | — |
 | P2 | Done 2026-10-11: the `live` environment holds the deployer credential the shop uses, under the same two secret names. Still to do: restrict the environment to `main` | L10 promotion |
-| P3 | The cluster can pull `ghcr.io/plepicgames/lunar-base` (public package, or a pull secret) | first sync |
+| P3 | Open: on 2026-10-12 an anonymous pull of the published image was refused, so the package is private. The operator makes the package public | first sync |
 | P4 | Renovate installed on `plepicgames/lunar-base` | dependency updates |
 | P6 | Done 2026-10-11: the Jev key for this deployment is with the platform's key material, outside every repository | E1b |
 | P7 | Done 2026-10-11: `main` is protected by a ruleset (no deletion, no force push, pull request required, checks `validate` and `browser` required) | — |
