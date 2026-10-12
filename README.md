@@ -99,7 +99,8 @@ yourself. You need a GitHub account.
 The game ID lets a developer find the server's log of that game and replay it.
 The server keeps each log for 30 days and then deletes it
 ([decision 0007](./docs/decisions/0007-keep-game-logs-for-30-days.md)). A log
-holds no name, session or address. Nothing is hosted yet.
+holds no name, session or address. The game is hosted at
+<https://plepicgames.com/play/lunar-base>.
 
 The version is `dev` unless `LUNAR_BUILD` is set in the environment when the
 client is built, for example `LUNAR_BUILD=1.4.0 npm start`.
