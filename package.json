@@ -40,9 +40,9 @@
     "prettier": "3.9.10",
     "sharp": "0.35.5",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.71.1",
+    "typescript-eslint": "8.71.2",
     "vite": "8.3.4",
-    "vitest": "5.0.3"
+    "vitest": "5.0.4"
   },
   "dependencies": {
     "@fontsource-variable/outfit": "5.3.0",
@@ -52,6 +52,6 @@
     "react-dom": "19.3.0",
     "sirv": "3.0.2",
     "ws": "8.22.0",
-    "zod": "4.6.6"
+    "zod": "4.6.7"
   }
 }
