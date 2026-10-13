@@ -1,4 +1,4 @@
-// The table as pictures (architecture, Screens): opponents strip, Supply with
+// The table as pictures (architecture, Screens): opponents rail, Supply with
 // the Deck and Discard counts, the Base area, the log, the decision bar, your
 // hand and your counters. It draws `view` and holds no rules. The elements are
 // in tab order, the grid places them: decision, hand, Base, Supply, opponents,
@@ -338,18 +338,20 @@ export function PictureTable({
       <div className={styles.mine}>
         <Hand cards={view.hand} actions={handActions} cardWidth={widths.hand} />
         {me === undefined ? null : (
-          <Counters
-            player={me}
-            targets={view.targets}
-            label={`${me.name} (you)`}
-            influenceCount={
-              view.config.influences
-                ? view.hand.filter(
-                    (card) => card.cardId.startsWith("inf-") || card.cardId.startsWith("ks-inf-"),
-                  ).length
-                : undefined
-            }
-          />
+          <div className={styles.you}>
+            <Counters
+              player={me}
+              targets={view.targets}
+              label={`${me.name} (you)`}
+              influenceCount={
+                view.config.influences
+                  ? view.hand.filter(
+                      (card) => card.cardId.startsWith("inf-") || card.cardId.startsWith("ks-inf-"),
+                    ).length
+                  : undefined
+              }
+            />
+          </div>
         )}
       </div>
       <div className={styles.board}>
@@ -448,17 +450,17 @@ export function PictureTable({
             </span>
           </div>
         </section>
-        {view.influencesInGame.length > 0 && (
-          <section aria-label="Influences in this game" className={styles.influences}>
-            <h3 className={styles.heading}>Influences in this game</h3>
-            <ul>
-              {view.influencesInGame.map((name) => (
-                <li key={name}>{name}</li>
-              ))}
-            </ul>
-          </section>
-        )}
       </div>
+      {view.influencesInGame.length > 0 && (
+        <section aria-label="Influences in this game" className={styles.influences}>
+          <h3 className={styles.heading}>Influences in this game</h3>
+          <ul>
+            {view.influencesInGame.map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section aria-label="Opponents" className={styles.opponents}>
         {me &&
           (targetOptions.has(me.seat) ||

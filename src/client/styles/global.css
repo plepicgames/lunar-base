@@ -89,6 +89,14 @@ button:disabled {
   min-height: 0;
 }
 
+/* Three columns from 1024 px wide: the picture table is as wide as the window. */
+@media (min-width: 64rem) {
+  .shell.table:has([data-layout="picture"]) .main {
+    width: 100%;
+    padding: 0;
+  }
+}
+
 .shell.table:has([data-layout="picture"]) .footer {
   min-height: 2.25rem;
   flex-wrap: nowrap;

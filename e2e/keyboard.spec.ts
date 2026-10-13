@@ -5,12 +5,14 @@ import { buildView } from "../src/client/testing/build-fixture.ts";
 import { player, view } from "../src/client/testing/view-fixture.ts";
 import { expect, test } from "./fixtures.ts";
 
-// The table with the keyboard only, and its six regions at the two sizes the
-// brief names. The spec answers the socket itself, so it can script a whole
+// The table with the keyboard only, and its seven regions at the two sizes the
+// brief names and two larger ones. The spec answers the socket itself, so it can script a whole
 // turn: the box, then the Build, then the next player's turn.
 const SIZES = [
   { width: 1280, height: 720 },
   { width: 1024, height: 768 },
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
 ];
 
 const NAMES = ["Ann", "Bea", "Cy"];
@@ -406,7 +408,7 @@ test("the other side of your Station opens from its button, keeps the focus, the
 
 for (const { width, height } of SIZES) {
   for (const seating of SEATINGS) {
-    test(`the six regions do not overlap at ${String(width)}x${String(height)} with ${seating.label}`, async ({
+    test(`the seven regions do not overlap at ${String(width)}x${String(height)} with ${seating.label}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height });
@@ -415,14 +417,14 @@ for (const { width, height } of SIZES) {
 
       const boxes = await page.evaluate(() => {
         const names = ["Opponents", "Supply", "Base", "Log", "Your decision", "Your hand"];
-        return names.map((name) => {
+        return [...names, "Ann (you)"].map((name) => {
           const element = document.querySelector(`section[aria-label="${name}"]`);
           if (element === null) throw new Error(`no ${name}`);
           const { left, top, right, bottom } = element.getBoundingClientRect();
           return { name, left, top, right, bottom };
         });
       });
-      expect(boxes).toHaveLength(6);
+      expect(boxes).toHaveLength(7);
       for (const box of boxes) {
         expect(box.right - box.left, `${box.name} has width`).toBeGreaterThan(0);
         expect(box.bottom - box.top, `${box.name} has height`).toBeGreaterThan(0);

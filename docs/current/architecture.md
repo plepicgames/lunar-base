@@ -1747,7 +1747,11 @@ Both tables show a seated player a "Leave game" button
 none. On the picture table in a window 48rem wide or more it sits at the
 right of the footer band, where it covers no table region
 (`e2e/table-layout.spec.ts`); on the plain table and in a narrower window it
-sits beside Help. It opens a confirmation dialog with "Stay", which has the
+sits beside Help. From 64rem wide the picture table has your counters under
+its top right corner, so Help is in the footer band too, left of Leave game;
+a watcher sees Help alone there. The same test holds that neither button
+covers a table region or the other. Leave game opens a confirmation dialog
+with "Stay", which has the
 focus and is what Escape does, and "Leave game". Only the latter sends
 `game.leave`, once: the button is then disabled until `lobby.state` takes the
 table away. A dropped connection enables it again, because the message may be
@@ -1817,29 +1821,63 @@ the hand, the Base and the bar their parts.
 | Back | Escape, or the Back button, steps from the turn to the places and from the places to the Modules. Escape belongs to an open dialog, such as a zoom view, first |
 | Keyboard | Tab, Enter and R are enough. Picking a Module moves focus to its first place; picking a place moves it to the preview; stepping back returns it to the place or the Module that was left. R with Ctrl, Alt or Meta is left to the browser |
 | Nothing computed | The client reads the places, turns, price and Orb colours from the options. It checks no placement and works out no price |
-| Bar height | One line of text and one row of buttons, like the generic bar. `e2e/build.spec.ts` holds the board's height at 1024x720 and 1280x720 and plays the path with the mouse and with the keyboard |
+| Bar height | One line of text and one row of buttons, like the generic bar. The centre column of the three-column table is narrower than that needs: in a window under 82rem wide the text keeps the room of two lines at every step, and under 72rem the buttons, with less padding, keep the room of two rows. The bar is then as tall as its fullest step, so the Base does not move while a Module is placed. `e2e/build.spec.ts` holds the board's height at 1024x720 and 1280x720 and plays the path with the mouse and with the keyboard |
 | `BaseView` | Takes an `offer`: cells to outline, a card to preview and the placements to fit. It knows nothing of Build |
 | Plain table | Unchanged: one button per option |
 
-The table is as tall as the window and the page never scrolls. Opponents,
-the decision bar and your hand keep their size, so every player's progress
-and your own counters stay on screen. The Supply and Base area (one scrolling
-column) and the log take the remaining height and scroll inside it. This
-applies to the picture table only; the plain table and the result scroll as an
-ordinary page.
-`e2e/table-layout.spec.ts` holds this at 1280x720 and 1024x720, with up to
-six seats and 200 log events.
+The table is as tall as the window and the page never scrolls. From 1,024 px
+(64rem) wide it is as wide as the window too and has three columns, so that
+the Base, where a player builds, is the largest region:
 
-In a window 800 px high or less the cards are drawn smaller (hand 64 px wide,
-Supply 44 px) and the gaps shrink, the piles lie in a row and the Base may be
-5rem high, so that at 1280x720 and 1024x768, with up to six seats and nine
-Supply cards, the six regions (Opponents, Supply, Base, Log, decision, hand) and the decision
-bar's buttons lie inside the window and no two regions overlap
-(`e2e/keyboard.spec.ts`). The zoom view shows the full card.
+- Left, a rail 13rem wide: the opponents, one below the other, each with its
+  counters, its decision buttons and the control that shows its Base.
+- Centre, the width that is left: Supply, the Base, the decision bar and your
+  hand, top to bottom. Supply, the bar and the hand keep their size. The Base
+  takes the height that is left and shrinks before anything scrolls, so the
+  whole Base is on screen. The bar puts its lead and its buttons on one row
+  when they fit.
+- Right, 14rem wide: your own counters, the Influences of the game when there
+  are any, and the log, which scrolls inside its column.
+
+Every player's progress stays on screen: when the rail is short of height it
+draws each player denser (four in the rail in a window up to 850 px high, five
+up to 1,040 px, six up to 1,240 px), with a smaller dial and Deck back, the
+counters in a grid, the name on one line and a lower Base control. In the grid
+the dial, the colonists and the hand share a row and the achievements lie
+under them over the full width; icons that do not fit one line wrap, so none
+is covered. A watcher has no seat and so has every player in the rail: six in
+a window up to 850 px high are drawn with less air and smaller badges still.
+Nothing is left out. The rail scrolls inside itself only when even that does
+not fit, as when five opponents each carry a decision button in a window
+720 px high.
+
+Under 1,024 px wide the table keeps the stacked arrangement: the opponents in
+a row on top, Supply and Base (one scrolling column) beside the Influences of
+the game and the log, the decision bar, then your hand with your counters at
+its right. The lobby, waiting, result and plain-table screens keep a width of
+72rem; the plain table and the result scroll as an ordinary page.
+
+`e2e/table-layout.spec.ts` holds the three columns at 1280x720 and 1024x768
+and the stacked arrangement at 1000x720; the fit at 1280x720 and 1024x720 with
+up to six seats and 200 log events; and with four seats, that the Base at
+1280x720 has at least twice the 832x151 px it had in the stacked table, that
+the whole Base is on screen at 1440x900 and 1920x1080 with nothing scrolling,
+that the table reaches both edges of a 1920 px window, and that the Base is
+the largest region at all three sizes.
+
+Supply cards are 44 px wide at every window height: Supply is a small strip
+and the two piles lie in its row. In a window 800 px high or less the hand is
+drawn smaller (64 px wide, not 110), the gaps shrink and the Base may be
+5rem high. At 1280x720, 1024x768, 1440x900 and 1920x1080, with up to six seats
+and nine Supply cards, the seven regions (Opponents, Supply, Base, Log,
+decision, hand, your counters) and the decision bar's buttons lie inside the
+window and no two regions overlap (`e2e/keyboard.spec.ts`). The zoom view
+shows the full card.
 
 **Tab order.** The document order is the tab order: the decision bar, your
 hand and counters, the Base, Supply, the opponents, the log. The grid places
-the regions, so the order does not change what is seen. Every option can be
+the regions, so the order does not change what is seen: your counters follow
+your hand in the order and are drawn in the right column. Every option can be
 reached: an option that no card, Station or Module carries (its card is in no
 hand or Supply, its target has no seat) is a button in the decision bar.
 
@@ -1856,20 +1894,20 @@ handles Escape. The leave confirmation follows the table dialogs, and Help
 follows both and stays active above them.
 
 ```
-+----------------------------------------------------------------+
-| Opponents: name, Credits n/20, colonists n/10, achievements    |
-|            n/5, hand size, a small picture of each Base        |
-+------------------------------------------------+---------------+
-| Supply (3 + N cards)        Deck n   Discard n |               |
-+------------------------------------------------+  Log          |
-|                                                |               |
-|  The Base in focus: yours, or an opponent's    |               |
-|  when you click it. Pan and zoom.              |               |
-|                                                |               |
-+------------------------------------------------+---------------+
-| What is asked of you now, with its buttons                     |
-| Your hand, overlapping; your counters: 12/20, 6/10, 3/5, 1/4   |
-+----------------------------------------------------------------+
++-------------+----------------------------------+---------------+
+| Opponents,  | Supply (3 + N cards)             | Your counters |
+| stacked:    |                Deck n  Discard n | 12/20, 6/10,  |
+| name,       +----------------------------------+ 3/5, 1/4      |
+| Credits     |                                  +---------------+
+| n/20,       |  The Base in focus: yours, or an | Influences in |
+| colonists   |  opponent's when you click it.   | this game     |
+| n/10,       |  Pan and zoom.                   +---------------+
+| hand size,  |                                  | Log           |
+| achievements+----------------------------------+               |
+| n/5, a small| What is asked of you now, with   |               |
+| picture of  | its buttons                      |               |
+| its Base    | Your hand, overlapping           |               |
++-------------+----------------------------------+---------------+
 ```
 
 ### Behaviour
@@ -1878,7 +1916,7 @@ follows both and stays active above them.
 `layoutOf` follows R5.3: the top cell is `(x,y)`; the bottom lies below, left,
 above or right as `q` turns from 0 to 3. The viewport fits on first display
 and after its Base changes. Drag or arrow keys pan; wheel, + and - zoom; Fit
-centres every card again. The same view draws a small, static preview beside
+centres every card again. The same view draws a small, static preview under
 each opponent's counters. Selecting that preview focuses the opponent's Base;
 Your Base returns to the viewer's Base.
 
@@ -1896,16 +1934,17 @@ previews. Looking sends nothing to the server, so no one can tell who looked.
 - The view decides everything. The client renders `view` and offers the
   `options` of the pending decision; it holds no rules. A thing is
   clickable exactly when an option points at it.
-- The table lists `influencesInGame` after the game starts. The open-game
-  Lobby and Waiting screens have no selected list yet: it is picked at setup.
+- The table lists `influencesInGame` after the game starts, above the log.
+  The open-game Lobby and Waiting screens have no selected list yet: it is
+  picked at setup.
   The Kickstarter checkbox is enabled and defaults off.
 - The Deck shows `deckTop` when public, otherwise a back. The Discard pile
   shows its last public card and opens the complete public pile in a dialog;
   when the list is hidden it shows a back. Public pile cards use the same zoom
-  view as other cards. A hidden pile closes its dialog. The two piles share a
-  row with slightly smaller Supply cards in full-height windows so they do not
-  push the Base down. Both counts come from the view in picture and plain tables.
-- Kafka (D14) marks each other Station as a button in the opponent strip;
+  view as other cards. A hidden pile closes its dialog. The two piles share
+  Supply's row, drawn smaller than its cards, so they do not push the Base
+  down. Both counts come from the view in picture and plain tables.
+- Kafka (D14) marks each other Station as a button in the opponents rail;
   pressing it sends the option id. An Exchange redraws each Base from the
   next view. A priced Draft uses the option's label on its card button.
 - Each decision kind has one fixed interaction. Build (D6): pick a Module
@@ -1914,15 +1953,16 @@ previews. Looking sends nothing to the server, so no one can tell who looked.
   shown before confirming. Choices of a target (D9 to D11) highlight
   Stations, Modules or players. Defence (D12) is a dialog over the table.
 - Target decisions (D9) mark only the players named by options, including
-  your own seat when offered. Their strip buttons use the option labels.
+  your own seat when offered, first in the rail. Their rail buttons use the
+  option labels.
   Flip (D10) offers a Station button for each seat named by an option. One
   Station sends its option immediately; two or any number can be toggled and
   confirmed, with the selected seat set matched to an engine option. Steal
   Module (D11) marks candidate Bases, focuses the first one, and puts each
   candidate Module's named option button on its card.
-- Cards are small on the table (about 110 px wide). Hover, long press or
-  the space bar opens the `w591` image, with the card's name and rules
-  text from `cards.json` as real text beside it.
+- Cards are small on the table (the hand about 110 px wide, Supply 44 px).
+  Hover, long press or the space bar opens the `w591` image, with the card's
+  name and rules text from `cards.json` as real text beside it.
 - Progress toward the three public victory conditions (Credits, colonists,
   achievements) is always visible for every player, since that is what
   players watch. The targets come from the view, because Welfare and
@@ -1982,7 +2022,8 @@ previews. Looking sends nothing to the server, so no one can tell who looked.
   Build), a place is a dashed outline, and a chosen Station has a double
   border.
 - Designed for a desktop window of 1280 x 720 or larger and usable down to
-  1024 wide. No phone layout.
+  1024 wide. The picture table uses the whole width of a wider window. No
+  phone layout.
 - A plain table at `?plain=1` draws the same view as text, with one button
   per option and no images. It stays as a
   debugging aid; it needs no change when the engine gains a decision kind.

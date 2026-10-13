@@ -140,6 +140,286 @@ test("a selected Station has a visible state before confirmation", async ({ page
   expect(after).not.toBe(before);
 });
 
+/** Each region's box, the page's scroll size, the board's scroll range and each opponent's box. */
+async function measure(page: Page) {
+  return await page.evaluate(() => {
+    const region = (name: string) => {
+      const element = document.querySelector(`section[aria-label="${name}"]`);
+      if (element === null) throw new Error(`no ${name}`);
+      return element;
+    };
+    const box = (element: Element) => {
+      const { top, bottom, left, right, width, height } = element.getBoundingClientRect();
+      return { top, bottom, left, right, width, height, area: width * height };
+    };
+    const board = region("Base").parentElement;
+    if (board === null) throw new Error("no board");
+    return {
+      opponents: box(region("Opponents")),
+      supply: box(region("Supply")),
+      base: box(region("Base")),
+      log: box(region("Log")),
+      decision: box(region("Your decision")),
+      hand: box(region("Your hand")),
+      you: box(region("Ann (you)")),
+      rail: [...region("Opponents").querySelectorAll("section[data-seat]")].map(box),
+      groupsInHand: region("Your hand").querySelectorAll('[role="group"]').length,
+      page: {
+        width: document.documentElement.scrollWidth,
+        height: document.documentElement.scrollHeight,
+      },
+      boardRange: board.scrollHeight - board.clientHeight,
+    };
+  });
+}
+
+const WIDE = [
+  { width: 1280, height: 720 },
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
+];
+
+// From 1024 px wide: opponents in a rail on the left, Supply, Base, decision
+// and hand in the centre, your counters above the Log on the right.
+for (const { width, height } of [WIDE[0], { width: 1024, height: 768 }]) {
+  test(`the picture table has three columns at ${String(width)}x${String(height)}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await showTable(page, 4, 0);
+    const found = await measure(page);
+
+    for (const centre of [found.supply, found.base, found.decision, found.hand]) {
+      expect(found.opponents.right).toBeLessThanOrEqual(centre.left + 0.5);
+      expect(centre.right).toBeLessThanOrEqual(Math.min(found.you.left, found.log.left) + 0.5);
+    }
+    expect(found.supply.bottom).toBeLessThanOrEqual(found.base.top + 0.5);
+    expect(found.base.bottom).toBeLessThanOrEqual(found.decision.top + 0.5);
+    expect(found.decision.bottom).toBeLessThanOrEqual(found.hand.top + 0.5);
+    expect(found.you.bottom).toBeLessThanOrEqual(found.log.top + 0.5);
+    // The opponents are stacked: one left edge, each below the one before.
+    expect(found.rail).toHaveLength(3);
+    expect(new Set(found.rail.map((opponent) => opponent.left)).size).toBe(1);
+    for (const [index, opponent] of found.rail.entries()) {
+      if (index > 0) expect(opponent.top).toBeGreaterThanOrEqual(found.rail[index - 1].bottom);
+    }
+  });
+}
+
+test("below 1024 px wide the table keeps the stacked arrangement", async ({ page }) => {
+  await page.setViewportSize({ width: 1000, height: 720 });
+  await showTable(page, 4, 0);
+  const found = await measure(page);
+  expect(found.opponents.bottom).toBeLessThanOrEqual(found.supply.top + 0.5);
+  // Your counters lie right of the hand, in its row.
+  expect(found.you.left).toBeGreaterThanOrEqual(found.hand.right - 0.5);
+  expect(found.you.top).toBeLessThan(found.hand.bottom);
+  expect(found.you.bottom).toBeGreaterThan(found.hand.top);
+});
+
+test("your counters lie above the Log and the hand row holds only cards", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 4, 0);
+  const found = await measure(page);
+  expect(found.you.left).toBeGreaterThanOrEqual(found.log.left - 0.5);
+  expect(found.you.right).toBeLessThanOrEqual(found.log.right + 0.5);
+  expect(found.you.bottom).toBeLessThanOrEqual(found.log.top + 0.5);
+  expect(Math.abs(found.hand.left - found.base.left)).toBeLessThanOrEqual(1);
+  expect(Math.abs(found.hand.right - found.base.right)).toBeLessThanOrEqual(1);
+  expect(found.groupsInHand).toBe(0);
+});
+
+// The scene of the report: four players, seven Supply cards, the first Main
+// Action of the game. The Base measured 832x151 px before the rails.
+test("at 1280x720 with four players the Base has twice its old area", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 4, 0, "", {
+    pending: {
+      id: "d2",
+      seat: 0,
+      kind: "main_action",
+      options: [
+        { id: "station-0:0", label: "Terran Outpost: Draft", card: "station-0", box: 0 },
+        { id: "station-0:1", label: "Terran Outpost: Build", card: "station-0", box: 1 },
+        { id: "station-0:2", label: "Terran Outpost: Resell x2, Draw", card: "station-0", box: 2 },
+      ],
+    },
+  });
+  const { base } = await measure(page);
+  expect(base.area).toBeGreaterThanOrEqual(2 * 832 * 151);
+  expect(Math.min(base.top, base.left)).toBeGreaterThanOrEqual(0);
+  expect(base.bottom).toBeLessThanOrEqual(720);
+  expect(base.right).toBeLessThanOrEqual(1280);
+});
+
+for (const { width, height } of WIDE.slice(1)) {
+  test(`the whole Base is on screen at ${String(width)}x${String(height)}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await showTable(page, 4, 0);
+    const found = await measure(page);
+    expect(Math.min(found.base.top, found.base.left)).toBeGreaterThanOrEqual(0);
+    expect(found.base.bottom).toBeLessThanOrEqual(height);
+    expect(found.base.right).toBeLessThanOrEqual(width);
+    expect(found.page.height).toBeLessThanOrEqual(height);
+    expect(found.page.width).toBeLessThanOrEqual(width);
+    expect(found.boardRange).toBeLessThanOrEqual(1);
+  });
+}
+
+test("Supply is no taller in a tall window", async ({ page }) => {
+  await page.setViewportSize(WIDE[0]);
+  await showTable(page, 4, 0);
+  const short = (await measure(page)).supply.height;
+  for (const size of WIDE.slice(1)) {
+    await page.setViewportSize(size);
+    await expect
+      .poll(async () => (await measure(page)).supply.height, { message: String(size.width) })
+      .toBeLessThanOrEqual(short);
+  }
+});
+
+test("a Supply card zooms and carries its option at 1440x900", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const decisions: { decision: string; option: string }[] = [];
+  const pending = {
+    id: "d4",
+    seat: 0,
+    kind: "draft",
+    options: [{ id: "s0", card: "s0", label: "Draft Depot (first)" }],
+  };
+  await showTable(page, 4, 0, "", { pending }, decisions);
+  const supply = page.getByRole("region", { name: "Supply" });
+
+  await supply.locator('[data-card="s1"]').focus();
+  await page.keyboard.press("Space");
+  await expect(page.getByRole("dialog", { name: "Depot" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await supply.getByRole("button", { name: "Draft Depot (first)" }).click();
+  await expect.poll(() => decisions).toEqual([{ decision: "d4", option: "s0" }]);
+});
+
+test("the picture table is as wide as the window at 1920x1080", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await showTable(page, 4, 0);
+  const found = await measure(page);
+  expect(found.opponents.left).toBeLessThanOrEqual(16);
+  expect(found.log.right).toBeGreaterThanOrEqual(1904);
+});
+
+test("the plain table keeps 72rem at 1920x1080", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await showTable(page, 4, 0, "?plain=1");
+  const main = await page.locator("main").boundingBox();
+  expect(main?.width).toBeLessThanOrEqual(1152);
+});
+
+for (const { width, height } of WIDE) {
+  test(`the Base is the largest region at ${String(width)}x${String(height)}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await showTable(page, 4, 0);
+    const { base, opponents, supply, log, decision, hand, you } = await measure(page);
+    for (const other of [opponents, supply, log, decision, hand, you]) {
+      expect(base.area).toBeGreaterThan(other.area);
+    }
+  });
+}
+
+test("View Bea's Base shows it and Your Base returns", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 4, 0);
+  const heading = page.getByRole("region", { name: "Base" }).getByRole("heading");
+  await page.getByRole("button", { name: "View Bea's Base" }).click();
+  await expect(heading).toHaveText("Bea's Base");
+  await page.getByRole("button", { name: "Your Base", exact: true }).click();
+  await expect(heading).toHaveText("Your Base");
+});
+
+test("with six players the last opponent's target button sends its option at 1280x720", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const decisions: { decision: string; option: string }[] = [];
+  const pending = {
+    id: "d9",
+    seat: 0,
+    kind: "target",
+    options: NAMES.slice(1).map((name, index) => ({
+      id: `t${String(index + 1)}`,
+      label: `Target ${name}`,
+      target: index + 1,
+    })),
+  };
+  await showTable(page, 6, 0, "", { pending }, decisions);
+  await page
+    .getByRole("region", { name: "Opponents" })
+    .getByRole("button", { name: "Target Flo" })
+    .click();
+  await expect.poll(() => decisions).toEqual([{ decision: "d9", option: "t5" }]);
+});
+
+/** For each player in the rail: the pairs of its counters that overlap, and whether the rail shows all of it. */
+async function measureRail(page: Page) {
+  return await page.evaluate(() => {
+    const rail = document.querySelector('section[aria-label="Opponents"]');
+    if (rail === null) throw new Error("no Opponents");
+    const clip = rail.getBoundingClientRect();
+    return [...rail.querySelectorAll("section[data-seat]")].map((section) => {
+      const { top, bottom } = section.getBoundingClientRect();
+      const counters = [...section.querySelectorAll(':scope > div > [role="group"]')].map(
+        (counter) => ({ name: counter.ariaLabel, box: counter.getBoundingClientRect() }),
+      );
+      const overlaps = counters.flatMap((one, index) =>
+        counters
+          .slice(index + 1)
+          .filter(
+            ({ box }) =>
+              one.box.left < box.right &&
+              box.left < one.box.right &&
+              one.box.top < box.bottom &&
+              box.top < one.box.bottom,
+          )
+          .map((other) => `${String(one.name)} and ${String(other.name)}`),
+      );
+      const shown = top >= clip.top && bottom <= clip.bottom;
+      return { counters: counters.length, overlaps, shown };
+    });
+  });
+}
+
+// Credits, Colonists, Hand and Achievements, clear of each other and on screen.
+const WHOLE = { counters: 4, overlaps: [], shown: true };
+// Welfare raises the achievements target to 6: five icons are an ordinary
+// count before a victory.
+const FIVE_ICONS = {
+  targets: { credits: 20, colonists: 10, achievements: 6 },
+  players: NAMES.map((name, seat) =>
+    player(seat, { name, achievements: ["atom", "dog", "rocket", "dna", "brain"], handSize: 3 }),
+  ),
+};
+
+test("with six players five achievements do not reach the hand at 1280x720", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 6, 0, "", FIVE_ICONS);
+  expect(await measureRail(page)).toEqual(Array.from({ length: 5 }, () => WHOLE));
+});
+
+// A watcher has no seat: all six players are in the rail, one more than a
+// player sees there. The heights are 720 and the first above each denser rail.
+test("a watcher of six players sees every player's counters without scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 6, 0, "", { ...FIVE_ICONS, you: null, hand: [], pending: null });
+  for (const height of [720, 851, 1241]) {
+    await page.setViewportSize({ width: 1280, height });
+    await expect
+      .poll(() => measureRail(page), { message: String(height) })
+      .toEqual(Array.from({ length: 6 }, () => WHOLE));
+  }
+});
+
 const CASES = [
   { width: 1280, seats: 3, events: 0 },
   { width: 1280, seats: 3, events: 200 },
@@ -196,7 +476,7 @@ for (const { width, seats, events } of CASES) {
 }
 
 for (const { width, seats } of CASES.filter(({ events }) => events === 0)) {
-  test(`Leave game overlaps neither Help nor a table region at ${String(width)}x720 with ${String(seats)} seats`, async ({
+  test(`Leave game and Help cover no table region and not each other at ${String(width)}x720 with ${String(seats)} seats`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 720 });
@@ -224,31 +504,36 @@ for (const { width, seats } of CASES.filter(({ events }) => events === 0)) {
         }
         return { top, bottom, left, right };
       };
-      const button = one("button", "Leave game");
-      const { top, bottom, left, right } = button.getBoundingClientRect();
+      const buttons = [one("button", "Leave game"), one("button", "Help")];
       const regions = ["Opponents", "Supply", "Base", "Log", "Your decision", "Your hand"];
-      const others = [
-        one("button", "Help"),
-        ...document.querySelectorAll("footer a"),
-        ...[...regions, "Ann (you)"].map((name) => one(`section[aria-label="${name}"]`)),
-      ];
-      const overlapped = others.filter((element) => {
-        const box = drawn(element);
-        return box.left < right && left < box.right && box.top < bottom && top < box.bottom;
+      return buttons.map((button) => {
+        const { top, bottom, left, right } = button.getBoundingClientRect();
+        const others = [
+          ...buttons.filter((other) => other !== button),
+          ...document.querySelectorAll("footer a"),
+          ...[...regions, "Ann (you)"].map((name) => one(`section[aria-label="${name}"]`)),
+        ];
+        const overlapped = others.filter((element) => {
+          const box = drawn(element);
+          return box.left < right && left < box.right && box.top < bottom && top < box.bottom;
+        });
+        return {
+          name: button.textContent,
+          box: { top, bottom, left, right },
+          overlapped: overlapped.map((element) => element.ariaLabel ?? element.textContent),
+          onTop: document.elementFromPoint((left + right) / 2, (top + bottom) / 2) === button,
+          page: document.documentElement.scrollHeight,
+        };
       });
-      return {
-        box: { top, bottom, left, right },
-        overlapped: overlapped.map((element) => element.ariaLabel ?? element.textContent),
-        onTop: document.elementFromPoint((left + right) / 2, (top + bottom) / 2) === button,
-        page: document.documentElement.scrollHeight,
-      };
     });
 
-    expect(found.overlapped).toEqual([]);
-    expect(found.onTop).toBe(true);
-    expect(Math.min(found.box.top, found.box.left)).toBeGreaterThanOrEqual(0);
-    expect(found.box.right).toBeLessThanOrEqual(width);
-    expect(Math.max(found.box.bottom, found.page)).toBeLessThanOrEqual(720);
+    for (const button of found) {
+      expect(button.overlapped, `${button.name} overlaps`).toEqual([]);
+      expect(button.onTop, `${button.name} is on top`).toBe(true);
+      expect(Math.min(button.box.top, button.box.left)).toBeGreaterThanOrEqual(0);
+      expect(button.box.right).toBeLessThanOrEqual(width);
+      expect(Math.max(button.box.bottom, button.page)).toBeLessThanOrEqual(720);
+    }
   });
 }
 
@@ -318,8 +603,10 @@ test("the plain table scrolls like a page to reach its decision", async ({ page 
 });
 
 test("wheel zoom keeps the Base in place without a console error", async ({ page }) => {
-  // A window short enough that the board scrolls: the zoom must not move it.
-  await page.setViewportSize({ width: 1280, height: 600 });
+  // A window where the board scrolls: the zoom must not move it. Under 1024 px
+  // wide the stacked table still has such a board; at 1280x600 the Base
+  // shrinks instead and nothing scrolls.
+  await page.setViewportSize({ width: 1000, height: 600 });
   const errors: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());

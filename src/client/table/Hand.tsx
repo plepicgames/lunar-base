@@ -13,13 +13,15 @@ export const HAND_CARD_WIDTH = 110;
 const GAP = 8;
 
 /**
- * In a window of 800 px or less in height the cards are drawn smaller, so that
- * Supply, Base, decision and hand lie side by side without overlapping at
- * 1280 x 720 and 1024 x 768. The zoom view shows the full card.
+ * In a window of 800 px or less in height the hand is drawn smaller, so that
+ * Supply, Base, decision and hand lie one above the other without overlapping
+ * at 1280 x 720 and 1024 x 768. Supply is a small strip at every height: the
+ * room goes to the Base. The zoom view shows the full card.
  */
 const SHORT_WINDOW = "(max-height: 800px)";
-const COMPACT_WIDTHS = { hand: 64, supply: 44 } as const;
-const FULL_WIDTHS = { hand: HAND_CARD_WIDTH, supply: 100 } as const;
+const SUPPLY_CARD_WIDTH = 44;
+const COMPACT_WIDTHS = { hand: 64, supply: SUPPLY_CARD_WIDTH } as const;
+const FULL_WIDTHS = { hand: HAND_CARD_WIDTH, supply: SUPPLY_CARD_WIDTH } as const;
 
 function subscribeShort(onChange: () => void): () => void {
   if (typeof window.matchMedia !== "function") return () => undefined;
