@@ -523,3 +523,52 @@ test("choose-one scores the printed actions rather than option labels", () => {
     score(input, input.decision.options[0]),
   );
 });
+
+function stuckRequest(...supply: string[]): DecisionRequest {
+  const station = {
+    instance: "station",
+    cardId: "stn-dark-side",
+    side: "named" as const,
+    named: "stn-dark-side",
+    revealed: true,
+  };
+  const input = hand(
+    request(
+      "main_action",
+      [
+        { id: "draft", label: "Draft", card: "station", box: 0 },
+        { id: "build", label: "Build", card: "station", box: 1 },
+      ],
+      { credits: 0, base: { station, modules: [], orbs: { red: 1, blue: 0, yellow: 1, wild: 0 } } },
+    ),
+    "mod-indigo-egregore",
+  );
+  input.view = {
+    ...input.view,
+    supply: supply.map((cardId) => ({ instance: cardId, cardId })),
+  };
+  return input;
+}
+
+test.each(["mod-artificial-intellect", "agt-kim-the-mech-pilot"])(
+  "Main Action takes an unwanted %s from the Supply rather than a Build it cannot make",
+  async (cardId) => {
+    const input = stuckRequest(cardId);
+    const [draft, build] = input.decision.options;
+    expect(score(input, build)).toBe(0);
+    expect(score(input, draft)).toBeGreaterThan(0);
+    expect(await builtinMaker("stuck", 0).decide(input, signal)).toBe("draft");
+  },
+);
+
+test("Main Action may still leave an Influence whose Draft costs more than it gains", async () => {
+  const input = hand(
+    stuckRequest("inf-runaway-bureaucracy"),
+    "inf-lunar-alliance",
+    "inf-quarantine",
+  );
+  const [draft, build] = input.decision.options;
+  expect(score(input, draft)).toBeLessThan(0);
+  expect(score(input, build)).toBe(0);
+  expect(await builtinMaker("stuck", 0).decide(input, signal)).toBe("build");
+});

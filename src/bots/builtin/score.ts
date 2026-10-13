@@ -15,6 +15,7 @@ const cards = new Map(catalogue.map((card) => [card.id, card]));
 const WIN = 1_000_000;
 const CARD = 3;
 const CREDIT = 3;
+const DRAFT_FLOOR = 1;
 
 /** One evaluation context per request; placement searches are shared by its boxes. */
 export function scorer(request: DecisionRequest): (option: DecisionOption) => number {
@@ -256,12 +257,13 @@ export function scorer(request: DecisionRequest): (option: DecisionOption) => nu
         if (count > 0) top = undefined;
         drawable -= count;
       } else if (action.op === "draft") {
+        // Taking a Module or Agent brings the Shuttles nearer, so it beats a box that does nothing.
         const values = view.supply
           .flatMap((card) => {
             const def = cards.get(card.cardId);
-            return def && influences.canDraft(def, credits)
-              ? [influences.draft(def, undefined, credits)]
-              : [];
+            if (!def || !influences.canDraft(def, credits)) return [];
+            const value = influences.draft(def, undefined, credits);
+            return [def.type === "influence" ? value : Math.max(DRAFT_FLOOR, value)];
           })
           .sort((a, b) => b - a);
         value += values.slice(0, action.n).reduce((sum, item) => sum + item, 0);

@@ -62,3 +62,39 @@ test.each([
   },
   20_000,
 );
+
+test.each([
+  [false, false, "issue26:2:754"],
+  [true, true, "issue26:2:405"],
+  [true, true, "issue26:2:644"],
+  [true, true, "issue26:2:876"],
+])(
+  "two built-in makers reach a result before the turn limit (Influences: %s, Kickstarter: %s, seed %s)",
+  async (influences, kickstarter, seed) => {
+    const signal = AbortSignal.abort();
+    const makers = [builtinMaker(seed, 0), builtinMaker(seed, 1)];
+    let result = startGame({ seats: 2, influences, kickstarter }, seed);
+    const histories: ViewEvent[][] = [[], []];
+    for (;;) {
+      const state = result.state;
+      for (const seat of [0, 1])
+        histories[seat] = [
+          ...histories[seat],
+          ...result.events.flatMap((event) => eventFor(event, seat) ?? []),
+        ].slice(-200);
+      if (state.result || state.turn.number > TURN_CAP) break;
+      const decision = state.pending;
+      if (!decision) throw new Error(`No decision or result: ${seed}`);
+      const seat = decision.seat;
+      const option = await makers[seat].decide(
+        { view: viewFor(state, seat), decision, seat, events: histories[seat] },
+        signal,
+      );
+      const applied = applyChoice(state, { seat, decision: decision.id, option }, gameRegistry);
+      if (!applied.ok) throw new Error(`${seed}: ${applied.error.message}`);
+      result = applied;
+    }
+    expect(result.state.result?.reason).toBe("victory");
+    expect(result.state.turn.number).toBeLessThanOrEqual(TURN_CAP);
+  },
+);
