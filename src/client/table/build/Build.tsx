@@ -1,8 +1,8 @@
 // The Build interaction D6 (architecture, Behaviour): pick a Module in your
 // hand, pick one of its places on your Base, turn it, confirm. The hand, the
-// Base and the bar each draw their part of one selection. A place is any cell
-// a placement covers; a turn is a placement that covers the place. Every
-// place, turn, price and Orb shown is what an option of the engine says.
+// Base and the bar each draw their part of one selection. Every place, turn,
+// price and Orb shown is what an option of the engine says.
+// A place is any cell a placement covers; a turn, a placement that covers it.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";

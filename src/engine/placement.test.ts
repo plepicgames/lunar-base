@@ -255,10 +255,7 @@ describe("legalPlacements", () => {
   });
 
   test("lists the ten places of a Lunar Capital at a Terran Outpost with an Inflatable Habitat on its left", () => {
-    const base: BaseSpec = {
-      station: "stn-shackleton",
-      modules: [["mod-inflatable-habitat", -1, 0, 0]],
-    };
+    const base = withModules(STATION_ALONE, ["mod-inflatable-habitat", -1, 0, 0]);
     // The fifth lies across both cards: its LL gray meets the Station's T red
     // and its B blue meets the Habitat's T gray. Gray fits any colour.
     expect(listed(base, "mod-lunar-capital")).toEqual([

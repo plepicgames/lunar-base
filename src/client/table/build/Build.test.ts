@@ -125,15 +125,8 @@ describe("Build: Module, place, turn, Confirm", () => {
       "0",
       "0",
     ]);
-    expect(names(places())).toEqual([
-      "Place Depot at 1,-1",
-      "Place Depot at 2,-1",
-      "Place Depot at -2,0",
-      "Place Depot at -1,0",
-      "Place Depot at 2,0",
-      "Place Depot at -1,1",
-      "Place Depot at 1,1",
-    ]);
+    const others = ["1,-1", "2,-1", "-2,0", "-1,0", "2,0", "-1,1", "1,1"];
+    expect(names(places())).toEqual(others.map((cell) => `Place Depot at ${cell}`));
 
     // A click takes the next placement that covers the place: 0, 2, 3 and round again.
     const turns = [];

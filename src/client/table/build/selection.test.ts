@@ -1,31 +1,28 @@
 import { describe, expect, test } from "vitest";
 import { buildOption, buildOptions, capitalOptions } from "../../testing/build-fixture.ts";
-import {
-  buildSelection,
-  plainOptions,
-  type BuildAction,
-  type Option,
-  type Selection,
-} from "./selection.ts";
+import { buildSelection, plainOptions, type BuildAction, type Selection } from "./selection.ts";
 
 const options = buildOptions;
 
-/** Applies the actions in order, from a decision of `asked` that was just asked. */
-function afterOf(asked: readonly Option[], ...actions: BuildAction[]): Selection {
+/** Applies the actions in order, from a decision that was just asked. */
+function after(...actions: BuildAction[]): Selection {
   return actions.reduce<Selection>(
-    (selection, action) => buildSelection(asked, action, selection),
-    buildSelection(asked, { type: "open" }),
+    (selection, action) => buildSelection(options, action, selection),
+    buildSelection(options, { type: "open" }),
   );
 }
 
-function after(...actions: BuildAction[]): Selection {
-  return afterOf(options, ...actions);
+/** The same for the report's position, from its Lunar Capital picked. */
+function capital(...actions: BuildAction[]): Selection {
+  const picked = buildSelection(capitalOptions, { type: "module", card: "c-4" });
+  return actions.reduce((from, action) => buildSelection(capitalOptions, action, from), picked);
 }
 
+const pickDepot = { type: "module", card: "c-1" } as const;
+const at = (x: number, y: number) => ({ type: "cell", x, y }) as const;
 const ids = (selection: Selection) => selection.turns.map((option) => option.id);
-const key = (x: number, y: number) => `${String(x)},${String(y)}`;
-const cells = (selection: Selection) => selection.cells.map(({ x, y }) => key(x, y));
-const capital = { type: "module", card: "c-4" } as const;
+const key = ({ x, y }: { x: number; y: number }) => `${String(x)},${String(y)}`;
+const cells = (selection: Selection) => selection.cells.map((cell) => key(cell));
 
 describe("buildSelection", () => {
   test("a decision just asked lists the Modules its options name, in the engine's order", () => {
@@ -48,29 +45,21 @@ describe("buildSelection", () => {
 
     const reactor = after({ type: "module", card: "c-2" });
     expect(cells(reactor)).toEqual(["-1,-1", "-1,0", "0,2", "0,3"]);
-    const lunar = afterOf(capitalOptions, capital);
+    const lunar = capital();
     expect(cells(lunar)).toEqual(["-1,-2", "-2,-1", "-1,-1", "0,-1", "1,-1", "1,0", "2,0", "1,1"]);
   });
 
   test("picking a place previews the first placement whose top cell it is, and else the first whose bottom cell it is", () => {
-    const top = after({ type: "module", card: "c-1" }, { type: "cell", x: 1, y: 0 });
-    expect(top.cell).toEqual({ x: 1, y: 0 });
-    expect(top.option?.id).toBe("c-1:1,0,0");
-
-    const bottom = after({ type: "module", card: "c-1" }, { type: "cell", x: 2, y: -1 });
-    expect(bottom.cell).toEqual({ x: 2, y: -1 });
-    expect(bottom.option?.id).toBe("c-1:1,-1,3");
+    const selection = after({ type: "module", card: "c-1" }, { type: "cell", x: 1, y: 0 });
+    expect(selection.cell).toEqual({ x: 1, y: 0 });
+    expect(selection.option?.id).toBe("c-1:1,0,0");
+    expect(after(pickDepot, at(2, -1)).option?.id).toBe("c-1:1,-1,3");
   });
 
   test("the turns of a place are the placements that cover it", () => {
-    const depot = { type: "module", card: "c-1" } as const;
-    expect(ids(after(depot, { type: "cell", x: 1, y: 0 }))).toEqual([
-      "c-1:1,0,0",
-      "c-1:1,0,2",
-      "c-1:1,0,3",
-    ]);
+    expect(ids(after(pickDepot, at(1, 0)))).toEqual(["c-1:1,0,0", "c-1:1,0,2", "c-1:1,0,3"]);
     // Its own placement first, then the one that reaches up into it from 1,0.
-    expect(ids(after(depot, { type: "cell", x: 1, y: -1 }))).toEqual(["c-1:1,-1,3", "c-1:1,0,2"]);
+    expect(ids(after(pickDepot, at(1, -1)))).toEqual(["c-1:1,-1,3", "c-1:1,0,2"]);
   });
 
   test("a cell that two Modules share keeps the turns of each Module apart", () => {
@@ -94,7 +83,7 @@ describe("buildSelection", () => {
 
   test("turning steps through every placement that covers the place, each once, and comes round", () => {
     // Two of the five are turned left: a turn is a placement, not a quarter.
-    let selection = afterOf(capitalOptions, capital, { type: "cell", x: -1, y: -1 });
+    let selection = capital(at(-1, -1));
     const seen = [];
     for (let turn = 0; turn < 6; turn += 1) {
       seen.push(selection.option?.id);
@@ -110,7 +99,7 @@ describe("buildSelection", () => {
     ]);
   });
 
-  test("a place that one placement covers stays on it", () => {
+  test("a cell with one legal turn stays on it", () => {
     const selection = after(
       { type: "module", card: "c-1" },
       { type: "cell", x: 2, y: -1 },
@@ -120,19 +109,13 @@ describe("buildSelection", () => {
   });
 
   test("the report's position: the cell above the Station is a place of Lunar Capital", () => {
-    const places = afterOf(capitalOptions, capital);
-    expect(places.cells).toContainEqual({ x: 0, y: -1 });
-
-    const across = buildSelection(capitalOptions, { type: "cell", x: 0, y: -1 }, places);
+    expect(capital().cells).toContainEqual({ x: 0, y: -1 });
+    const across = capital(at(0, -1));
     expect(across.option?.id).toBe("c-4:-1,-1,3");
     expect(across.option?.orbs).toEqual(["red", "blue"]);
     expect(across.turns).toHaveLength(1);
-
-    expect(afterOf(capitalOptions, capital, { type: "cell", x: -1, y: -1 }).turns).toHaveLength(5);
-    expect(ids(afterOf(capitalOptions, capital, { type: "cell", x: -1, y: -2 }))).toEqual([
-      "c-4:-1,-2,0",
-      "c-4:-1,-1,2",
-    ]);
+    expect(capital(at(-1, -1)).turns).toHaveLength(5);
+    expect(ids(capital(at(-1, -2)))).toEqual(["c-4:-1,-2,0", "c-4:-1,-1,2"]);
   });
 
   test("the selected option is the engine's own option: its id, price and Orbs", () => {
@@ -189,45 +172,32 @@ describe("buildSelection", () => {
     expect(buildSelection(options, { type: "open" }, placed)).toEqual(after());
   });
 
-  test.each([
-    ["the Depot and the Fusion Reactor", buildOptions],
-    ["Lunar Capital", capitalOptions],
-  ])(
-    "every placed option is reached from each of its two cells, once, and from no other: %s",
-    (_, asked) => {
-      // Where the bottom cell lies from the top cell, by quarter turn (R5.3).
-      const below = [
-        [0, 1],
-        [-1, 0],
-        [0, -1],
-        [1, 0],
-      ] as const;
-      const reached = new Map<string, string[]>();
-      let total = 0;
-      for (const card of afterOf(asked).modules) {
-        const module = afterOf(asked, { type: "module", card });
+  test("every placed option is reached from each of its two cells, once, and from no other", () => {
+    // Where the bottom cell lies from the top cell, by quarter turn (R5.3).
+    const dx = [0, -1, 0, 1];
+    const dy = [1, 0, -1, 0];
+    for (const asked of [buildOptions, capitalOptions]) {
+      const reached: string[] = [];
+      for (const card of buildSelection(asked, { type: "open" }).modules) {
+        const module = buildSelection(asked, { type: "module", card });
         for (const cell of module.cells) {
           let selection = buildSelection(asked, { type: "cell", ...cell }, module);
           for (let turn = 0; turn < selection.turns.length; turn += 1) {
-            const { option } = selection;
-            if (option === null) throw new Error("a place with no placement");
             // The engine's own object, not a copy of it.
-            expect(asked).toContain(option);
-            reached.set(option.id, [...(reached.get(option.id) ?? []), key(cell.x, cell.y)]);
-            total += 1;
+            expect(asked).toContain(selection.option);
+            reached.push(`${selection.option?.id ?? "none"} from ${key(cell)}`);
             selection = buildSelection(asked, { type: "turn" }, selection);
           }
         }
       }
       const placed = asked.filter((option) => "card" in option);
-      expect([...reached.keys()].sort()).toEqual(placed.map((option) => option.id).sort());
-      expect(total).toBe(placed.length * 2);
-      for (const { id, x, y, q } of placed) {
-        const [dx, dy] = below[q];
-        expect(reached.get(id)?.toSorted()).toEqual([key(x, y), key(x + dx, y + dy)].toSorted());
-      }
-    },
-  );
+      const ways = placed.flatMap(({ id, x, y, q }) => [
+        `${id} from ${key({ x, y })}`,
+        `${id} from ${key({ x: x + dx[q], y: y + dy[q] })}`,
+      ]);
+      expect(reached.toSorted()).toEqual(ways.toSorted());
+    }
+  });
 });
 
 describe("plainOptions", () => {

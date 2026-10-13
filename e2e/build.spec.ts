@@ -4,11 +4,7 @@ import { expect, test } from "./fixtures.ts";
 
 // The Build interaction over the real built client. The spec answers the
 // socket with a scripted D6 decision and collects what the client sends.
-async function showBuild(
-  page: Page,
-  view = buildView(),
-  module = "Build Depot",
-): Promise<Record<string, unknown>[]> {
+async function showBuild(page: Page, view = buildView()): Promise<Record<string, unknown>[]> {
   const sent: Record<string, unknown>[] = [];
   await page.routeWebSocket("**/ws", (socket) => {
     socket.onMessage((raw) => {
@@ -33,7 +29,7 @@ async function showBuild(
   await page.goto("./");
   await page.getByRole("textbox", { name: "Name" }).fill("Ann");
   await page.getByRole("button", { name: "Enter the lobby" }).click();
-  await expect(page.getByRole("button", { name: module })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Build / }).first()).toBeVisible();
   return sent;
 }
 
@@ -106,7 +102,7 @@ test("Build with the mouse: Module, place, a click to turn, Confirm", async ({ p
 test("the report's position: the place above the Station takes Lunar Capital lying across", async ({
   page,
 }) => {
-  const sent = await showBuild(page, capitalView(), "Build Lunar Capital");
+  const sent = await showBuild(page, capitalView());
   const base = page.getByRole("region", { name: "Base" });
 
   await page.getByRole("button", { name: "Build Lunar Capital" }).click();
@@ -114,10 +110,8 @@ test("the report's position: the place above the Station takes Lunar Capital lyi
   const place = base.getByRole("button", { name: "Place Lunar Capital at 0,-1" });
   await expect(place).toBeInViewport({ ratio: 1 });
   await place.click();
-  await expect(base.getByRole("button", { name: "Turn Lunar Capital" })).toHaveAttribute(
-    "data-turns",
-    "3",
-  );
+  const preview = base.getByRole("button", { name: "Turn Lunar Capital" });
+  await expect(preview).toHaveAttribute("data-turns", "3");
 
   const bar = page.getByRole("region", { name: "Your decision" });
   await expect(bar.getByRole("status")).toContainText("Orbs formed: red, blue.");

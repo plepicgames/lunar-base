@@ -1,8 +1,8 @@
 // The Build decision D6 as three choices (architecture, Behaviour): a Module,
-// one of its places, one of the turns of that place. A place is a cell that a
-// placement of the Module covers, its top cell or its bottom cell; a turn is
-// one of the placements that cover the place. The engine lists every legal
-// Build as one option; this groups those options and never adds one.
+// one of its places, one of the turns of that place. The engine lists every
+// legal Build as one option; this groups those options and never adds one.
+// A place is a cell that a placement of the Module covers, its top cell or its
+// bottom cell; a turn is one of the placements that cover the place.
 
 import type { GameView } from "../../../protocol/messages.ts";
 import { layoutOf } from "../layout.ts";
@@ -37,11 +37,7 @@ export interface Selection {
   /** Every cell a placement of the chosen Module covers, row by row. */
   readonly cells: readonly Cell[];
   readonly cell: Cell | null;
-  /**
-   * The placements of the chosen Module that cover the chosen cell: those
-   * whose top cell it is, then those whose bottom cell it is, each in the
-   * engine's order.
-   */
+  /** The placements of the chosen Module that cover the chosen cell, by top cell first. */
   readonly turns: readonly BuildOption[];
   /** The engine's option for the chosen Module, cell and turn. */
   readonly option: BuildOption | null;
