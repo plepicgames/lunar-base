@@ -1863,16 +1863,20 @@ up to six seats and 200 log events; and with four seats, that the Base at
 1280x720 has at least twice the 832x151 px it had in the stacked table, that
 the whole Base is on screen at 1440x900 and 1920x1080 with nothing scrolling,
 that the table reaches both edges of a 1920 px window, and that the Base is
-the largest region at all three sizes.
+the largest region at all three sizes. It also holds the size of a Supply
+card and of the two piles on both sides of each boundary, and that nine
+Supply cards and the piles are one row at 1440x900 and 1920x1080.
 
-Supply cards are 44 px wide at every window height: Supply is a small strip
-and the two piles lie in its row. In a window 800 px high or less the hand is
-drawn smaller (64 px wide, not 110), the gaps shrink and the Base may be
-5rem high. At 1280x720, 1024x768, 1440x900 and 1920x1080, with up to six seats
-and nine Supply cards, the seven regions (Opponents, Supply, Base, Log,
-decision, hand, your counters) and the decision bar's buttons lie inside the
-window and no two regions overlap (`e2e/keyboard.spec.ts`). The zoom view
-shows the full card.
+A Supply card is 44 px wide: Supply is a small strip and the two piles lie
+in its row. In a window at least 1440 px wide and more than 850 px high it is
+66 px wide, and nine cards and the two piles are still one row. The Deck and
+the Discard pile are 0.7 of a Supply card: 31 or 46 px wide. In a window 800
+px high or less the hand is drawn smaller (64 px wide, not 110), the gaps
+shrink and the Base may be 5rem high. At 1280x720, 1024x768, 1440x900 and
+1920x1080, with up to six seats and nine Supply cards, the seven regions
+(Opponents, Supply, Base, Log, decision, hand, your counters) and the decision
+bar's buttons lie inside the window and no two regions overlap
+(`e2e/keyboard.spec.ts`). The zoom view shows the full card.
 
 **Tab order.** The document order is the tab order: the decision bar, your
 hand and counters, the Base, Supply, the opponents, the log. The grid places
@@ -1960,9 +1964,10 @@ previews. Looking sends nothing to the server, so no one can tell who looked.
   confirmed, with the selected seat set matched to an engine option. Steal
   Module (D11) marks candidate Bases, focuses the first one, and puts each
   candidate Module's named option button on its card.
-- Cards are small on the table (the hand about 110 px wide, Supply 44 px).
-  Hover, long press or the space bar opens the `w591` image, with the card's
-  name and rules text from `cards.json` as real text beside it.
+- Cards are small on the table (the hand about 110 px wide, Supply 44 px, 66
+  px in a large window). Hover, long press or the space bar opens the `w591`
+  image, with the card's name and rules text from `cards.json` as real text
+  beside it.
 - Progress toward the three public victory conditions (Credits, colonists,
   achievements) is always visible for every player, since that is what
   players watch. The targets come from the view, because Welfare and

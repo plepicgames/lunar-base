@@ -15,31 +15,38 @@ const GAP = 8;
 /**
  * In a window of 800 px or less in height the hand is drawn smaller, so that
  * Supply, Base, decision and hand lie one above the other without overlapping
- * at 1280 x 720 and 1024 x 768. Supply is a small strip at every height: the
- * room goes to the Base. The zoom view shows the full card.
+ * at 1280 x 720 and 1024 x 768. Supply is a small strip: the room goes to the
+ * Base. Only a window at least 1440 px wide and more than 850 px high has
+ * the room for Supply cards half as big again, with nine of them and the two
+ * piles still in one row. The zoom view shows the full card.
  */
 const SHORT_WINDOW = "(max-height: 800px)";
+const ROOMY_WINDOW = "(min-width: 1440px) and (min-height: 851px)";
 const SUPPLY_CARD_WIDTH = 44;
 const COMPACT_WIDTHS = { hand: 64, supply: SUPPLY_CARD_WIDTH } as const;
 const FULL_WIDTHS = { hand: HAND_CARD_WIDTH, supply: SUPPLY_CARD_WIDTH } as const;
+const ROOMY_WIDTHS = { hand: HAND_CARD_WIDTH, supply: 66 } as const;
 
-function subscribeShort(onChange: () => void): () => void {
+type CardWidths = { readonly hand: number; readonly supply: number };
+
+function subscribeWindow(onChange: () => void): () => void {
   if (typeof window.matchMedia !== "function") return () => undefined;
-  const query = window.matchMedia(SHORT_WINDOW);
-  query.addEventListener("change", onChange);
+  const queries = [SHORT_WINDOW, ROOMY_WINDOW].map((query) => window.matchMedia(query));
+  for (const query of queries) query.addEventListener("change", onChange);
   return () => {
-    query.removeEventListener("change", onChange);
+    for (const query of queries) query.removeEventListener("change", onChange);
   };
 }
 
-function isShort(): boolean {
-  return typeof window.matchMedia === "function" && window.matchMedia(SHORT_WINDOW).matches;
+function cardWidths(): CardWidths {
+  if (typeof window.matchMedia !== "function") return FULL_WIDTHS;
+  if (window.matchMedia(SHORT_WINDOW).matches) return COMPACT_WIDTHS;
+  return window.matchMedia(ROOMY_WINDOW).matches ? ROOMY_WIDTHS : FULL_WIDTHS;
 }
 
 /** The width of a card in the hand and in Supply for this window. */
-export function useCardWidths(): { readonly hand: number; readonly supply: number } {
-  const short = useSyncExternalStore(subscribeShort, isShort, () => false);
-  return short ? COMPACT_WIDTHS : FULL_WIDTHS;
+export function useCardWidths(): CardWidths {
+  return useSyncExternalStore(subscribeWindow, cardWidths, () => FULL_WIDTHS);
 }
 
 /** The distance between the left edges of neighbours so `count` cards fit `width`. */

@@ -266,17 +266,78 @@ for (const { width, height } of WIDE.slice(1)) {
   });
 }
 
-test("Supply is no taller in a tall window", async ({ page }) => {
+/** The first Supply card's size, the two piles' widths, and how many rows cards and piles take. */
+async function measureSupply(page: Page) {
+  return await page.evaluate(() => {
+    const supply = document.querySelector('section[aria-label="Supply"]');
+    if (supply === null) throw new Error("no Supply");
+    const cards = [...supply.querySelectorAll("[data-card]")];
+    const piles = ["deck", "discard"].map((pile) => {
+      const image = supply.querySelector(`[data-pile="${pile}"] img`);
+      if (image === null) throw new Error(`no ${pile}`);
+      return image;
+    });
+    const { width, height } = cards[0].getBoundingClientRect();
+    return {
+      card: { width, height },
+      piles: piles.map((pile) => pile.getBoundingClientRect().width),
+      rows: new Set([...cards, ...piles].map((element) => element.getBoundingClientRect().top))
+        .size,
+    };
+  });
+}
+
+// Supply is a small strip, and half as big again where the window has the
+// room: at least 1440 px wide and more than 850 px high.
+test("a Supply card is 66x132 px at 1440x900 and 1920x1080", async ({ page }) => {
   await page.setViewportSize(WIDE[0]);
   await showTable(page, 4, 0);
-  const short = (await measure(page)).supply.height;
   for (const size of WIDE.slice(1)) {
     await page.setViewportSize(size);
     await expect
-      .poll(async () => (await measure(page)).supply.height, { message: String(size.width) })
-      .toBeLessThanOrEqual(short);
+      .poll(async () => (await measureSupply(page)).card, { message: String(size.width) })
+      .toEqual({ width: 66, height: 132 });
   }
 });
+
+for (const { width, height } of [
+  WIDE[0],
+  { width: 1024, height: 768 },
+  { width: 1440, height: 800 },
+  { width: 1440, height: 850 },
+  { width: 1439, height: 900 },
+  { width: 1024, height: 900 },
+  { width: 1000, height: 900 },
+]) {
+  test(`a Supply card stays 44x88 px at ${String(width)}x${String(height)}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await showTable(page, 4, 0);
+    expect((await measureSupply(page)).card).toEqual({ width: 44, height: 88 });
+  });
+}
+
+test("the Deck and Discard pile are 31 px wide at 1280x720 and 46 px at 1440x900", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE[0]);
+  await showTable(page, 4, 0);
+  expect((await measureSupply(page)).piles).toEqual([31, 31]);
+  await page.setViewportSize(WIDE[1]);
+  await expect.poll(async () => (await measureSupply(page)).piles).toEqual([46, 46]);
+});
+
+for (const { width, height } of WIDE.slice(1)) {
+  test(`nine Supply cards and the piles are one row at ${String(width)}x${String(height)}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await showTable(page, 6, 0);
+    const found = await measure(page);
+    expect((await measureSupply(page)).rows).toBe(1);
+    expect(found.boardRange).toBeLessThanOrEqual(1);
+    expect(found.base.bottom).toBeLessThanOrEqual(found.decision.top + 0.5);
+  });
+}
 
 test("a Supply card zooms and carries its option at 1440x900", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
