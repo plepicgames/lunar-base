@@ -3,6 +3,7 @@ import type { PointerEvent } from "react";
 import type { GameView } from "../../protocol/messages.ts";
 import { Card } from "../cards/Card.tsx";
 import { layoutOf, type Placement } from "./layout.ts";
+import { ZoomDialog } from "./Log.tsx";
 import styles from "./BaseView.module.css";
 
 type Base = GameView["players"][number]["base"];
@@ -28,6 +29,8 @@ interface BaseViewProps {
   readonly highlighted?: ReadonlySet<string>;
   readonly offer?: Offer;
   readonly targets?: ReadonlyMap<string, { label: string; onPress: () => void }>;
+  /** Names the button that shows the side of the Station that is down, when the view carries it. */
+  readonly lookLabel?: string;
 }
 
 /** A press on a control of the stage is a press, not the start of a drag of the Base. */
@@ -35,12 +38,23 @@ function keepFromDrag(event: PointerEvent): void {
   event.stopPropagation();
 }
 
-export function BaseView({ base, small = false, highlighted, offer, targets }: BaseViewProps) {
+export function BaseView({
+  base,
+  small = false,
+  highlighted,
+  offer,
+  targets,
+  lookLabel,
+}: BaseViewProps) {
   const viewport = useRef<HTMLDivElement>(null);
   const dragging = useRef<{ x: number; y: number } | null>(null);
   const [size, setSize] = useState({ width: small ? 130 : 600, height: small ? 80 : 360 });
   const [zoom, setZoom] = useState<number | null>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [looking, setLooking] = useState(false);
+  // The named side lies under the Outpost; the view carries it only for those who may know it.
+  const { station } = base;
+  const other = station.side === "terran_outpost" ? station.named : null;
   const cards = useMemo(
     () => [
       { instance: base.station.instance, cardId: base.station.cardId, x: 0, y: 0, q: 0 as const },
@@ -247,6 +261,22 @@ export function BaseView({ base, small = false, highlighted, offer, targets }: B
                     onClick={targets.get(card.instance)?.onPress}
                   />
                 )}
+                {!small &&
+                  lookLabel !== undefined &&
+                  other !== null &&
+                  card.instance === station.instance && (
+                    <button
+                      type="button"
+                      className={styles.look}
+                      aria-label={lookLabel}
+                      onPointerDown={keepFromDrag}
+                      onClick={() => {
+                        setLooking(true);
+                      }}
+                    >
+                      Other side
+                    </button>
+                  )}
               </div>
             );
           })}
@@ -296,6 +326,15 @@ export function BaseView({ base, small = false, highlighted, offer, targets }: B
           ))}
         </div>
       </div>
+      {/* Beside the viewport: the scaled stage would hold a fixed dialog in its own box. */}
+      {looking && other !== null && (
+        <ZoomDialog
+          cardId={other}
+          onClose={() => {
+            setLooking(false);
+          }}
+        />
+      )}
     </div>
   );
 }

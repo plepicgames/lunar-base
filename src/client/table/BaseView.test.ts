@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import source from "../../../docs/design/cards.json" with { type: "json" };
 import { player, view } from "../testing/view-fixture.ts";
 import { PictureTable } from "./PictureTable.tsx";
 
@@ -28,6 +29,28 @@ function mount() {
     }),
   );
 }
+
+type Station = ReturnType<typeof player>["base"]["station"];
+
+function withStation(seat: number, station: Partial<Station>) {
+  const base = player(seat).base;
+  return player(seat, { base: { ...base, station: { ...base.station, ...station } } });
+}
+
+/** Ann and Bea with these Stations; returns the mock that would send a decision. */
+function mountStations(ann: Partial<Station>, bea: Partial<Station> = {}) {
+  const onDecide = vi.fn();
+  render(
+    createElement(PictureTable, {
+      view: view({ players: [withStation(0, ann), withStation(1, bea)] }),
+      log: [],
+      onDecide,
+    }),
+  );
+  return onDecide;
+}
+
+const OTHER_SIDE = /other side/i;
 
 describe("Base view", () => {
   test("draws the Station and three Modules on distinct grid boxes", () => {
@@ -92,5 +115,82 @@ describe("Base view", () => {
     expect(Number(area.dataset.scale)).toBeGreaterThan(scale * 1.1);
     fireEvent.keyDown(area, { key: "-" });
     expect(Number(area.dataset.scale)).toBeCloseTo(scale * 1.1);
+  });
+});
+
+describe("the other side of a Station", () => {
+  test("an Outpost that carries its named side has a button to look at it", () => {
+    mountStations({ named: "stn-shackleton" });
+    const base = screen.getByRole("region", { name: "Base" });
+    expect(
+      within(base).getByRole("button", { name: "Look at the other side of your Station" }),
+    ).toBeTruthy();
+    expect(within(base).getByRole("img", { name: "Terran Outpost" })).toBeTruthy();
+    expect(document.body.innerHTML).not.toContain("stn-shackleton");
+    expect(document.body.innerHTML).not.toContain("Shackleton");
+  });
+
+  test("the button opens the named side in a modal dialog and Close closes it", () => {
+    const onDecide = mountStations({ named: "stn-shackleton" });
+    fireEvent.click(screen.getByRole("button", { name: "Look at the other side of your Station" }));
+    const dialog = screen.getByRole("dialog", { name: "Shackleton" });
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(onDecide).not.toHaveBeenCalled();
+  });
+
+  test("Escape closes the dialog and gives the focus back to the button", () => {
+    mountStations({ named: "stn-shackleton" });
+    const button = screen.getByRole("button", { name: "Look at the other side of your Station" });
+    // jsdom does not move the focus on a click.
+    button.focus();
+    fireEvent.click(button);
+    fireEvent.keyDown(screen.getByRole("dialog", { name: "Shackleton" }), { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  test("another player's Station that was Flipped up and down again is offered under their name", () => {
+    mountStations({}, { named: "stn-imbrium", revealed: true });
+    const opponents = screen.getByRole("region", { name: "Opponents" });
+    expect(within(opponents).queryByRole("button", { name: OTHER_SIDE })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "View Bea's Base" }));
+    const base = screen.getByRole("region", { name: "Base" });
+    fireEvent.click(
+      within(base).getByRole("button", { name: "Look at the other side of Bea's Station" }),
+    );
+    expect(screen.getByRole("dialog", { name: "Imbrium" })).toBeTruthy();
+  });
+
+  test("a Station with no named side in the view has no button and no trace of one", () => {
+    mountStations({ named: null }, { named: null });
+    const named = source.cards.filter(
+      (card) => card.type === "station" && card.id !== "stn-terran-outpost",
+    );
+    expect(named.length).toBeGreaterThan(0);
+    const expectNoTrace = () => {
+      expect(screen.queryByRole("button", { name: OTHER_SIDE })).toBeNull();
+      for (const card of named) {
+        expect(document.body.innerHTML).not.toContain(card.id);
+        expect(document.body.innerHTML).not.toContain(card.name);
+      }
+    };
+    expectNoTrace();
+    fireEvent.click(screen.getByRole("button", { name: "View Bea's Base" }));
+    expectNoTrace();
+  });
+
+  test("a Station with its named side up has no button", () => {
+    mountStations({
+      side: "named",
+      cardId: "stn-shackleton",
+      named: "stn-shackleton",
+      revealed: true,
+    });
+    expect(
+      within(screen.getByRole("region", { name: "Base" })).getByRole("img", { name: "Shackleton" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: OTHER_SIDE })).toBeNull();
   });
 });

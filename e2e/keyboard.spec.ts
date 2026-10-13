@@ -344,6 +344,66 @@ test("a card zoomed with the space bar keeps the focus, then gives it back", asy
   await expect(card).toBeFocused();
 });
 
+test("the other side of your Station opens from its button, keeps the focus, then gives it back", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const first = mainActionView();
+  const ann = first.players[0];
+  const station = { ...ann.base.station, named: "stn-shackleton" };
+  const sent = await script(page, {
+    ...first,
+    players: [{ ...ann, base: { ...ann.base, station } }, ...first.players.slice(1)],
+  });
+  await enter(page, "Terran Outpost: Build");
+
+  // The Station is highlighted by the decision, so the button lies beside its "Pick" tag.
+  const base = page.getByRole("region", { name: "Base" });
+  const label = "Look at the other side of your Station";
+  const button = base.getByRole("button", { name: label });
+  await expect(button).toBeVisible();
+  const inside = (inner: DOMRect | null, outer: { width: number; height: number } | DOMRect) => {
+    if (inner === null) return false;
+    const left = "left" in outer ? outer.left : 0;
+    const top = "top" in outer ? outer.top : 0;
+    return (
+      inner.left >= left - 0.5 &&
+      inner.top >= top - 0.5 &&
+      inner.right <= left + outer.width + 0.5 &&
+      inner.bottom <= top + outer.height + 0.5
+    );
+  };
+  const rect = async (target: ReturnType<Page["getByRole"]>) =>
+    await target.evaluate((element) => element.getBoundingClientRect().toJSON() as DOMRect);
+  expect(inside(await rect(button), await rect(base)), "the button lies in the Base region").toBe(
+    true,
+  );
+
+  await tabTo(page, label);
+  expect(await regionOfFocus(page)).toBe("Base");
+  await page.keyboard.press("Enter");
+  const name = "Shackleton";
+  const dialog = page.getByRole("dialog", { name });
+  await expect(dialog).toBeVisible();
+  expect(await focusInDialog(page, name)).toBe(true);
+  await expectContained(page, name);
+  expect(
+    inside(await rect(dialog), { width: 1280, height: 720 }),
+    "the dialog lies in the window",
+  ).toBe(true);
+  const image = dialog.locator('img[src$="cards/w591/stn-shackleton.webp"]');
+  await expect
+    .poll(async () => await image.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(button).toBeFocused();
+  await expect(page.getByTestId("base-viewport").first()).toHaveAttribute("data-fitted", "true");
+  // Looking is the client's own business: nothing went to the server.
+  expect(sent).toEqual([]);
+});
+
 for (const { width, height } of SIZES) {
   for (const seating of SEATINGS) {
     test(`the six regions do not overlap at ${String(width)}x${String(height)} with ${seating.label}`, async ({

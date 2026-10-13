@@ -1722,7 +1722,10 @@ use the built-in player. Non-human players are held at or below the players. Bot
 The plain table (`src/client/table/PlainTable.tsx`) shows the turn and the
 active player; per player the name, Credits, colonists, achievements, hand
 size and the Base as a list ("Depot at 1,0 turned right"); the Supply, the
-Deck and Discard counts, your hand and the log. A pending decision of this
+Deck and Discard counts, your hand and the log. The Station's line names the
+side that is up and, while the Terran Outpost side is up and the view carries
+`base.station.named`, the side under it: "Terran Outpost (other side:
+Shackleton)". A pending decision of this
 seat shows its kind and one button per option, named by the engine's label;
 a press sends `game.decide` with the game, decision and option ids. Another
 seat's decision shows as a line naming that player and the kind. The log
@@ -1837,7 +1840,8 @@ reached: an option that no card, Station or Module carries (its card is in no
 hand or Supply, its target has no seat) is a button in the decision bar.
 
 **Dialogs.** A modal dialog (a choice, a private look at a hand, a zoom view
-opened by the space bar or from the log, the leave confirmation) takes the
+opened by the space bar, from the log or by the button for a Station's other
+side, the leave confirmation) takes the
 focus when it opens, keeps
 Tab and Shift+Tab inside it, pulls back focus that lands outside, closes on
 Escape wherever the focus is, and gives the focus back to the control that had
@@ -1873,6 +1877,17 @@ and after its Base changes. Drag or arrow keys pan; wheel, + and - zoom; Fit
 centres every card again. The same view draws a small, static preview beside
 each opponent's counters. Selecting that preview focuses the opponent's Base;
 Your Base returns to the viewer's Base.
+
+A Station lies with one side up, and R2.4 lets its owner know the other. While
+the Terran Outpost side is up and the view carries `base.station.named`, the
+full-size view puts a button on the Station, named "Look at the other side of
+your Station", or "Look at the other side of Bea's Station" on another
+player's Base. It opens the zoom view of the named side as a modal dialog with
+a Close button. The grid still draws the side that is up, and Orbs, colonists
+and achievements still count that side. There is no button when `named` is
+`null` (another player's never-Flipped Station), when the named side is up
+(its other side is the Terran Outpost every Station shares), or in the small
+previews. Looking sends nothing to the server, so no one can tell who looked.
 
 - The view decides everything. The client renders `view` and offers the
   `options` of the pending decision; it holds no rules. A thing is

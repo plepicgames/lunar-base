@@ -108,8 +108,11 @@ function HandDialog({
   );
 }
 
-/** A card from a log line, in the zoom view with a Close button. A modal dialog. */
-function ZoomDialog({
+/**
+ * A card in the zoom view with a Close button: one named in a log line, or a
+ * Station's other side. A modal dialog.
+ */
+export function ZoomDialog({
   cardId,
   onClose,
 }: {

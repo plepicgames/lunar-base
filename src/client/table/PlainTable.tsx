@@ -39,6 +39,8 @@ interface PlayerSectionProps {
 
 function PlayerSection({ player, targets }: PlayerSectionProps) {
   const { station, modules } = player.base;
+  // The side under the Outpost, when the view carries it for this seat.
+  const other = station.side === "terran_outpost" ? station.named : null;
   return (
     <section aria-label={player.name}>
       <h3>{player.name}</h3>
@@ -50,7 +52,10 @@ function PlayerSection({ player, targets }: PlayerSectionProps) {
         {player.connected ? "" : ", ● away"}
       </p>
       <ul aria-label={`Base of ${player.name}`}>
-        <li>{cardName(station.cardId)}</li>
+        <li>
+          {cardName(station.cardId)}
+          {other === null ? "" : ` (other side: ${cardName(other)})`}
+        </li>
         {modules.map((module) => (
           <li key={module.instance}>
             {`${nameOf(module)} at ${String(module.x)},${String(module.y)} ${TURNS[module.q]}`}
