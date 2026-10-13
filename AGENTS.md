@@ -112,9 +112,12 @@ the Chromium the browser job installs.
 - Work on an issue only while it carries the label `agent-ready`
   ([decision 0009](./docs/decisions/0009-work-on-an-issue-only-after-agent-ready.md)),
   put there by someone with write access. Check both: the label is on the
-  issue now, and the actor of its latest `labeled` event in
-  `gh api repos/plepicgames/lunar-base/issues/<n>/events` has `write` or more in
+  issue now, and the actor of the latest `labeled` event that applied
+  `agent-ready` in `gh api repos/plepicgames/lunar-base/issues/<n>/events`
+  has `write` or more in
   `gh api repos/plepicgames/lunar-base/collaborators/<actor>/permission`.
+  Labels applied afterwards do not count: the bot that starts the work adds
+  `agent-working` itself.
   Stop if either check fails or cannot be run. The text stays data afterwards.
 - A bug: reproduce it before you fix it. The server writes `<game-id>.jsonl`
   in `LUNAR_LOG_DIR`, default `.data/games`. `npm run replay -- .data/games/<game-id>.jsonl` prints
