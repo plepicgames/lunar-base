@@ -87,7 +87,7 @@ npm run check
 `.github/workflows/validate.yml` also runs `gitleaks git --redact`,
 `zizmor .github/workflows/` and `lychee --config lychee.toml './**/*.md'`.
 
-Do not upgrade `typescript` past 6.0: `typescript-eslint` 8.71.1 accepts
+Do not upgrade `typescript` past 6.0: `typescript-eslint` 8.71.2 accepts
 versions below 6.1 only. Do not upgrade `@playwright/test` without changing
 the Chromium the browser job installs.
 

@@ -30,7 +30,7 @@ table names a newer release, it says why that one is not used.
 | Part | Package | Version | Why this one |
 | --- | --- | --- | --- |
 | Runtime | Node.js | 24.x, at least 24.15.0 | Runs TypeScript by type stripping with no flag and no build step. jsdom 30 needs 24.15 |
-| Language | `typescript` | 6.0.3 | Type checker only (`noEmit`). Not 7.0.2: `typescript-eslint` 8.71.1 accepts `<6.1.0` only |
+| Language | `typescript` | 6.0.3 | Type checker only (`noEmit`). Not 7.0.2: `typescript-eslint` 8.71.2 accepts `<6.1.0` only |
 | WebSocket | `ws` | 8.22.0 | The standard Node WebSocket server. No framework is needed for one socket endpoint |
 | Static files | `sirv` | 3.0.2 | Serves the built client. Safer than a hand-written file handler |
 | Validation | `zod` | 4.6.5 | Checks every message at the server boundary and the Jev response |
@@ -42,7 +42,7 @@ table names a newer release, it says why that one is not used.
 | Property tests | `fast-check` | 4.10.2 | Random legal games; shrinks a failure to a short decision list |
 | Component tests | `@testing-library/react`, `@testing-library/dom`, `jsdom` | 16.3.3, 10.4.2, 30.1.2 | Client tests without a browser |
 | Browser tests | `@playwright/test` | 1.64.0 | Each Playwright release drives one Chromium build. The tests never download a browser: after an upgrade, run `npx playwright install chromium` once on a machine that runs them. `.github/workflows/validate.yml` installs the matching build itself |
-| Lint | `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `globals` | 10.12.0, 10.0.1, 8.71.1, 7.1.1, 17.13.0 | Type-aware rules: unhandled promises, exhaustive `switch`. Also enforces the import boundaries |
+| Lint | `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `globals` | 10.12.0, 10.0.1, 8.71.2, 7.1.1, 17.13.0 | Type-aware rules: unhandled promises, exhaustive `switch`. Also enforces the import boundaries |
 | Format | `prettier` | 3.9.9 | One formatter, no options to argue about |
 | Images | `sharp` | 0.35.5 | Resize and WebP encoding with a prebuilt binary. No system package |
 | Types | `@types/node`, `@types/ws`, `@types/react`, `@types/react-dom` | 24.19.2, 8.18.2, 19.3.0, 19.3.0 | Match the runtime versions |
@@ -52,6 +52,9 @@ Rules for dependencies:
 
 - `package-lock.json` is committed. `.npmrc` sets `save-exact=true`. Install
   with `npm ci`.
+- `renovate.json` limits TypeScript updates to `<6.1.0`, matching the
+  `typescript-eslint` peer range. Revisit the limit when the linter supports
+  newer compiler versions.
 - A change that adds or upgrades a dependency updates this table and says
   why.
 - One package, no workspaces. One lockfile and one `node_modules` keep every

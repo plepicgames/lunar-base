@@ -6,6 +6,12 @@
       "description": "The engines field states the oldest Node.js the game runs on. It is raised on purpose, with the start script's check and the documents, not because a newer release exists.",
       "matchDepTypes": ["engines"],
       "enabled": false
+    },
+    {
+      "description": "Keep TypeScript within the supported typescript-eslint peer range. Revisit this limit when typescript-eslint supports newer compiler versions.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.1.0"
     }
   ]
 }
