@@ -1,10 +1,14 @@
 import type { Page } from "@playwright/test";
-import { buildView } from "../src/client/testing/build-fixture.ts";
+import { buildView, capitalView } from "../src/client/testing/build-fixture.ts";
 import { expect, test } from "./fixtures.ts";
 
 // The Build interaction over the real built client. The spec answers the
 // socket with a scripted D6 decision and collects what the client sends.
-async function showBuild(page: Page): Promise<Record<string, unknown>[]> {
+async function showBuild(
+  page: Page,
+  view = buildView(),
+  module = "Build Depot",
+): Promise<Record<string, unknown>[]> {
   const sent: Record<string, unknown>[] = [];
   await page.routeWebSocket("**/ws", (socket) => {
     socket.onMessage((raw) => {
@@ -22,16 +26,14 @@ async function showBuild(page: Page): Promise<Record<string, unknown>[]> {
           jev: false,
         }),
       );
-      socket.send(
-        JSON.stringify({ type: "game.update", game: "g1", seq: 1, view: buildView(), events: [] }),
-      );
+      socket.send(JSON.stringify({ type: "game.update", game: "g1", seq: 1, view, events: [] }));
     });
   });
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("./");
   await page.getByRole("textbox", { name: "Name" }).fill("Ann");
   await page.getByRole("button", { name: "Enter the lobby" }).click();
-  await expect(page.getByRole("button", { name: "Build Depot" })).toBeVisible();
+  await expect(page.getByRole("button", { name: module })).toBeVisible();
   return sent;
 }
 
@@ -69,7 +71,7 @@ test("Build with the mouse: Module, place, a click to turn, Confirm", async ({ p
   const base = page.getByRole("region", { name: "Base" });
 
   await page.getByRole("button", { name: "Build Depot" }).click();
-  await expect(base.getByRole("button", { name: /^Place Depot at / })).toHaveCount(3);
+  await expect(base.getByRole("button", { name: /^Place Depot at / })).toHaveCount(8);
   // Every place lies inside the Base grid: the view is fitted around them.
   const grid = await base.getByTestId("base-viewport").boundingBox();
   if (grid === null) throw new Error("Base viewport has no box");
@@ -85,7 +87,9 @@ test("Build with the mouse: Module, place, a click to turn, Confirm", async ({ p
   await base.getByRole("button", { name: "Place Depot at 1,0" }).click();
   const preview = base.getByRole("button", { name: "Turn Depot" });
   await expect(preview).toHaveAttribute("data-turns", "0");
-  await preview.click();
+  // The Depot's other cell, 1,1, is a place too: its outline lies over that
+  // half of the preview, and the middle of the preview is on its edge.
+  await preview.click({ position: { x: 10, y: 10 } });
   await expect(preview).toHaveAttribute("data-turns", "2");
 
   const bar = page.getByRole("region", { name: "Your decision" });
@@ -97,6 +101,28 @@ test("Build with the mouse: Module, place, a click to turn, Confirm", async ({ p
   await expect(confirm).toBeInViewport({ ratio: 1 });
   await confirm.click();
   expect(sent).toEqual([decide("c-1:1,0,2")]);
+});
+
+test("the report's position: the place above the Station takes Lunar Capital lying across", async ({
+  page,
+}) => {
+  const sent = await showBuild(page, capitalView(), "Build Lunar Capital");
+  const base = page.getByRole("region", { name: "Base" });
+
+  await page.getByRole("button", { name: "Build Lunar Capital" }).click();
+  // No placement has its top cell here: it is the bottom cell of the one across.
+  const place = base.getByRole("button", { name: "Place Lunar Capital at 0,-1" });
+  await expect(place).toBeInViewport({ ratio: 1 });
+  await place.click();
+  await expect(base.getByRole("button", { name: "Turn Lunar Capital" })).toHaveAttribute(
+    "data-turns",
+    "3",
+  );
+
+  const bar = page.getByRole("region", { name: "Your decision" });
+  await expect(bar.getByRole("status")).toContainText("Orbs formed: red, blue.");
+  await bar.getByRole("button", { name: /^Confirm: / }).click();
+  expect(sent).toEqual([decide("c-4:-1,-1,3")]);
 });
 
 // The bar is at its fullest with a preview: text, Confirm, Back and skip.

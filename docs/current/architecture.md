@@ -1804,26 +1804,30 @@ trigger named by the card. While another seat decides, no card glows.
 #### Build interaction
 
 `buildSelection(options, action, from)` in `build/selection.ts` is a pure
-reducer over the D6 options. It groups them by Module (`card`), then by top
-cell (`x`, `y`), then by turn (`q`), in the engine's order, and holds the
-chosen Module, cell and turn. Its `option` is the engine's own option for
-that choice. An action no option stands behind changes nothing.
+reducer over the D6 options. It groups them by Module (`card`), then by
+place, then by the placements that cover the place, and holds the chosen
+Module, place and placement. A place is any cell a placement covers: its top
+cell (`x`, `y`) or its bottom cell, read from `x`, `y` and `q` with the
+client's `layoutOf`. The placements whose top cell is the place come first,
+then those whose bottom cell it is, each in the engine's order. Its `option`
+is the engine's own option for that choice. An action no option stands behind
+changes nothing.
 `useBuild` (`build/Build.tsx`) holds one selection per decision id and gives
 the hand, the Base and the bar their parts.
 
 | Step | What shows | Control and its name |
 | --- | --- | --- |
 | 1. Module | Each Module the options name glows in your hand; the picked one is `aria-pressed` and glows in the selection colour | Card button "Build Depot" |
-| 2. Place | One dashed outline per top cell of that Module on your Base. The Base is fitted around every placement of the Module, and comes back into focus if an opponent's was shown | Outline button "Place Depot at 1,0" |
-| 3. Turn | The Module lies at the place, turned as the option says, starting with the first turn the engine lists. The other places stay as outlines | Preview button "Turn Depot"; a press or R takes the next legal turn of the place and comes round |
-| 4. Confirm | The bar reads "Price: 1 Credit. Orbs formed: yellow, red. Turn 2 of 3" from the previewed option's `price` and `orbs` | "Confirm: " and the engine's label sends that option |
+| 2. Place | One dashed outline per cell that a placement of that Module covers on your Base, row by row. The Base is fitted around every placement of the Module, and comes back into focus if an opponent's was shown | Outline button "Place Depot at 1,0" |
+| 3. Turn | The Module lies on the place as the first of those placements says. The other places stay as outlines; one of them lies over the other cell of the preview, and a press on it picks that place | Preview button "Turn Depot"; a press or R takes the next placement that covers the place and comes round. It may move the Module to another top cell; the place stays |
+| 4. Confirm | The bar reads "Price: 1 Credit. Orbs formed: yellow, red. Turn 2 of 3" from the previewed option's `price` and `orbs`; "of 3" counts the placements that cover the place | "Confirm: " and the engine's label sends that option |
 
 | Point | Decision |
 | --- | --- |
 | Skip | An option that names no placement (`skip`) is a button in the bar with the engine's label at every step. An option whose `card`, `x`, `y`, `q`, `price` or `orbs` is missing is treated the same way, so no option is ever lost |
 | Back | Escape, or the Back button, steps from the turn to the places and from the places to the Modules. Escape belongs to an open dialog, such as a zoom view, first |
-| Keyboard | Tab, Enter and R are enough. Picking a Module moves focus to its first place; picking a place moves it to the preview; stepping back returns it to the place or the Module that was left. R with Ctrl, Alt or Meta is left to the browser |
-| Nothing computed | The client reads the places, turns, price and Orb colours from the options. It checks no placement and works out no price |
+| Keyboard | Tab, Enter and R are enough. Picking a Module moves focus to its first place, the first row by row; picking a place moves it to the preview; stepping back returns it to the place or the Module that was left. R with Ctrl, Alt or Meta is left to the browser |
+| Nothing computed | The client reads the places, turns, price and Orb colours from the options. Each placement is reached from both of its cells and from no other. The client adds no option, checks no placement and works out no price or Orb; the second cell of a placement is the only thing it derives |
 | Bar height | One line of text and one row of buttons, like the generic bar. The centre column of the three-column table is narrower than that needs: in a window under 82rem wide the text keeps the room of two lines at every step, and under 72rem the buttons, with less padding, keep the room of two rows. The bar is then as tall as its fullest step, so the Base does not move while a Module is placed. `e2e/build.spec.ts` holds the board's height at 1024x720 and 1280x720 and plays the path with the mouse and with the keyboard |
 | `BaseView` | Takes an `offer`: cells to outline, a card to preview and the placements to fit. It knows nothing of Build |
 | Plain table | Unchanged: one button per option |
@@ -1955,8 +1959,8 @@ previews. Looking sends nothing to the server, so no one can tell who looked.
   pressing it sends the option id. An Exchange redraws each Base from the
   next view. A priced Draft uses the option's label on its card button.
 - Each decision kind has one fixed interaction. Build (D6): pick a Module
-  in hand, the legal places appear as outlines on the Base, pick one, turn
-  it through the legal turns, confirm; the price and the Orbs it forms are
+  in hand, the legal places appear as outlines on the Base, pick one, step
+  through the placements that cover it, confirm; the price and the Orbs it forms are
   shown before confirming. Choices of a target (D9 to D11) highlight
   Stations, Modules or players. Defence (D12) is a dialog over the table.
 - Target decisions (D9) mark only the players named by options, including

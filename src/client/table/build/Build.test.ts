@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { App } from "../../App.tsx";
 import type { GameState } from "../../connection.ts";
-import { buildView } from "../../testing/build-fixture.ts";
+import { buildView, capitalView } from "../../testing/build-fixture.ts";
 import { FakeWebSocket } from "../../testing/fake-socket.ts";
 import { player } from "../../testing/view-fixture.ts";
 import { Table } from "../Table.tsx";
@@ -86,13 +86,18 @@ describe("Build: Module, place, turn, Confirm", () => {
     expect(within(bar()).queryByRole("button", { name: /^Confirm/ })).toBeNull();
   });
 
-  test("a picked Module is marked and outlines exactly the places its options name", () => {
+  test("a picked Module is marked and outlines every cell a placement of it covers", () => {
     mount();
     fireEvent.click(hand().getByRole("button", { name: "Build Depot" }));
     expect(names(places())).toEqual([
       "Place Depot at 1,-1",
+      "Place Depot at 2,-1",
+      "Place Depot at -2,0",
       "Place Depot at -1,0",
       "Place Depot at 1,0",
+      "Place Depot at 2,0",
+      "Place Depot at -1,1",
+      "Place Depot at 1,1",
     ]);
     expect(hand().getByRole("button", { name: "Build Depot" }).getAttribute("aria-pressed")).toBe(
       "true",
@@ -100,8 +105,10 @@ describe("Build: Module, place, turn, Confirm", () => {
 
     fireEvent.click(hand().getByRole("button", { name: "Build Fusion Reactor" }));
     expect(names(places())).toEqual([
+      "Place Fusion Reactor at -1,-1",
       "Place Fusion Reactor at -1,0",
       "Place Fusion Reactor at 0,2",
+      "Place Fusion Reactor at 0,3",
     ]);
     expect(hand().getByRole("button", { name: "Build Depot" }).getAttribute("aria-pressed")).toBe(
       "false",
@@ -118,9 +125,17 @@ describe("Build: Module, place, turn, Confirm", () => {
       "0",
       "0",
     ]);
-    expect(names(places())).toEqual(["Place Depot at 1,-1", "Place Depot at -1,0"]);
+    expect(names(places())).toEqual([
+      "Place Depot at 1,-1",
+      "Place Depot at 2,-1",
+      "Place Depot at -2,0",
+      "Place Depot at -1,0",
+      "Place Depot at 2,0",
+      "Place Depot at -1,1",
+      "Place Depot at 1,1",
+    ]);
 
-    // A click turns it through the legal turns of the place: 0, 2, 3 and round again.
+    // A click takes the next placement that covers the place: 0, 2, 3 and round again.
     const turns = [];
     for (let press = 0; press < 3; press += 1) {
       fireEvent.click(preview);
@@ -145,7 +160,7 @@ describe("Build: Module, place, turn, Confirm", () => {
     fireEvent.click(screen.getByRole("button", { name: "View Bea's Base" }));
     fireEvent.click(hand().getByRole("button", { name: "Build Depot" }));
     expect(base().getByRole("heading").textContent).toBe("Your Base");
-    expect(places()).toHaveLength(3);
+    expect(places()).toHaveLength(8);
   });
 
   test("an opponent's Base shows no place", () => {
@@ -197,6 +212,54 @@ describe("Build: the bar before Confirm", () => {
   });
 });
 
+describe("Build: a place is any cell a placement covers", () => {
+  const status = () => within(bar()).getByRole("status").textContent;
+  const preview = () => base().getByRole("button", { name: "Turn Lunar Capital" });
+  const lies = () => {
+    const { gridX, gridY, gridWidth, turns } = preview().dataset;
+    return [gridX, gridY, gridWidth, turns];
+  };
+
+  test("the bar counts the placements that cover the place", () => {
+    mount(capitalView());
+    pick("Lunar Capital", "-1,-1");
+    expect(status()).toContain("Turn 1 of 5");
+
+    key("r");
+    key("r");
+    key("r");
+    expect(status()).toContain("Turn 4 of 5");
+    // The Module moved up; the place it covers did not.
+    expect(lies()).toEqual(["-1", "-2", "1", "0"]);
+
+    fireEvent.click(within(bar()).getByRole("button", { name: "Back" }));
+    fireEvent.click(base().getByRole("button", { name: "Place Lunar Capital at -1,-2" }));
+    expect(status()).toContain("Turn 1 of 2");
+  });
+
+  test("the report's position: the place above the Station previews Lunar Capital lying across", () => {
+    const onDecide = mount(capitalView());
+    pick("Lunar Capital", "0,-1");
+    expect(lies()).toEqual(["-1", "-1", "2", "3"]);
+    expect(status()).toContain("Orbs formed: red, blue.");
+    expect(status()).toContain("Turn 1 of 1.");
+
+    fireEvent.click(
+      within(bar()).getByRole("button", {
+        name: "Confirm: Build Lunar Capital at -1,-1 turned left, pay 4",
+      }),
+    );
+    expect(onDecide).toHaveBeenCalledExactlyOnceWith("d6", "c-4:-1,-1,3");
+  });
+
+  test("the picked place has no outline; the other cell of the preview keeps one", () => {
+    mount(capitalView());
+    pick("Lunar Capital", "0,-1");
+    expect(names(places())).not.toContain("Place Lunar Capital at 0,-1");
+    expect(names(places())).toContain("Place Lunar Capital at -1,-1");
+  });
+});
+
 describe("Build: Skip and Escape", () => {
   test("Skip sends the skip option at every step", () => {
     const onDecide = mount();
@@ -215,7 +278,7 @@ describe("Build: Skip and Escape", () => {
 
     key("Escape");
     expect(base().queryByRole("button", { name: "Turn Depot" })).toBeNull();
-    expect(places()).toHaveLength(3);
+    expect(places()).toHaveLength(8);
     // Focus is on the place that was left, so the keyboard goes on from there.
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Place Depot at 1,0");
 
@@ -237,7 +300,7 @@ describe("Build: Skip and Escape", () => {
     expect(within(bar()).queryByRole("button", { name: "Back" })).toBeNull();
     pick("Depot", "1,0");
     fireEvent.click(within(bar()).getByRole("button", { name: "Back" }));
-    expect(places()).toHaveLength(3);
+    expect(places()).toHaveLength(8);
     fireEvent.click(within(bar()).getByRole("button", { name: "Back" }));
     expect(places()).toHaveLength(0);
   });
