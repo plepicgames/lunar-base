@@ -380,6 +380,11 @@ export function PictureTable({
                     : undefined
                 }
                 offer={shown.seat === view.you ? build?.offer : undefined}
+                lookLabel={
+                  shown.seat === view.you
+                    ? "Look at the other side of your Station"
+                    : `Look at the other side of ${shown.name}'s Station`
+                }
                 targets={
                   new Map(
                     moduleOptions

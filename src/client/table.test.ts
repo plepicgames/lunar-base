@@ -87,6 +87,34 @@ describe("Plain table", () => {
     expect(asked.textContent).toContain("Bea");
     expect(asked.textContent).toContain("build");
   });
+
+  test("an Outpost that carries its named side reads both sides", () => {
+    const ann = player(0);
+    const station = { ...ann.base.station, named: "stn-shackleton" };
+    table({ players: [{ ...ann, base: { ...ann.base, station } }, player(1)] });
+    const items = within(screen.getByRole("list", { name: "Base of Ann" })).getAllByRole(
+      "listitem",
+    );
+    expect(items[0].textContent).toBe("Terran Outpost (other side: Shackleton)");
+  });
+
+  test("a Station with no named side in the view, or with its named side up, reads one side", () => {
+    const ann = player(0);
+    const station = {
+      ...ann.base.station,
+      side: "named" as const,
+      cardId: "stn-shackleton",
+      named: "stn-shackleton",
+      revealed: true,
+    };
+    table({ players: [{ ...ann, base: { ...ann.base, station } }, player(1)] });
+    const first = (name: string) =>
+      within(screen.getByRole("list", { name: `Base of ${name}` })).getAllByRole("listitem")[0]
+        .textContent;
+    expect(first("Bea")).toBe("Terran Outpost");
+    expect(first("Ann")).toBe("Shackleton");
+    expect(screen.getByRole("region", { name: "Table" }).textContent).not.toContain("other side");
+  });
 });
 
 describe("Result screen", () => {
