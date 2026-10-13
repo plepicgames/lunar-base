@@ -254,6 +254,24 @@ describe("legalPlacements", () => {
     ]);
   });
 
+  test("lists the ten places of a Lunar Capital at a Terran Outpost with an Inflatable Habitat on its left", () => {
+    const base = withModules(STATION_ALONE, ["mod-inflatable-habitat", -1, 0, 0]);
+    // The fifth lies across both cards: its LL gray meets the Station's T red
+    // and its B blue meets the Habitat's T gray. Gray fits any colour.
+    expect(listed(base, "mod-lunar-capital")).toEqual([
+      { x: -1, y: -2, q: 0, orbs: ["blue"] },
+      { x: -2, y: -1, q: 3, orbs: ["wild"] },
+      { x: -1, y: -1, q: 1, orbs: ["blue"] },
+      { x: -1, y: -1, q: 2, orbs: ["blue"] },
+      { x: -1, y: -1, q: 3, orbs: ["red", "blue"] },
+      { x: 1, y: -1, q: 0, orbs: ["wild"] },
+      { x: 1, y: 0, q: 0, orbs: ["yellow", "blue"] },
+      { x: 1, y: 0, q: 2, orbs: ["blue"] },
+      { x: 1, y: 0, q: 3, orbs: ["blue"] },
+      { x: 2, y: 0, q: 1, orbs: ["blue"] },
+    ]);
+  });
+
   test.each(cards)("returns the same list in the same order on two calls: %s", (id) => {
     const { base, cardOf } = buildBase(PAGE_23_CORRECT);
     const first = legalPlacements(base, cardById(id), cardOf);

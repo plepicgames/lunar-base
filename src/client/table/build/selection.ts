@@ -1,8 +1,11 @@
 // The Build decision D6 as three choices (architecture, Behaviour): a Module,
 // one of its places, one of the turns of that place. The engine lists every
 // legal Build as one option; this groups those options and never adds one.
+// A place is a cell that a placement of the Module covers, its top cell or its
+// bottom cell; a turn is one of the placements that cover the place.
 
 import type { GameView } from "../../../protocol/messages.ts";
+import { layoutOf } from "../layout.ts";
 
 type Pending = NonNullable<GameView["pending"]>;
 export type Option = Extract<Pending, { options: unknown }>["options"][number];
@@ -31,11 +34,11 @@ export interface Selection {
   /** The Modules the options name, in the engine's order. */
   readonly modules: readonly string[];
   readonly module: string | null;
-  /** The top cells the options name for the chosen Module. */
+  /** Every cell a placement of the chosen Module covers, row by row. */
   readonly cells: readonly Cell[];
   readonly cell: Cell | null;
-  /** The turns the options name for the chosen Module at the chosen cell. */
-  readonly turns: readonly Quarter[];
+  /** The placements of the chosen Module that cover the chosen cell, by top cell first. */
+  readonly turns: readonly BuildOption[];
   /** The engine's option for the chosen Module, cell and turn. */
   readonly option: BuildOption | null;
 }
@@ -45,7 +48,7 @@ export type BuildAction =
   | { readonly type: "open" }
   | { readonly type: "module"; readonly card: string }
   | { readonly type: "cell"; readonly x: number; readonly y: number }
-  /** The next legal turn of the chosen cell, the first after the last. */
+  /** The next placement that covers the chosen cell, the first after the last. */
   | { readonly type: "turn" }
   /** One choice back: from the turn to the places, from the places to the Modules. */
   | { readonly type: "back" };
@@ -77,24 +80,37 @@ function at(cell: Cell, other: Cell): boolean {
   return other.x === cell.x && other.y === cell.y;
 }
 
+/** The two cells a placement covers: its top cell, then its bottom cell. */
+function cellsOf(option: BuildOption): readonly [Cell, Cell] {
+  return [{ x: option.x, y: option.y }, layoutOf(option, 1).bottom];
+}
+
+/** The placements that cover a cell: by their top cell first, then by their bottom cell. */
+function covering(placements: readonly BuildOption[], cell: Cell): readonly BuildOption[] {
+  return ([0, 1] as const).flatMap((end) =>
+    placements.filter((option) => at(cell, cellsOf(option)[end])),
+  );
+}
+
 function select(
   options: readonly Option[],
   module: string | null,
   cell: Cell | null,
-  q: Quarter | null,
+  id: string | null,
 ): Selection {
   const builds = options.filter(isBuild);
   const mine = builds.filter((option) => option.card === module);
-  const here = cell === null ? [] : mine.filter((option) => at(cell, option));
+  const covered = mine.flatMap(cellsOf);
+  const turns = cell === null ? [] : covering(mine, cell);
   return {
     modules: [...new Set(builds.map((option) => option.card))],
     module,
-    cells: mine
-      .filter((option, index) => mine.findIndex((other) => at(option, other)) === index)
-      .map(({ x, y }) => ({ x, y })),
+    cells: covered
+      .filter((one, index) => covered.findIndex((other) => at(one, other)) === index)
+      .sort((one, other) => one.y - other.y || one.x - other.x),
     cell,
-    turns: here.map((option) => option.q),
-    option: here.find((option) => option.q === q) ?? null,
+    turns,
+    option: turns.find((option) => option.id === id) ?? null,
   };
 }
 
@@ -115,13 +131,13 @@ export function buildSelection(
     case "cell": {
       const cell = from.cells.find((candidate) => at(candidate, action));
       if (cell === undefined) return from;
-      const first = placementsOf(options, from.module ?? "").find((option) => at(cell, option));
-      return select(options, from.module, cell, first?.q ?? null);
+      const first = covering(placementsOf(options, from.module ?? ""), cell).at(0);
+      return select(options, from.module, cell, first?.id ?? null);
     }
     case "turn": {
       if (from.option === null) return from;
-      const next = from.turns[(from.turns.indexOf(from.option.q) + 1) % from.turns.length];
-      return select(options, from.module, from.cell, next);
+      const next = from.turns[(from.turns.indexOf(from.option) + 1) % from.turns.length];
+      return select(options, from.module, from.cell, next.id);
     }
     case "back":
       if (from.cell !== null) return select(options, from.module, null, null);

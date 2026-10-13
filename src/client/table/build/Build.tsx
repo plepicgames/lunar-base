@@ -2,6 +2,7 @@
 // hand, pick one of its places on your Base, turn it, confirm. The hand, the
 // Base and the bar each draw their part of one selection. Every place, turn,
 // price and Orb shown is what an option of the engine says.
+// A place is any cell a placement covers; a turn, a placement that covers it.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -186,7 +187,8 @@ export function BuildBar({ build, lead, onDecide }: BuildBarProps) {
   } else if (option === null) {
     status = `${name}: pick a place on your Base.`;
   } else {
-    const turn = `Turn ${String(turns.indexOf(option.q) + 1)} of ${String(turns.length)}`;
+    // The turns are the placements that cover the place, not the quarters of one cell.
+    const turn = `Turn ${String(turns.indexOf(option) + 1)} of ${String(turns.length)}`;
     status = (
       <>
         {name}. <strong>Price: {credits(option.price)}.</strong>{" "}
