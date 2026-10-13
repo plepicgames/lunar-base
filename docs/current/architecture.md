@@ -1840,11 +1840,16 @@ the Base, where a player builds, is the largest region:
   are any, and the log, which scrolls inside its column.
 
 Every player's progress stays on screen: when the rail is short of height it
-draws each opponent denser (four opponents in a window up to 850 px high, five
-up to 1,040 px), with a smaller dial, the counters in a grid, the name on one
-line and a lower Base control. Nothing is left out. The rail scrolls inside
-itself only when even that does not fit, as when five opponents each carry a
-decision button in a window 720 px high.
+draws each player denser (four in the rail in a window up to 850 px high, five
+up to 1,040 px, six up to 1,240 px), with a smaller dial and Deck back, the
+counters in a grid, the name on one line and a lower Base control. In the grid
+the dial, the colonists and the hand share a row and the achievements lie
+under them over the full width; icons that do not fit one line wrap, so none
+is covered. A watcher has no seat and so has every player in the rail: six in
+a window up to 850 px high are drawn with less air and smaller badges still.
+Nothing is left out. The rail scrolls inside itself only when even that does
+not fit, as when five opponents each carry a decision button in a window
+720 px high.
 
 Under 1,024 px wide the table keeps the stacked arrangement: the opponents in
 a row on top, Supply and Base (one scrolling column) beside the Influences of

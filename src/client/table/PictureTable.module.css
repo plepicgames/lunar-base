@@ -40,7 +40,7 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: var(--counters-gap, var(--spacing-1));
 }
 .opponent[data-targeted] {
   outline: 2px solid var(--action);
@@ -329,14 +329,16 @@
 }
 
 /* Short of height, the rail draws each player denser: a smaller dial, the
-   counters in a grid (Counters.module.css) and a lower Base control. Four
-   opponents need it in a window up to 850 px high, five up to 1040 px. */
+   counters in a grid (Counters.module.css), a smaller Deck back and a lower
+   Base control. Four in the rail need it in a window up to 850 px high, five
+   up to 1040 px, six up to 1240 px. A watcher has every player in the rail. */
 @media (min-width: 64rem) and (max-height: 850px) {
   .opponents:has(> :nth-child(4)) {
     --counters-gap: var(--spacing-1);
     --counters-row: grid;
     --counters-wrap: nowrap;
     --dial-size: 2.5rem;
+    --hand-width: 1.25rem;
     --preview-height: 1.125rem;
   }
 }
@@ -346,7 +348,30 @@
     --counters-row: grid;
     --counters-wrap: nowrap;
     --dial-size: 2.5rem;
+    --hand-width: 1.25rem;
     --preview-height: 1.125rem;
+  }
+}
+@media (min-width: 64rem) and (max-height: 1240px) {
+  .opponents:has(> :nth-child(6)) {
+    --counters-gap: var(--spacing-1);
+    --counters-row: grid;
+    --counters-wrap: nowrap;
+    --dial-size: 2.5rem;
+    --hand-width: 1.25rem;
+    --preview-height: 1.125rem;
+  }
+}
+
+/* Six in a window up to 850 px high: less air inside each player and smaller
+   badges still. The gap between two players stays. */
+@media (min-width: 64rem) and (max-height: 850px) {
+  .opponents:has(> :nth-child(6)) {
+    --badge-size: 1.25rem;
+    --counters-gap: 0.125rem;
+    --dial-size: 2rem;
+    --hand-width: 1rem;
+    gap: var(--spacing-1);
   }
 }
 

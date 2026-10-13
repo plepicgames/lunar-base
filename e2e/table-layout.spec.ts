@@ -359,6 +359,67 @@ test("with six players the last opponent's target button sends its option at 128
   await expect.poll(() => decisions).toEqual([{ decision: "d9", option: "t5" }]);
 });
 
+/** For each player in the rail: the pairs of its counters that overlap, and whether the rail shows all of it. */
+async function measureRail(page: Page) {
+  return await page.evaluate(() => {
+    const rail = document.querySelector('section[aria-label="Opponents"]');
+    if (rail === null) throw new Error("no Opponents");
+    const clip = rail.getBoundingClientRect();
+    return [...rail.querySelectorAll("section[data-seat]")].map((section) => {
+      const { top, bottom } = section.getBoundingClientRect();
+      const counters = [...section.querySelectorAll(':scope > div > [role="group"]')].map(
+        (counter) => ({ name: counter.ariaLabel, box: counter.getBoundingClientRect() }),
+      );
+      const overlaps = counters.flatMap((one, index) =>
+        counters
+          .slice(index + 1)
+          .filter(
+            ({ box }) =>
+              one.box.left < box.right &&
+              box.left < one.box.right &&
+              one.box.top < box.bottom &&
+              box.top < one.box.bottom,
+          )
+          .map((other) => `${String(one.name)} and ${String(other.name)}`),
+      );
+      const shown = top >= clip.top && bottom <= clip.bottom;
+      return { counters: counters.length, overlaps, shown };
+    });
+  });
+}
+
+// Credits, Colonists, Hand and Achievements, clear of each other and on screen.
+const WHOLE = { counters: 4, overlaps: [], shown: true };
+// Welfare raises the achievements target to 6: five icons are an ordinary
+// count before a victory.
+const FIVE_ICONS = {
+  targets: { credits: 20, colonists: 10, achievements: 6 },
+  players: NAMES.map((name, seat) =>
+    player(seat, { name, achievements: ["atom", "dog", "rocket", "dna", "brain"], handSize: 3 }),
+  ),
+};
+
+test("with six players five achievements do not reach the hand at 1280x720", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 6, 0, "", FIVE_ICONS);
+  expect(await measureRail(page)).toEqual(Array.from({ length: 5 }, () => WHOLE));
+});
+
+// A watcher has no seat: all six players are in the rail, one more than a
+// player sees there. The heights are 720 and the first above each denser rail.
+test("a watcher of six players sees every player's counters without scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await showTable(page, 6, 0, "", { ...FIVE_ICONS, you: null, hand: [], pending: null });
+  for (const height of [720, 851, 1241]) {
+    await page.setViewportSize({ width: 1280, height });
+    await expect
+      .poll(() => measureRail(page), { message: String(height) })
+      .toEqual(Array.from({ length: 6 }, () => WHOLE));
+  }
+});
+
 const CASES = [
   { width: 1280, seats: 3, events: 0 },
   { width: 1280, seats: 3, events: 200 },
