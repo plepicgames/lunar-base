@@ -1402,6 +1402,10 @@ no step-budget endings. The Influence scorer uses only projected information:
 | D13 order | Score the offered printed actions for their resolving seat. Prefer own benefits and opponents' losses; a credit-winning effect takes precedence over subsequent text. Opponents' cards remain unknown |
 | Approximation | Collection values for 0–4 held Influences are 0, 6, 15, 36, 250. Unknown drawn cards have generic value 3. Discard effects recurse at most twice; no hidden card identities or exact future sequence is predicted. This is a shallow heuristic, not an engine simulation |
 
+`src/bots/builtin/strength.test.ts` also plays four seeded games with the
+built-in maker in both seats: one base game and three with Influences and
+Kickstarter. Each must end in victory within the 300-turn cap.
+
 A second maker, `randomMaker`, picks uniformly. Tests and property runs use
 it. `src/bots/maker.ts` exports the interface, request, `OptionId` (a string)
 and `randomMaker(seed, seat)`.
@@ -1422,7 +1426,7 @@ option, as for the random maker. An aborted signal does not prevent a choice.
 | Core scoring | Behaviour |
 | --- | --- |
 | D6 Build | A Build reaching the view's colonist or achievement target scores 1,000,000. Otherwise: 4 for building, 12 per colonist, 18 per new distinct achievement, quadratic progress toward both targets, minus 3 per Credit spent. Each formed Orb adds 1; each Credit it or a printed Orb saves on another held card adds 5. Skip scores 0 |
-| D2 Main Action | Evaluate the printed box of the visible Station or Module. Build uses the best affordable legal placement from the current hand and Base, sharing placement results within this request. Draw values available Deck and recyclable discard cards (using the public count even when hidden) at 3 each, replacing the first card's value with its visible Module/Agent or Influence collection value when `deckTop` is public; Draft values visible Supply cards; Resell values Credits at 3 each, limited by eligible Supply cards; discards lose card value |
+| D2 Main Action | Evaluate the printed box of the visible Station or Module. Build uses the best affordable legal placement from the current hand and Base, sharing placement results within this request. Draw values available Deck and recyclable discard cards (using the public count even when hidden) at 3 each, replacing the first card's value with its visible Module/Agent or Influence collection value when `deckTop` is public; Draft values visible Supply cards; a Module or an Agent the Draft can take counts for at least 1, so a box that takes a card from the Supply beats a box that does nothing, and an Influence keeps its computed value, which can be below 0; Resell values Credits at 3 each, limited by eligible Supply cards; discards lose card value |
 | D4 Draft | Discount the Module's future Build value and penalize costs beyond current Credits. A drafted card never scores as an immediate victory. Agents get a modest value minus price |
 | D1 Agent | Value its printed actions minus its offered price; prospective Builds use the Credits remaining after payment. Going on scores 0 |
 | D7 Now or later | Resolve positive immediate text now; defer negative text such as discarding the hand. Later scores 0 |
