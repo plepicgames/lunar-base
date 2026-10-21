@@ -10,7 +10,7 @@
 # version the client shows and the server writes into each game log.
 
 # node:24.21.0-trixie-slim
-FROM node:24.21.0-trixie-slim@sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66 AS build
+FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS build
 
 WORKDIR /src
 
@@ -25,7 +25,7 @@ ARG LUNAR_BUILD=dev
 RUN LUNAR_BUILD="$LUNAR_BUILD" npx vite build
 
 # node:24.21.0-trixie-slim
-FROM node:24.21.0-trixie-slim@sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66 AS runtime-dependencies
+FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS runtime-dependencies
 
 WORKDIR /src
 
@@ -33,7 +33,7 @@ COPY package.json package-lock.json .npmrc ./
 RUN npm ci --omit=dev
 
 # node:24.21.0-trixie-slim
-FROM node:24.21.0-trixie-slim@sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66 AS runtime
+FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS runtime
 
 # `source` is what links the package on GitHub to this repository.
 LABEL org.opencontainers.image.source="https://github.com/plepicgames/lunar-base"
